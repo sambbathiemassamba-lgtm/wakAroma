@@ -1,0 +1,171 @@
+/* ==========================================================================
+   VARIABLES CSS
+   ========================================================================== */
+:root {
+  --color-primary: #d4a574;
+  --color-accent: #ff9f1c;
+  --color-text: #333;
+  --color-bg: #f9f9f9;
+  --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-serif: 'Cormorant Garamond', serif;
+  --spacing-small: 0.5rem;
+  --spacing-medium: 1rem;
+  --spacing-large: 2rem;
+}
+
+/* ==========================================================================
+   RESET ET STYLES DE BASE
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: 1.6;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-large);
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: var(--spacing-large);
+}
+
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-medium);
+}
+
+
+.header__logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.header__title h1 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 600;
+  color: green;
+}
+
+.header__subtitle {
+  font-size: 0.875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-top: var(--spacing-small);
+}
+
+/* Barre de recherche */
+.header__search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-form {
+  display: flex;
+  gap: var(--spacing-small);
+}
+
+.search-form__input {
+  flex: 1;
+  padding: var(--spacing-medium);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.search-form__input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.1);
+}
+
+.search-form__button {
+  padding: var(--spacing-medium) var(--spacing-large);
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.search-form__button:hover {
+  background-color: #ff8c00;
+}
+
+/* Actions utilisateur */
+.header__actions {
+  display: flex;
+  gap: var(--spacing-large);
+  align-items: center;
+}
+
+.header__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-small);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: color 0.3s ease;
+}
+
+.header__link:hover {
+  color: var(--color-accent);
+}
+
+.header__link img {
+  width: 32px;
+  height: 32px;
+}
+
+.header__link span {
+  font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    padding: var(--spacing-medium);
+  }
+
+  .header__brand {
+    width: 100%;
+  }
+
+  .header__search {
+    width: 100%;
+  }
+
+  .header__title h1 {
+    font-size: 1.5rem;
+  }
+}
+
