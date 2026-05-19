@@ -9,7 +9,7 @@
 <body>
     <header class="header">
         <!-- Logo et titre -->
-        <div class="header__brand">
+        <div class="header__brgitand">
             <img src="logo/logo.jpeg" alt="Logo WakAroma" class="header__logo">
             <div class="header__title">
                 <h1>WakAroma</h1>
@@ -32,8 +32,10 @@
                 <span>Connexion</span>
             </a>
             <a href="#pannier" class="header__link header__link--cart">
-                <img src="icones/pannier.png" alt="Panier">
+                <img src="icones/panier.png" alt="Panier">
                 <span>Panier</span>
             </a>
         </nav>
     </header>
+
+    <?php require_once 'footer.php' ?>

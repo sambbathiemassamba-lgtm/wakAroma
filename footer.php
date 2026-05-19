@@ -20,7 +20,7 @@
             <div class="footer__col footer__contact">
                 <h4>Contact</h4>
                 <ul>
-                    <li>Téléphone : <a href="tel:+33760900621">+33 7 60 90 06 21</a></li>
+                    <li>Téléphone : <a href="tel:+33760900621">+33760900621</a></li>
                     <li>Email : <a href="mailto:contact@wakaroma.example">contact@wakaroma.example</a></li>
                 </ul>
             </div>
@@ -28,30 +28,24 @@
             <div class="footer__col footer__social">
                 <h4>Nous suivre</h4>
                 <div class="footer__social-list">
+                    <!-- lien du whatsapp -->
                     <a href="#whatsapp" class="social-link" aria-label="WhatsApp">
-                        <img src="logo/whatssapp.png" alt="WhatsApp">
+                        <img src="icones/whatssapp.png" alt="WhatsApp">
                     </a>
+                    <!-- lien du facebook -->
                     <a href="#facebook" class="social-link" aria-label="Facebook">
-                        <img src="logo/facebook.png" alt="Facebook">
+                        <img src="icones/facebook.png" alt="Facebook">
                     </a>
+                    <!-- lien du instagram -->
                     <a href="#instagram" class="social-link" aria-label="Instagram">
-                        <img src="logo/instagram.png" alt="Instagram">
+                        <img src="icones/instagram.png" alt="Instagram">
                     </a>
                 </div>
             </div>
 
             <div class="footer__bottom">
-                <p>&copy; <span id="year"></span> WakAroma — Tous droits réservés.</p>
+                <p>&copy; <?php echo date('Y'); ?> WakAroma — Tous droits réservés.</p>
             </div>
         </footer>
-
-        <script>
-            // année automatique
-            (function(){
-                var y = new Date().getFullYear();
-                var el = document.getElementById('year');
-                if(el) el.textContent = y;
-            })();
-        </script>
     </body>
 </html>
