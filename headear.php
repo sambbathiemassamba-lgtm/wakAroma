@@ -27,7 +27,7 @@
     
         <!-- Actions utilisateur -->
         <nav class="header__actions">
-            <a href="#login" class="header__link header__link--login">
+            <a href="login.php" class="header__link header__link--login">
                 <img src="icones/login.png" alt="Connexion">
                 <span>Connexion</span>
             </a>
