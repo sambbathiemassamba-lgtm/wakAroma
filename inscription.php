@@ -1,7 +1,11 @@
 <?php
+// $_SESSION['success']  
+
+use PHPMailer\PHPMailer\PHPMailer;
+
 session_start();
 require_once 'pdo.php';
-
+require_once 'sendEmail.php';
 
 $errors = [];
 $success = null;
@@ -20,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     if (empty($prenom)) $errors[] = "Le champ prénom est vide.";
     if (empty($numero) || !is_numeric($numero)) $errors[] = "Numéro invalide.";
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Email invalide.";
-
+    if ($email !== $_POST['email_conf']) $errors[] = "Les emails ne correspondent pas";
+    
     if (empty($password) || empty($password_conf)) {
         $errors[] = "Veuillez remplir les mots de passe.";
     } else {
@@ -51,11 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     if (empty($errors)) {
 
         $password_hash = password_hash($password, PASSWORD_BCRYPT);
-      
+        $tokend = str_random(6);
         
         $insert = $pdo->prepare("
             INSERT INTO users (nom, prenom, email, numero, password_hash, confirmation_token)
-            VALUES (:nom, :prenom, :email, :numero, :password_hash)
+            VALUES (:nom, :prenom, :email, :numero, :password_hash, :confirmation_token)
         ");
 
         $insert->execute([
@@ -64,8 +69,19 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
             ':email' => $email,
             ':numero' => $numero,
             ':password_hash' => $password_hash,
+            ':confirmation_token' => $tokend 
         ]);
-        
+
+        $mail = new PHPMailer(true);
+        $mailToSend = htmlentities($_POST['email']);
+        $sendmail = EnvoieMail($mail, $mailToSend,  $tokend);
+
+        if($sendmail)
+        {
+            $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
+
+        }
+        header("Location: confirmation.php");
         // $success = "Votre inscription a été effectuée avec succès.";
     }
 }
@@ -76,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
 <div class="login-page">
 
-    <div class="login-page__overlay"></div>
+    
 
     <div class="login-card">
 
@@ -125,13 +141,19 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
             <!-- numero telephone -->
             <div class="form-group">
                 <label>Numéro</label>
-                <input type="text" name="numero"  placeholder="07 60 90 06 21">
+                <input type="text" name="numero"  placeholder="+33 07 60 90 06 21">
             </div>
 
             <!-- email -->
             <div class="form-group">
                 <label>Email</label>
                 <input type="email" name="email"  placeholder="nom@exemple.com">
+            </div>
+
+            <!-- confirmation de l'email -->
+            <div class="form-group">
+                <label>Confiamtion email</label>
+                <input type="email" name="email_conf" placeholder="Confirmer email">
             </div>
 
             <!-- mot de passe -->
@@ -162,3 +184,5 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
 <!-- FOOTER -->
 <?php require_once "footer.php"; ?>
+
+

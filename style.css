@@ -266,3 +266,597 @@ img {
   .footer__col { min-width: 100%; }
 }
 
+
+
+/* 
+======================================================================================================================================
+PAGE INDEX.PHP
+=====================================================================================================================================================
+*/
+
+/* ==========================================================================
+   PRODUITS
+   ========================================================================== */
+
+.produits {
+  width: 100%;
+  max-width: 1400px;
+  margin: 3rem auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ==========================================================================
+   CARTE PRODUIT
+   ========================================================================== */
+
+.produit {
+  background: #fff;
+  border: 1px solid #ebebeb;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.produit:hover {
+  border-color: #c8c8c8;
+  transform: translateY(-5px);
+}
+
+/* ==========================================================================
+   ZONE IMAGE
+   ========================================================================== */
+
+.produit__img-wrap {
+  position: relative;
+  background-color: #f8f5ef;
+  background-image:
+    radial-gradient(circle, #d4b896 1.5px, transparent 1.5px);
+  background-size: 12px 12px;
+  height: 220px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.produit__img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 1.5rem;
+  transition: transform 0.4s ease;
+}
+
+.produit:hover .produit__img-wrap img {
+  transform: scale(1.08);
+}
+
+/* ==========================================================================
+   BADGES (Promo / Nouveau / Bio…)
+   ========================================================================== */
+
+.produit__badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.produit__badge--promo { background: #fef3c7; color: #92400e; }
+.produit__badge--new   { background: #d1fae5; color: #065f46; }
+.produit__badge--bio   { background: #dbeafe; color: #1e40af; }
+
+/* ==========================================================================
+   BOUTON FAVORIS
+   ========================================================================== */
+
+.produit__wishlist {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  color: #ccc;
+  transition: color 0.2s ease, border-color 0.2s ease;
+  user-select: none;
+}
+
+.produit__wishlist:hover,
+.produit__wishlist.actif {
+  color: #e24b4a;
+  border-color: #fca5a5;
+}
+
+/* ==========================================================================
+   CORPS DE LA CARTE
+   ========================================================================== */
+
+.produit__contenu {
+  padding: 0.9rem 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 5px;
+}
+
+.produit__categorie {
+  font-size: 10.5px;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.produit__titre {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.4;
+  font-family: var(--font-serif);
+  margin: 0;
+}
+
+.produit__etoiles {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 13px;
+  color: #d97706;
+}
+
+.produit__avis {
+  color: #bbb;
+  font-size: 11px;
+  margin-left: 3px;
+}
+
+.produit__description {
+  font-size: 0.85rem;
+  color: #777;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+/* ==========================================================================
+   FOOTER CARTE — toujours ancré en bas
+   ========================================================================== */
+
+.produit__footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #f2f2f2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+/* Prix */
+.produit__prix-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.produit__prix {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.produit__prix-ancien {
+  font-size: 0.8rem;
+  color: #ccc;
+  text-decoration: line-through;
+}
+
+.produit__prix-economie {
+  font-size: 11px;
+  color: #059669;
+  font-weight: 600;
+}
+
+/* Stock */
+.produit__stock {
+  font-size: 11.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.produit__stock--ok  { color: #059669; }
+.produit__stock--low { color: #d97706; }
+
+/* ==========================================================================
+   BOUTONS
+   ========================================================================== */
+
+.produit__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.produit__btn {
+  flex: 1;
+  background: #1f4f2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.produit__btn:hover  { background: #163b22; }
+.produit__btn:active { transform: scale(0.96); }
+
+.panier__btn {
+  color: white;
+  background:orange;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease,
+  color 0.2s ease, transform 0.12s ease;
+}
+
+.panier__btn:hover  { background: #c77f2c; border-color: #bbb; }
+.panier__btn:active { transform: scale(0.92); }
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .produits {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 1rem;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .produits {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* 
+===========================================================================================================================================================================================================================
+PAGE LOGIN 
+================================================================================================================================ 
+*/
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background:
+        radial-gradient(ellipse 80% 60% at 70% 10%, rgba(212,165,116,0.22) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 10% 80%, rgba(255,159,28,0.12) 0%, transparent 55%),
+        #f9f4ee;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(212,165,116,0.15) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+}
+
+.login-page__deco {
+    position: absolute;
+    right: -80px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,165,116,0.18) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    border-radius: 2rem;
+    box-shadow:
+        0 4px 6px rgba(0,0,0,0.04),
+        0 24px 60px rgba(31,79,46,0.10),
+        0 0 0 1px rgba(212,165,116,0.15);
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 440px;
+    animation: fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.login-card__brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.login-card__logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 1rem;
+    box-shadow: 0 4px 18px rgba(212,165,116,0.3);
+}
+
+.login-card__title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f4f2e;
+    margin-top: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.login-card__subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #c77f2c;
+    font-weight: 600;
+}
+
+.login-card__divider {
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, #d4a574, #ff9f1c);
+    border-radius: 2px;
+    margin: 0 auto 1.8rem;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    position: relative;  
+}
+
+.form-group label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4a4a4a;
+    letter-spacing: 0.02em;
+    /*  padding-right retiré du label */
+}
+
+.form-group .input-wrap {
+    position: relative;
+}
+
+.form-group .input-wrap svg {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #c8a87a;
+    pointer-events: none;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.9rem 2.8rem 0.9rem 2.8rem; /*  padding-right pour le bouton 👁 */
+    border: 1.5px solid #e8ddd0;
+    border-radius: 0.85rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.975rem;
+    color: #333;
+    background: #fdfaf7;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #d4a574;
+    background: #fff;
+    box-shadow: 0 0 0 3.5px rgba(212,165,116,0.18);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(25%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+    line-height: 1;
+}
+
+.login-form__options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    margin-top: -0.3rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    color: #555;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #d4a574;
+    cursor: pointer;
+}
+
+.login-form__forgot {
+    color: #c77f2c;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.login-form__forgot:hover {
+    color: #a05a10;
+    text-decoration: underline;
+}
+
+.btn-login {
+    margin-top: 0.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #d4a574 0%, #ff9f1c 100%);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 0.85rem;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    box-shadow: 0 6px 22px rgba(212,165,116,0.45);
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(212,165,116,0.55);
+    filter: brightness(1.05);
+}
+
+.btn-login:active { transform: translateY(0); }
+
+.alert {
+    padding: 0.8rem 1rem;
+    border-radius: 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.alert--error {
+    background: #fff0ef;
+    color: #c0392b;
+    border: 1px solid #f5c6c2;
+}
+
+.alert--success {
+    background: #edfaf2;
+    color: #1e7e45;
+    border: 1px solid #b2e8c8;
+}
+
+.login-card__register {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: #777;
+}
+
+.login-card__register a {
+    color: #1f4f2e;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.login-card__register a:hover {
+    color: #c77f2c;
+    text-decoration: underline;
+}
+
+.login-card__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: #888;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.login-card__back:hover { color: #c77f2c; }
+
+@media (max-width: 480px) {
+    .login-card { padding: 2rem 1.5rem; }
+}
+
+
+
+/* 
+===================================================================================================
+PAGE BOUTIQUE
+=====================================================================================================
+*/
+
+
+
+
+
+

@@ -1,7 +1,7 @@
 <?php 
 
 try{
-    $host = "mysql:host=localhost;dbname=waKAroma;charset=utf8";
+    $host = "mysql:host=localhost;dbname=wakaroma;charset=utf8";
     $user = 'samzo';
     $password = 'Touba:55';
 

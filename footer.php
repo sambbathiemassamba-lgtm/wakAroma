@@ -21,7 +21,7 @@
                 <h4>Contact</h4>
                 <ul>
                     <li>Téléphone : <a href="tel:+33760900621">+33760900621</a></li>
-                    <li>Email : <a href="mailto:contact@wakaroma.example">contact@wakaroma.example</a></li>
+                    <li>Email : <a href="mailto:hodanmeg7@gmail.com">hodanmeg7@gmail.com</a></li>
                 </ul>
             </div>
 
@@ -37,7 +37,7 @@
                         <img src="icones/facebook.png" alt="Facebook">
                     </a>
                     <!-- lien du instagram -->
-                    <a href="#instagram" class="social-link" aria-label="Instagram">
+                    <a href="https://www.instagram.com/wakaaroma?igsh=MWIybnl3NXR3aXlrNA==" class="social-link" aria-label="Instagram">
                         <img src="icones/instagram.png" alt="Instagram">
                     </a>
                 </div>
