@@ -1,131 +1,56 @@
 <?php
-// $_SESSION['success']  
+// $_SESSION['success']  session : connect l'utilisateur
 
-use PHPMailer\PHPMailer\PHPMailer;
 
 session_start();
-require_once 'pdo.php';
-require_once 'sendEmail.php';
+require_once 'sendEmail.php'; // PHHMailer
+require_once 'function.php'; // founction 
 
-$errors = [];
-$success = null;
+
 
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
-    $nom = trim($_POST['nom'] ?? '');
-    $prenom = trim($_POST['prenom'] ?? '');
-    $numero = trim($_POST['numero'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $password_conf = $_POST['password_conf'] ?? '';
+    $nom = htmlspecialchars(trim($_POST['nom'] ?? ''));
+    $prenom = htmlspecialchars(trim($_POST['prenom'] ?? ''));
+    $numero = htmlspecialchars($_POST['indicatif']);
+    $numero .= htmlspecialchars(trim($_POST['numero'] ?? ''));
+    $email =  htmlspecialchars(trim($_POST['email'] ?? ''));
+    $email_conf = htmlspecialchars(trim($_POST['email_conf'] ?? ''));
+    $password =   htmlspecialchars($_POST['password'] ?? '');
+    $password_conf = htmlspecialchars($_POST['password_conf'] ?? '');
 
-    // VALIDATION
-    if (empty($nom)) $errors[] = "Le champ nom n'est pas rempli.";
-    if (empty($prenom)) $errors[] = "Le champ prénom est vide.";
-    if (empty($numero) || !is_numeric($numero)) $errors[] = "Numéro invalide.";
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Email invalide.";
-    if ($email !== $_POST['email_conf']) $errors[] = "Les emails ne correspondent pas";
-    
-    if (empty($password) || empty($password_conf)) {
-        $errors[] = "Veuillez remplir les mots de passe.";
-    } else {
-        if ($password !== $password_conf) {
-            $errors[] = "Les mots de passe ne correspondent pas.";
-        }
-        if (strlen($password) < 6) {
-            $errors[] = "Mot de passe minimum 6 caractères.";
-        }
-    }
-
-    $check = $pdo->prepare("
-        SELECT id_user 
-        FROM users 
-        WHERE email = :email OR numero = :numero
-    ");
-
-    $check->execute([
-        ':email' => $email,
-        ':numero' => $numero
-    ]);
-
-    if ($check->fetch()) {
-        $errors[] = "L'email ou le numéro existe déjà.";
-    }
+    // message d'erreur
+    $errors = message_errors($nom, $prenom, $numero, $email, $email_conf,$password,$password_conf);
 
     // INSERT USER
-    if (empty($errors)) {
-
+    if (empty($errors)) 
+    {
+        // mot de passe hache
         $password_hash = password_hash($password, PASSWORD_BCRYPT);
-        $tokend = str_random(6);
+        $tokend = str_random(6); // founction pour recupere le code de validation
         
-        $insert = $pdo->prepare("
-            INSERT INTO users (nom, prenom, email, numero, password_hash, confirmation_token)
-            VALUES (:nom, :prenom, :email, :numero, :password_hash, :confirmation_token)
-        ");
-
-        $insert->execute([
-            ':nom' => $nom,
-            ':prenom' => $prenom,
-            ':email' => $email,
-            ':numero' => $numero,
-            ':password_hash' => $password_hash,
-            ':confirmation_token' => $tokend 
-        ]);
-
-        $mail = new PHPMailer(true);
-        $mailToSend = htmlentities($_POST['email']);
-        $sendmail = EnvoieMail($mail, $mailToSend,  $tokend);
-
-        if($sendmail)
-        {
-            $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
-
-        }
-        header("Location: confirmation.php");
-        // $success = "Votre inscription a été effectuée avec succès.";
+        // on cree l'utilisateur
+        insertion_users($nom, $prenom, $email, $numero, $password_hash, $tokend);
     }
 }
 ?>
 
-<link rel="stylesheet" href="style.css">
-
-
-<div class="login-page">
-
-    
-
-    <div class="login-card">
-
-        <!-- LOGO -->
-        <div class="login-card__brand">
-            <img src="logo/logo.jpeg" class="login-card__logo">
-            <h1 class="login-card__title">WakAroma</h1>
-            <p class="login-card__subtitle">Épices d'Afrique</p>
-        </div>
-
-        <a href="index.php" class="login-card__back">← Retour à la boutique</a>
-
+<?php require_once 'header_login.php' ?>
         <h1 class="login-title">Bienvenue</h1>
-        <p class="login-subtitle">Rejoignez WakAroma et découvrez nos saveurs d’Afrique.</p>
-
-        <br>
+        <p class="login-subtitle">Rejoignez WakAroma et découvrez nos saveurs d’Afrique.</p><br>
 
         <!-- ALERTES -->
         <?php if (!empty($errors)): ?>
             <?php foreach ($errors as $error): ?>
                 <div class="alert alert--error"><?= htmlspecialchars($error) ?></div>
             <?php endforeach; ?>
-        <?php endif; ?>
-
-        <?php if ($success): ?>
-            <div class="alert alert--success"><?= htmlspecialchars($success) ?></div>
-        <?php endif; ?>
-
-        <br>
+        <?php endif; ?><br>
 
         <!-- FORMULAIRE -->
         <form method="POST" class="login-form">
-
+            <!-- champ cache -->
+            <input type="hidden" name="indicatif" value="+33" />
+           
             <!-- nom -->
             <div class="form-group">
                 <label>Nom</label>
@@ -138,10 +63,25 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                 <input type="text" name="prenom"  placeholder="prenom">
             </div>
 
-            <!-- numero telephone -->
+            <!-- numero -->
             <div class="form-group">
-                <label>Numéro</label>
-                <input type="text" name="numero"  placeholder="+33 07 60 90 06 21">
+            <label>Numéro</label>
+            <div class="phone-wrap">
+                <div class="dd-wrap">
+                <div class="dd-trigger" id="trigger">
+                    <span id="flag-display">🇫🇷</span>
+                    <span id="dial-display">+33</span>
+                    <i class="ti ti-chevron-down"></i>
+                </div>
+                <div class="dd-panel" id="panel">
+                    <div class="dd-search-wrap">
+                    <input type="text" id="search" placeholder="Rechercher..." autocomplete="off" />
+                    </div>
+                    <div class="dd-list" id="list"></div>
+                </div>
+                </div>
+                <input class="phone-input" type="tel" name="numero" placeholder="06 12 34 56 78" id="phone" />
+            </div>
             </div>
 
             <!-- email -->
@@ -186,3 +126,4 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 <?php require_once "footer.php"; ?>
 
 
+<script src="script/inscription.js"></script>

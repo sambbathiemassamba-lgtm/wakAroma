@@ -11,6 +11,7 @@ use PHPMailer\PHPMailer\Exception;
 
 
 
+
 function str_random(int $long): string
 {
     $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
@@ -31,11 +32,10 @@ function EnvoieMail(PHPMailer $mail, string $mailToSend, string $tokend)
     // Server settings
     $mail->SMTPDebug = 0;
     $mail->isSMTP();
-
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
     $mail->Username   = 'samzosamb123@gmail.com';
-    $mail->Password   = 'yavvnrrjegysopxh ';
+    $mail->Password   = 'oxwcjqcvmoettpkx';
 
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port       = 465;
@@ -55,17 +55,11 @@ function EnvoieMail(PHPMailer $mail, string $mailToSend, string $tokend)
     $mail->Body = <<<HTML
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Validation de Compte</title>
-
     <style>
-
         body{
             background-color:#000;
             color:#fff;
@@ -111,13 +105,10 @@ function EnvoieMail(PHPMailer $mail, string $mailToSend, string $tokend)
             font-size:14px;
             color:#888;
         }
-
     </style>
 
 </head>
-
 <body>
-
     <div class="container">
 
         <h1>Compte créé avec succès</h1>
@@ -135,7 +126,6 @@ function EnvoieMail(PHPMailer $mail, string $mailToSend, string $tokend)
     </div>
 
 </body>
-
 </html>
 HTML;
 

@@ -46,35 +46,17 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 }
 ?>
 
-<link rel="stylesheet" href="style.css">
-
-<!-- HEADER -->
-        <!-- Branding -->
-        <div class="login-card__brand">
-            <img src="logo/logo.jpeg" alt="Logo WakAroma" class="login-card__logo">
-            <h1 class="login-card__title">WakAroma</h1>
-            <p class="login-card__subtitle">Épices d'Afrique</p>
-        </div>
-
-<div class="login-page">
-
-    <div class="login-page__overlay"></div>
-
-    <div class="login-card">
-
-        <!-- RETOUR -->
-        <a href="index.php" class="login-card__back">
-            ← Retour 
-        </a>
-            
-            <h1 class="login-title">
-                  Bienvenue
-            </h1>
-
-            <p class="login-subtitle">
-                Accédez à votre compte WakAroma.
-            </p><br>
-
+<?php require_once 'header_login.php'?>            
+        <h1 class="login-title"> Bienvenue</h1>
+        <p class="login-subtitle">Accédez à votre compte WakAroma.</p>
+        
+            <!-- message success apres inscripton -->
+        <?php if(!empty($_SESSION['success'])):?>
+            <div class="alert--success">
+                <?= $_SESSION['success']?>
+            </div>
+        <?php endif;?>
+        
         <!-- ALERTES -->
         <?php if ($error): ?>
             <div class="alert alert--error">

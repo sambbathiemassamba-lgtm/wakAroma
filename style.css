@@ -555,6 +555,7 @@ PAGE INDEX.PHP
 }
 
 
+
 /* 
 ===========================================================================================================================================================================================================================
 PAGE LOGIN 
@@ -713,6 +714,173 @@ PAGE LOGIN
     box-shadow: 0 0 0 3.5px rgba(212,165,116,0.18);
 }
 
+
+/* phone */
+.phone-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 1.5px solid #e8ddd0;
+  border-radius: 0.85rem;
+  background: #fdfaf7;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  overflow: visible;
+}
+
+.phone-wrap:focus-within {
+  border-color: #d4a574;
+  background: #fff;
+  box-shadow: 0 0 0 3.5px rgba(212, 165, 116, 0.18);
+}
+
+.phone-input {
+  flex: 1;
+  padding: 0.9rem 1rem !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.975rem;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: unset !important;
+}
+
+.phone-input:focus {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.dd-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dd-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  min-height: 48px;
+  height: 100%;
+  border: none;
+  border-right: 1.5px solid #e8ddd0;
+  border-radius: 0.85rem 0 0 0.85rem;
+  background: transparent;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.dd-trigger:hover {
+  background: rgba(212, 165, 116, 0.08);
+}
+
+.dd-trigger i {
+  font-size: 14px;
+  color: #c8a87a;
+  transition: transform 0.2s;
+}
+
+.dd-trigger.open i {
+  transform: rotate(180deg);
+}
+
+.dd-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 260px;
+  border: 1.5px solid #e8ddd0;
+  border-radius: 0.85rem;
+  background: #fdfaf7;
+  overflow: hidden;
+  z-index: 999;
+}
+
+.dd-panel.open {
+  display: block;
+}
+
+.dd-search-wrap {
+  padding: 8px;
+  border-bottom: 1px solid #e8ddd0;
+}
+
+.dd-search-wrap input {
+  width: calc(100% - 16px) !important;
+  padding: 0 10px !important;
+  height: 34px !important;
+  min-height: unset !important;
+  border: 1.5px solid #e8ddd0 !important;
+  border-radius: 0.6rem !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-family: 'DM Sans', sans-serif;
+  color: #333 !important;
+  outline: none;
+  box-sizing: border-box !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.dd-search-wrap input:focus {
+  border-color: #d4a574 !important;
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.18) !important;
+  background: #fff !important;
+}
+
+.dd-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.dd-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.dd-item:hover {
+  background: rgba(212, 165, 116, 0.08);
+}
+
+.dd-item.selected {
+  color: #d4a574;
+  font-weight: 600;
+}
+
+.dd-dial {
+  margin-left: auto;
+  color: #c8a87a;
+  font-size: 12px;
+}
+
+.dd-empty {
+  padding: 12px;
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+
+
+
+
 .toggle-password {
     position: absolute;
     right: 0.75rem;
@@ -851,12 +1019,49 @@ PAGE LOGIN
 
 /* 
 ===================================================================================================
-PAGE BOUTIQUE
+PAGE CONFIRMATION
 =====================================================================================================
 */
+.code-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
 
+.code-input {
+  width: 30px;
+  height: 50px;
+  border-radius: 999px;
+  border: 1.5px solid rgb(200, 200, 200);
+  background: rgb(245, 245, 245);
+  text-align: center;
+  font-size: 18px;
+  font-weight: 500;
+  color: rgb(26, 26, 26);
+  caret-color: transparent;
+  outline: none;
+  padding: 0;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
 
+.code-input:focus {
+  border-color: rgb(127, 119, 221);
+  background: rgb(255, 255, 255);
+  box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.13);
+  transform: scale(1.08);
+}
 
+.code-input.filled {
+  border-color: rgb(83, 74, 183);
+  background: rgb(255, 255, 255);
+  color: rgb(83, 74, 183);
+}
 
-
+.code-inputs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}

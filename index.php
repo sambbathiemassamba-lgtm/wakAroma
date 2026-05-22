@@ -1,26 +1,10 @@
 <?php
+// inclusion du fichier function
+require_once 'function.php';
 
-require_once "pdo.php";
 
 //recuperation produits + images
-try{
-    $req = "
-    SELECT 
-        produits.nom,
-        produits.description,
-        produits.prix,
-        images.url_image
-    FROM produits
-    INNER JOIN images
-        ON produits.id_produit = images.id_produit
-";
-}catch(Exception $e)
-{
-    die($e->getMessage());
-}
-
-
-$datas = $pdo->query($req)->fetchAll(PDO::FETCH_OBJ);
+$datas = recuperation_produits_images();
 
 ?>
 
