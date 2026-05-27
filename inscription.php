@@ -1,5 +1,6 @@
 <?php
-// $_SESSION['success']  session : connect l'utilisateur
+// $_SESSION['eamil']  session pour recuperer l'email besion dans la page rendNewCode
+
 
 
 session_start();
@@ -31,7 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         
         // on cree l'utilisateur
         insertion_users($nom, $prenom, $email, $numero, $password_hash, $tokend);
+
+        // session pour recuperer l'email besion dans la page rendNewCode
+        $_SESSION['email'] = $email;
     }
+
+
 }
 ?>
 
@@ -86,13 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
             <!-- email -->
             <div class="form-group">
-                <label>Email</label>
+                <label>E-mail</label>
                 <input type="email" name="email"  placeholder="nom@exemple.com">
             </div>
 
             <!-- confirmation de l'email -->
             <div class="form-group">
-                <label>Confiamtion email</label>
+                <label>Confiamtion E-mail</label>
                 <input type="email" name="email_conf" placeholder="Confirmer email">
             </div>
 

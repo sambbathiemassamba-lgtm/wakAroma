@@ -206,3 +206,18 @@ function confirmation_code(?string $code)
 
     }
 }
+
+
+/*
+ * ====================================================
+ * PAGE CONFIRMATION
+ * ========================================================
+ */
+
+// compte a rebour
+function getRemainingTime(int $expire_time)
+{
+    $elapsed = time() - $_SESSION['code_time'];
+
+    return max(0, $expire_time - $elapsed);
+}

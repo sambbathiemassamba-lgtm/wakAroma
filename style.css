@@ -929,6 +929,8 @@ PAGE LOGIN
     color: #a05a10;
     text-decoration: underline;
 }
+            
+
 
 .btn-login {
     margin-top: 0.5rem;
@@ -1065,3 +1067,4 @@ PAGE CONFIRMATION
   align-items: center;
   gap: 10px;
 }
+
