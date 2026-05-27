@@ -2,7 +2,6 @@
 
 //  $_SESSION['errors'] : session des erreurs qu'on affichera dans la page confirmation
 //  $_SESSION['success'] : session des success qu'on affichera dans la page confirmation
-
 session_start();
 
 require_once 'pdo.php';
@@ -49,10 +48,15 @@ if ($send === true) {
 
 } else {
 
-    $_SESSION['errors'] = "Erreur lors de l'envoi du mail.";
+    $_SESSION['errors'] = "Erreur lors de l'envoi du mail. E-mail est invalide.";
+   
+
 
     // suppression de l'utilisateur si l'email est incorrect
-    $pdo->prepare("DELETE users WHERE id = : idEmail")->execute([':ideEmail' => $_SESSION['email']]);
+    $delete = $pdo->prepare("DELETE FROM users WHERE email = :email");
+    $delete->execute([
+        ':email' => $_SESSION['email']
+    ]);
 }
 
 

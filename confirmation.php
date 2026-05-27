@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
             <div class="login-card__brand">
 
-                <img src="logo/logo.jpeg" class="login-card__logo">
+                <a href="index.php"><img src="logo/logo.jpeg" class="login-card__logo"></a>
 
                 <h1 class="login-card__title"> WakAroma </h1>
 
@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
             
             <!-- message erreur -->
-                <div class="alert--error">
+                <div class="alert alert--error">
                     <?php if (!empty($errors)): ?>
                         <ul>
                             <?php foreach($errors as $error):?>
@@ -109,10 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
 
             <!-- temps -->
-            <?php if ($remaining_time > 0): ?>
-                <div class="alert--success"> Code valide pendant : <span id="timer"></span> </div>
+            <?php if ($remaining_time > 0 ): ?>
+                <div class="alert alert--success"> Code valide pendant : <span id="timer"></span> </div>
             <?php else: ?>
-                <div class="alert--error"> Code expiré </div>
+                <div class="alert alert--error"> Code expiré </div>
             <?php endif; ?>
 
             <h3 class="login-title"> Confirmation du compte </h3>
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
                 <!-- nouveau code -->
                 <div id="resend-block">
-                    <?php if ($remaining_time <= 0): ?>
+                    <?php if ($remaining_time <= 0 && !empty($_SESSION['code_time'])): ?>
                         <a href="resendCode.php"> Envoyer un nouveau code </a>
                     <?php endif; ?>
                 </div>

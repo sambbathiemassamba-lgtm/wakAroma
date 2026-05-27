@@ -144,20 +144,25 @@ function insertion_users(
     $mail = new PHPMailer(true); // creation d'une instance
     $sendmail = EnvoieMail($mail, $email,  $tokend);
     
-    if($sendmail)
+    if($sendmail === true)
     {
         $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
-        
+
         // redirection vers la page de confirmation.ph[p]
         header("Location: confirmation.php");
 
+    }else{
+        $_SESSION['error'] = "E-amil est incorrect.";
+        $pdo->prepare("DELETE FROM users WHERE email = :email")->execute([':email' => $email]);
+        header("Location: inscription.php");
+        exit();
     }
 }
 
 
 /**
  * ======================================================================================================
- * PAGE INSCRIPTION.PHP
+ * PAGE CONFIRMATION.PHP
  * ========================================================================================================
  */
 
@@ -208,11 +213,6 @@ function confirmation_code(?string $code)
 }
 
 
-/*
- * ====================================================
- * PAGE CONFIRMATION
- * ========================================================
- */
 
 // compte a rebour
 function getRemainingTime(int $expire_time)
@@ -220,4 +220,89 @@ function getRemainingTime(int $expire_time)
     $elapsed = time() - $_SESSION['code_time'];
 
     return max(0, $expire_time - $elapsed);
+}
+
+
+/**
+ * =========================================================
+ * PAGE LOGIN 
+ * ========================================================
+ */
+
+function souvenirMoi()
+{
+    // Vérification cookie + session
+    if(isset($_COOKIE['souvenir']) && !isset($_SESSION['auth']))
+    {
+        global $pdo;
+
+        // Découpage cookie
+        $parts = explode('===', $_COOKIE['souvenir']);
+
+        // Vérification structure cookie
+        if(count($parts) === 3)
+        {
+            $userId = $parts[0];
+            $token = $parts[1];
+            $hash = $parts[2];
+
+            // Recherche utilisateur
+            $req = $pdo->prepare("
+                SELECT *
+                FROM users
+                WHERE souvenir_token = :id
+            ");
+
+            $req->execute([
+                ':id' => $token
+            ]);
+
+            $user = $req->fetch(PDO::FETCH_OBJ);
+
+            // Vérification utilisateur
+            if($user)
+            {
+
+
+                // Vérification token
+                if($token === $user->souvenir_token)
+                {
+                    // Recréation hash
+                    $expectedHash = hash( 'sha256', $user->id . $token);
+
+                    // Vérification hash sécurisé
+                    if(hash_equals($expectedHash, $hash))
+                    {
+                        // Connexion session
+                        $_SESSION['auth'] = [
+                            'id_user' => $user->id,
+                            'prenom'  => $user->prenom
+                        ];
+
+                        // Renouvellement cookie
+                        setcookie( 'souvenir', $_COOKIE['souvenir'], time() + 60 * 60 * 24 * 7, '/', '', false, true
+                        );
+
+                    }else{
+
+                        // Suppression cookie invalide
+                        setcookie( 'souvenir', '', time() - 3600, '/'
+                        );
+                    }
+
+                }else{
+
+                    // Suppression cookie invalide
+                    setcookie( 'souvenir', '', time() - 3600, '/'
+                    );
+                }
+
+            }else{
+
+                // Suppression cookie invalide
+                setcookie( 'souvenir', '', time() - 3600, '/'
+                );
+            }
+        }
+    }
 }

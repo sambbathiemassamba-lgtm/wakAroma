@@ -13,6 +13,8 @@
 -- );
 --ALTER TABLE users ADD numero VARCHAR(20) NOT NULL;
 --ALTER TABLE users ADD confirmation_token VARCHAR(225) NOT NULL;
+--ALTER TABLE users ADD souvenir_token VARCHAR(225) NOT NULL;
+
 -- -- =========================
 -- -- TABLE ADRESSES
 -- -- =========================

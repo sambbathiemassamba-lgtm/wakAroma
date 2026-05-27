@@ -1,5 +1,6 @@
 <?php
 // $_SESSION['eamil']  session pour recuperer l'email besion dans la page rendNewCode
+// $_SESSION['auth'] = $nom; // authentification de l'utilisateur
 
 
 
@@ -35,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
         // session pour recuperer l'email besion dans la page rendNewCode
         $_SESSION['email'] = $email;
+        
     }
 
 
@@ -51,6 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                 <div class="alert alert--error"><?= htmlspecialchars($error) ?></div>
             <?php endforeach; ?>
         <?php endif; ?><br>
+
+        <?php if(!empty($_SESSION['error'])):?>
+            <div class="alert alert--error"><?= $_SESSION['error'] ?></div>
+        <?php endif;?>
 
         <!-- FORMULAIRE -->
         <form method="POST" class="login-form">
@@ -81,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                 </div>
                 <div class="dd-panel" id="panel">
                     <div class="dd-search-wrap">
-                    <input type="text" id="search" placeholder="Rechercher..." autocomplete="off" />
+                    <input type="text" id="search" name="numero" placeholder="Rechercher..." autocomplete="off" />
                     </div>
                     <div class="dd-list" id="list"></div>
                 </div>
