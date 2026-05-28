@@ -32,11 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         $tokend = str_random(6); // founction pour recupere le code de validation
         
         // on cree l'utilisateur
-        insertion_users($nom, $prenom, $email, $numero, $password_hash, $tokend);
+        $inserted = insertion_users($nom, $prenom, $email, $numero, $password_hash, $tokend);
 
-        // session pour recuperer l'email besion dans la page rendNewCode
-        $_SESSION['email'] = $email;
-        
+        if ($inserted) {
+            $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
+            $_SESSION['email'] = $email;
+            header("Location: confirmation.php");
+            exit();
+        }
+
+        $_SESSION['error'] = "E-mail est incorrect.";
     }
 
 
@@ -56,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
         <?php if(!empty($_SESSION['error'])):?>
             <div class="alert alert--error"><?= $_SESSION['error'] ?></div>
+            <?php unset($_SESSION['error']); ?>
         <?php endif;?>
 
         <!-- FORMULAIRE -->

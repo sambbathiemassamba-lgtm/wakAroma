@@ -38,7 +38,7 @@
                     <span>Connexion</span>
                 </a>
             <?php endif; ?>
-            <a href="#pannier" class="header__link header__link--cart">
+            <a href="panier.php" class="header__link header__link--cart">
                 <img src="icones/panier.png" alt="Panier">
                 <span>Panier</span>
             </a>

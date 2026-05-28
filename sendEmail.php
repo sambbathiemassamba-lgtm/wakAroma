@@ -25,11 +25,10 @@ function str_random(int $long): string
     );
 }
 
-function EnvoieMail(PHPMailer $mail, string $mailToSend, string $tokend)
+function EnvoieMail(PHPMailer $mail, string $mailToSend, string $tokend): bool
 {
-    
-
-    // Server settings
+    try {
+        // Server settings
     $mail->SMTPDebug = 0;
     $mail->isSMTP();
     $mail->Host       = 'smtp.gmail.com';
@@ -131,7 +130,10 @@ HTML;
 
     $mail->AltBody = "Votre code de validation : {$tokend}";
 
-    $mail->send();
+        $mail->send();
 
-    return $tokend;
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
 }

@@ -5,7 +5,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');         // Modifier selon votre config phpMyAdmin
 define('DB_PASS', '');             // Modifier selon votre config phpMyAdmin
-define('DB_NAME', 'epicerie_epices'); // Modifier si nécessaire
+define('DB_NAME', 'wakaroma'); // Modifier si nécessaire
 
 // ==========================================
 // SEUIL D'ALERTE PAR DÉFAUT (modifiable ici ou via l'interface)
@@ -25,6 +25,8 @@ function getDB() {
                 DB_PASS,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
             );
+            // Migration automatique : ajouter seuil_alerte si elle n'existe pas
+            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS seuil_alerte INT NOT NULL DEFAULT " . SEUIL_ALERTE_DEFAULT);
         } catch (PDOException $e) {
             die(json_encode(['error' => 'Connexion impossible : ' . $e->getMessage()]));
         }
@@ -43,14 +45,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     switch ($action) {
 
         case 'get_stocks':
-            $stmt = $pdo->query("SELECT * FROM produits ORDER BY categorie, nom");
+            $stmt = $pdo->query("
+                SELECT
+                    p.id_produit        AS id,
+                    p.nom,
+                    c.nom               AS categorie,
+                    p.stock,
+                    COALESCE(p.seuil_alerte, 10) AS seuil_alerte,
+                    COALESCE(
+                        (SELECT car.valeur FROM caracteristiques car
+                         WHERE car.id_produit = p.id_produit AND car.nom = 'Poids' LIMIT 1),
+                        'g'
+                    ) AS unite,
+                    p.prix
+                FROM produits p
+                INNER JOIN categories c ON c.id_categorie = p.id_categorie
+                ORDER BY c.nom, p.nom
+            ");
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             break;
 
         case 'update_stock':
             $id    = (int)$_POST['id'];
             $stock = (int)$_POST['stock'];
-            $stmt  = $pdo->prepare("UPDATE produits SET stock = ? WHERE id = ?");
+            $stmt  = $pdo->prepare("UPDATE produits SET stock = ? WHERE id_produit = ?");
             $stmt->execute([$stock, $id]);
             echo json_encode(['success' => true]);
             break;
@@ -58,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         case 'update_seuil':
             $id    = (int)$_POST['id'];
             $seuil = (int)$_POST['seuil'];
-            $stmt  = $pdo->prepare("UPDATE produits SET seuil_alerte = ? WHERE id = ?");
+            $stmt  = $pdo->prepare("UPDATE produits SET seuil_alerte = ? WHERE id_produit = ?");
             $stmt->execute([$seuil, $id]);
             echo json_encode(['success' => true]);
             break;
@@ -82,22 +100,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 echo json_encode(['success' => false, 'error' => 'Le nom est obligatoire']);
                 break;
             }
+
+            // Récupérer id_categorie depuis le nom, ou créer la catégorie si elle n'existe pas
+            $stmtCat = $pdo->prepare("SELECT id_categorie FROM categories WHERE nom = ?");
+            $stmtCat->execute([$categorie]);
+            $cat = $stmtCat->fetch(PDO::FETCH_OBJ);
+            if ($cat) {
+                $id_categorie = $cat->id_categorie;
+            } else {
+                $stmtNewCat = $pdo->prepare("INSERT INTO categories (nom) VALUES (?)");
+                $stmtNewCat->execute([$categorie]);
+                $id_categorie = (int)$pdo->lastInsertId();
+            }
+
             $stmt = $pdo->prepare(
-                "INSERT INTO produits (nom, categorie, stock, seuil_alerte, unite, prix) VALUES (?, ?, ?, ?, ?, ?)"
+                "INSERT INTO produits (id_categorie, nom, stock, seuil_alerte, prix) VALUES (?, ?, ?, ?, ?)"
             );
-            $stmt->execute([$nom, $categorie, $stock, $seuil, $unite, $prix]);
-            echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+            $stmt->execute([$id_categorie, $nom, $stock, $seuil, $prix]);
+            $newId = (int)$pdo->lastInsertId();
+
+            // Insérer l'unité dans caracteristiques (Poids)
+            if (!empty($unite)) {
+                $stmtCar = $pdo->prepare("INSERT INTO caracteristiques (id_produit, nom, valeur) VALUES (?, 'Poids', ?)");
+                $stmtCar->execute([$newId, $unite]);
+            }
+
+            echo json_encode(['success' => true, 'id' => $newId]);
             break;
 
         case 'delete_produit':
             $id   = (int)$_POST['id'];
-            $stmt = $pdo->prepare("DELETE FROM produits WHERE id = ?");
+            $stmt = $pdo->prepare("DELETE FROM produits WHERE id_produit = ?");
             $stmt->execute([$id]);
             echo json_encode(['success' => true]);
             break;
 
         case 'get_categories':
-            $stmt = $pdo->query("SELECT DISTINCT categorie FROM produits ORDER BY categorie");
+            $stmt = $pdo->query("SELECT nom FROM categories ORDER BY nom");
             $cats = $stmt->fetchAll(PDO::FETCH_COLUMN);
             echo json_encode(['success' => true, 'data' => $cats]);
             break;

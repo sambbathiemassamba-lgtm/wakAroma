@@ -18,22 +18,25 @@ use PHPMailer\PHPMailer\PHPMailer;
 function recuperation_produits_images()
 {
     global $pdo;
-    try{
+    try {
         $req = "
         SELECT 
+            produits.id_produit,
             produits.nom,
             produits.description,
             produits.prix,
+            produits.stock,
             images.url_image
         FROM produits
-        INNER JOIN images
-            ON produits.id_produit = images.id_produit";
-    }catch(Exception $e)
-    {
+        LEFT JOIN images
+            ON produits.id_produit = images.id_produit
+        ORDER BY produits.id_produit ASC";
+
+        return $pdo->query($req)->fetchAll(PDO::FETCH_OBJ);
+
+    } catch (Exception $e) {
         die($e->getMessage());
     }
-
-    return $pdo->query($req)->fetchAll(PDO::FETCH_OBJ);
 }
 
 
@@ -124,34 +127,37 @@ function insertion_users(
     string $numero,
     string $password_hash,
     string $tokend
-)
+): bool
 {
     global $pdo;
-    $insert = $pdo->prepare("
-        INSERT INTO users (nom, prenom, email, numero, password_hash, confirmation_token)
-        VALUES (:nom, :prenom, :email, :numero, :password_hash, :confirmation_token)
-    ");
-    $insert->execute([
-        ':nom' => $nom,
-        ':prenom' => $prenom,
-        ':email' => $email,
-        ':numero' => $numero,
-        ':password_hash' => $password_hash,
-        ':confirmation_token' => $tokend 
-    ]);
 
-    // envoie de code de verification 
-    $mail = new PHPMailer(true);
     try {
-        EnvoieMail($mail, $email, $tokend);
-        $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
-        header("Location: confirmation.php");
-        exit();
-    } catch (Exception $e) {
-        $_SESSION['error'] = "E-mail incorrect ou envoi impossible.";
+        $insert = $pdo->prepare("
+            INSERT INTO users (nom, prenom, email, numero, password_hash, confirmation_token)
+            VALUES (:nom, :prenom, :email, :numero, :password_hash, :confirmation_token)
+        ");
+
+        $insert->execute([
+            ':nom' => $nom,
+            ':prenom' => $prenom,
+            ':email' => $email,
+            ':numero' => $numero,
+            ':password_hash' => $password_hash,
+            ':confirmation_token' => $tokend
+        ]);
+
+        $mail = new PHPMailer(true);
+        $sendmail = EnvoieMail($mail, $email, $tokend);
+
+        if ($sendmail === true) {
+            return true;
+        }
+
         $pdo->prepare("DELETE FROM users WHERE email = :email")->execute([':email' => $email]);
-        header("Location: inscription.php");
-        exit();
+        return false;
+    } catch (Exception $e) {
+        $pdo->prepare("DELETE FROM users WHERE email = :email")->execute([':email' => $email]);
+        return false;
     }
 }
 
