@@ -60,7 +60,7 @@
 --         ON DELETE RESTRICT
 --         ON UPDATE CASCADE
 -- );
-
+-- ALTER TABLE produits ADD COLUMN seuil_alerte INT NOT NULL DEFAULT 10;
 -- -- =========================
 -- -- TABLE CARACTERISTIQUES
 -- -- =========================
