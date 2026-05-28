@@ -141,18 +141,14 @@ function insertion_users(
     ]);
 
     // envoie de code de verification 
-    $mail = new PHPMailer(true); // creation d'une instance
-    $sendmail = EnvoieMail($mail, $email,  $tokend);
-    
-    if($sendmail === true)
-    {
+    $mail = new PHPMailer(true);
+    try {
+        EnvoieMail($mail, $email, $tokend);
         $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
-
-        // redirection vers la page de confirmation.ph[p]
         header("Location: confirmation.php");
-
-    }else{
-        $_SESSION['error'] = "E-amil est incorrect.";
+        exit();
+    } catch (Exception $e) {
+        $_SESSION['error'] = "E-mail incorrect ou envoi impossible.";
         $pdo->prepare("DELETE FROM users WHERE email = :email")->execute([':email' => $email]);
         header("Location: inscription.php");
         exit();
