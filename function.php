@@ -124,38 +124,37 @@ function insertion_users(
     string $numero,
     string $password_hash,
     string $tokend
-)
+): bool
 {
     global $pdo;
-    $insert = $pdo->prepare("
-        INSERT INTO users (nom, prenom, email, numero, password_hash, confirmation_token)
-        VALUES (:nom, :prenom, :email, :numero, :password_hash, :confirmation_token)
-    ");
-    $insert->execute([
-        ':nom' => $nom,
-        ':prenom' => $prenom,
-        ':email' => $email,
-        ':numero' => $numero,
-        ':password_hash' => $password_hash,
-        ':confirmation_token' => $tokend 
-    ]);
 
-    // envoie de code de verification 
-    $mail = new PHPMailer(true); // creation d'une instance
-    $sendmail = EnvoieMail($mail, $email,  $tokend);
-    
-    if($sendmail === true)
-    {
-        $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
+    try {
+        $insert = $pdo->prepare("
+            INSERT INTO users (nom, prenom, email, numero, password_hash, confirmation_token)
+            VALUES (:nom, :prenom, :email, :numero, :password_hash, :confirmation_token)
+        ");
 
-        // redirection vers la page de confirmation.ph[p]
-        header("Location: confirmation.php");
+        $insert->execute([
+            ':nom' => $nom,
+            ':prenom' => $prenom,
+            ':email' => $email,
+            ':numero' => $numero,
+            ':password_hash' => $password_hash,
+            ':confirmation_token' => $tokend
+        ]);
 
-    }else{
-        $_SESSION['error'] = "E-amil est incorrect.";
+        $mail = new PHPMailer(true);
+        $sendmail = EnvoieMail($mail, $email, $tokend);
+
+        if ($sendmail === true) {
+            return true;
+        }
+
         $pdo->prepare("DELETE FROM users WHERE email = :email")->execute([':email' => $email]);
-        header("Location: inscription.php");
-        exit();
+        return false;
+    } catch (Exception $e) {
+        $pdo->prepare("DELETE FROM users WHERE email = :email")->execute([':email' => $email]);
+        return false;
     }
 }
 
