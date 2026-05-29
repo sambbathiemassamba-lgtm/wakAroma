@@ -6,17 +6,36 @@ require_once 'function.php';
 // ──────────────────────────────────────────────────────────────
 // ACTIONS AJAX (appelées par fetch() en JS)
 // ──────────────────────────────────────────────────────────────
+
+// Helper : compte le total d'articles dans le panier (somme des quantités)
+function compterArticlesPanier($pdo, $id_user) {
+    $stmt = $pdo->prepare("
+        SELECT COALESCE(SUM(lp.quantite), 0) AS nb
+        FROM paniers pan
+        INNER JOIN lignes_panier lp ON lp.id_panier = pan.id_panier
+        WHERE pan.id_user = :id
+    ");
+    $stmt->execute([':id' => $id_user]);
+    return (int) $stmt->fetchColumn();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
 
     // L'utilisateur doit être connecté
     if (empty($_SESSION['auth'])) {
-        echo json_encode(['success' => false, 'message' => 'Non connecté']);
+        echo json_encode(['success' => false, 'message' => 'Non connecté', 'nb_articles' => 0]);
         exit();
     }
 
     $id_user = (int) $_SESSION['auth']['id_user'];
     $action  = $_POST['action'];
+
+    // ── Compter les articles (appelé au chargement de page) ──
+    if ($action === 'get_count') {
+        echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
+        exit();
+    }
 
     // ── Récupérer ou créer le panier de l'utilisateur ──
     $panier = $pdo->prepare("SELECT id_panier FROM paniers WHERE id_user = :id");
@@ -62,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 ->execute([':p' => $id_panier, ':prod' => $id_produit, ':prix' => $produit->prix]);
         }
 
-        echo json_encode(['success' => true, 'message' => 'Produit ajouté au panier']);
+        echo json_encode(['success' => true, 'message' => 'Produit ajouté au panier', 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
         exit();
     }
 
@@ -93,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 ->execute([':q' => $quantite, ':id' => $id_ligne, ':p' => $id_panier]);
         }
 
-        echo json_encode(['success' => true]);
+        echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
         exit();
     }
 
@@ -102,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $id_ligne = (int) $_POST['id_ligne'];
         $pdo->prepare("DELETE FROM lignes_panier WHERE id_ligne_panier = :id AND id_panier = :p")
             ->execute([':id' => $id_ligne, ':p' => $id_panier]);
-        echo json_encode(['success' => true]);
+        echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
         exit();
     }
 
@@ -110,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($action === 'vider') {
         $pdo->prepare("DELETE FROM lignes_panier WHERE id_panier = :p")
             ->execute([':p' => $id_panier]);
-        echo json_encode(['success' => true]);
+        echo json_encode(['success' => true, 'nb_articles' => 0]);
         exit();
     }
 
@@ -285,7 +304,6 @@ foreach ($lignes as $l) {
             </div>
 
             <a href="paiement.php" class="btn-paiement">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                 Procéder au paiement
             </a>
 
@@ -306,6 +324,35 @@ foreach ($lignes as $l) {
 <?php require_once 'footer.php'; ?>
 
 <script>
+// ── Badge panier (sync avec l'icône dans le header) ───────────
+function wrapCartIcon() {
+  const cartLink = document.querySelector('a[href*="panier"]');
+  if (!cartLink || cartLink.querySelector('#cart-badge-count')) return;
+  cartLink.style.position = 'relative';
+  cartLink.style.display  = 'inline-flex';
+  cartLink.style.alignItems = 'center';
+  const badge = document.createElement('span');
+  badge.id = 'cart-badge-count';
+  badge.textContent = '0';
+  badge.style.cssText = 'position:absolute;top:-8px;right:-8px;min-width:18px;height:18px;padding:0 4px;background:#c77f2c;color:#fff;font-size:.68rem;font-weight:700;border-radius:999px;display:flex;align-items:center;justify-content:center;line-height:1;border:2px solid #fff;pointer-events:none;z-index:10;transform:scale(0);transition:transform .2s cubic-bezier(.34,1.56,.64,1);';
+  cartLink.appendChild(badge);
+}
+function updateCartBadge(nb) {
+  const badge = document.getElementById('cart-badge-count');
+  if (!badge) return;
+  const n = parseInt(nb) || 0;
+  badge.textContent = n > 99 ? '99+' : n;
+  badge.style.transform = n > 0 ? 'scale(1)' : 'scale(0)';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  wrapCartIcon();
+  // Initialiser le badge avec le nombre de lignes déjà dans le panier
+  const nbLignes = <?= count($lignes) ?>;
+  // Calculer la vraie somme des quantités
+  const totalQte = <?= array_sum(array_column((array)$lignes, 'quantite')) ?? 0 ?>;
+  updateCartBadge(totalQte);
+});
+
 // ──────────────────────────────────────────────────────────────
 // UTILITAIRES
 // ──────────────────────────────────────────────────────────────
@@ -355,6 +402,7 @@ async function changerQuantite(idLigne, nouvelleQte) {
             toast(json.message || 'Erreur', 'error');
             return;
         }
+        if (json.nb_articles !== undefined) updateCartBadge(json.nb_articles);
 
         if (nouvelleQte <= 0) {
             // Supprimer la ligne du DOM
@@ -393,8 +441,7 @@ async function supprimerLigne(idLigne) {
     try {
         const json = await postAction({ action: 'supprimer', id_ligne: idLigne });
         if (!json.success) { toast('Erreur', 'error'); return; }
-
-        const el = document.getElementById('ligne-' + idLigne);
+        if (json.nb_articles !== undefined) updateCartBadge(json.nb_articles);
         if (el) {
             el.style.opacity   = '0';
             el.style.transform = 'translateX(-30px)';
@@ -418,6 +465,7 @@ async function viderPanier() {
     try {
         const json = await postAction({ action: 'vider' });
         if (!json.success) { toast('Erreur', 'error'); return; }
+        if (json.nb_articles !== undefined) updateCartBadge(json.nb_articles);
         document.querySelectorAll('.panier-ligne').forEach(el => el.remove());
         verifierPanierVide();
         recalculerTotaux();

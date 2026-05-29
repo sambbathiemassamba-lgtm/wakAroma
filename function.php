@@ -168,52 +168,62 @@ function insertion_users(
  * ========================================================================================================
  */
 
-function confirmation_code(?string $code)
+function confirmation_code($code)
 {
     global $pdo;
 
-    // Récupérer l'utilisateur avec le code
-    $req = "SELECT id_user, prenom 
-            FROM users 
-            WHERE confirmation_token = :code 
-            LIMIT 1";
+    // Recherche utilisateur avec le code
+    $req = $pdo->prepare("
+        SELECT id_user, confirmation_token
+        FROM users
+        WHERE confirmation_token = :code
+        LIMIT 1
+    ");
 
-    $stmt = $pdo->prepare($req);
-
-    $stmt->execute([
+    $req->execute([
         ':code' => $code
     ]);
 
-    $data = $stmt->fetch(PDO::FETCH_OBJ);
+    $user = $req->fetch(PDO::FETCH_OBJ);
 
-    if ($data) {
-
-        // Créer session utilisateur
-        $_SESSION['auth'] = [
-            'id_user' => $data->id_user,
-            'prenom'  => $data->prenom
-        ];
-
-        // Supprimer le token
-        $update = "UPDATE users 
-                   SET confirmation_token = NULL 
-                   WHERE id_user = :id";
-
-        $stmt = $pdo->prepare($update);
-
-        $stmt->execute([
-            ':id' => $data->id_user
-        ]);
-
-        return true;
-
-    } else {
-
-        return "Le code de confirmation est incorrect.";
-
+    // Si code invalide
+    if(!$user)
+    {
+        return "Le code de confirmation est invalide.";
     }
-}
 
+    // Mise à jour du compte
+    $update = $pdo->prepare("
+        UPDATE users
+        SET confirmation_token = NULL
+        WHERE id_user = :id_user
+    ");
+
+    $update->execute([
+        ':id_user' => $user->id_user
+    ]);
+
+    // Vérification réelle
+    $check = $pdo->prepare("
+        SELECT confirmation_token
+        FROM users
+        WHERE id_user = :id_user
+    ");
+
+    $check->execute([
+        ':id_user' => $user->id_user
+    ]);
+
+    $result = $check->fetch(PDO::FETCH_OBJ);
+
+    // Vérifie si ça a bien été mis à NULL
+    if($result->confirmation_token === NULL)
+    {
+        return true;
+    }
+
+    return "Erreur lors de la confirmation du compte.";
+}
 
 
 // compte a rebour

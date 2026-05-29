@@ -10,10 +10,12 @@
     <header class="header">
         <!-- Logo et titre -->
         <div class="header__brgitand">
-            <a href="index.php"><img src="logo/logo.jpeg" alt="Logo WakAroma" class="header__logo"></a>
+            
             <div class="header__title">
-                <h1>WakAroma</h1>
-                <p class="header__subtitle">Épices d'Afrique</p>
+                <a href="index.php">
+                    <h1>WakAroma</h1>
+                    <p class="header__subtitle">Épices d'Afrique</p>
+                </a>
             </div>
         </div>
 
@@ -39,7 +41,7 @@
                 </a>
             <?php endif; ?>
             <a href="panier.php" class="header__link header__link--cart">
-                <img src="icones/panier.png" alt="Panier">
+                <img src="icones/calebass.png" alt="Panier">
                 <span>Panier</span>
             </a>
         </nav>

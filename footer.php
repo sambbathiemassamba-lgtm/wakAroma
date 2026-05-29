@@ -20,7 +20,7 @@
             <div class="footer__col footer__contact">
                 <h4>Contact</h4>
                 <ul>
-                    <li>Téléphone : <a href="tel:+33760900621">+33760900621</a></li>
+                    <li>Téléphone : <a href="tel:+33760900621">+330668136485</a></li>
                     <li>Email : <a href="mailto:hodanmeg7@gmail.com">hodanmeg7@gmail.com</a></li>
                 </ul>
             </div>
