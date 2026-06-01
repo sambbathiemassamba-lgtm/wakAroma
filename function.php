@@ -70,15 +70,10 @@ function message_errors(
 
 
 
-    if (
-        empty($numero) ||
-        !preg_match('/^[0-9+\-\s]+$/', $numero)
-    ) {
+    // numero
+    if (empty($numero) || !preg_match('/^[0-9+\-\s]+$/', $numero)) {
         $errors[] = "Le numéro de téléphone est invalide.";
     }
-
-    // numero
-    if (empty($numero) || !is_numeric($numero)) $errors[] = "Numéro invalide.";
 
     // email
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Email invalide.";
@@ -172,27 +167,38 @@ function confirmation_code(string $code)
 {
     global $pdo;
 
-    // Recherche utilisateur avec le code
+    // Lier le code à l'email de l'utilisateur en cours d'inscription (session)
+    $email = $_SESSION['email'] ?? null;
+
+    if (empty($email)) {
+        return "Session expirée. Veuillez vous réinscrire.";
+    }
+
+    // Recherche utilisateur par email + token
     $req = $pdo->prepare("
         SELECT id_user, confirmation_token
         FROM users
-        WHERE confirmation_token = :code
+        WHERE email = :email
         LIMIT 1
     ");
 
     $req->execute([
-        ':code' => $code
+        ':email' => $email
     ]);
 
     $user = $req->fetch(PDO::FETCH_OBJ);
 
-    // Si code invalide
-    if(!$user)
-    {
+    // Si utilisateur introuvable
+    if (!$user) {
+        return "Aucun compte en attente de confirmation pour cet email.";
+    }
+
+    // Vérification du code saisi vs token en base
+    if (trim($user->confirmation_token) !== trim($code)) {
         return "Le code de confirmation est invalide.";
     }
 
-    // Mise à jour du compte
+    // Mise à jour : token à NULL = compte confirmé
     $update = $pdo->prepare("
         UPDATE users
         SET confirmation_token = NULL
@@ -203,7 +209,7 @@ function confirmation_code(string $code)
         ':id_user' => $user->id_user
     ]);
 
-    // Vérification réelle
+    // Vérification que la mise à jour a bien eu lieu
     $check = $pdo->prepare("
         SELECT confirmation_token
         FROM users
@@ -216,9 +222,8 @@ function confirmation_code(string $code)
 
     $result = $check->fetch(PDO::FETCH_OBJ);
 
-    // Vérifie si ça a bien été mis à NULL
-    if($result->confirmation_token === NULL)
-    {
+    // empty() couvre NULL, "", "0" — plus fiable que === NULL
+    if (empty($result->confirmation_token)) {
         return true;
     }
 
@@ -374,4 +379,3 @@ function recuperation_produit_by_id(int $id_produit): ?object
  
     return $produit;
 }
- 

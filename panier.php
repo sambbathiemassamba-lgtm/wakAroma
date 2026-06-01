@@ -200,7 +200,7 @@ foreach ($lignes as $l) {
         <div class="panier-vide__icone">🛒</div>
         <h2>Votre panier est vide</h2>
         <p>Découvrez nos épices et thés d'exception</p>
-        <a href="boutique.php" class="btn-continuer">Explorer la boutique</a>
+        <a href="index.php" class="btn-continuer">Explorer la boutique</a>
     </div>
 
     <?php else: ?>

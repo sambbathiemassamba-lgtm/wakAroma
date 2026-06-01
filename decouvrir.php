@@ -666,69 +666,6 @@ if (!$produit) {
             </a>
 
         </div>
-    </div><!-- /produit-hero -->
-
-
-    <!-- ══════════════════════════════════════════
-         PRODUITS SIMILAIRES
-         ══════════════════════════════════════════ -->
-    <?php if (!empty($similaires)): ?>
-    <section class="similaires">
-        <div class="similaires__header">
-            <p class="similaires__eyebrow">Notre sélection</p>
-            <h2 class="similaires__titre">Vous aimerez aussi</h2>
-        </div>
-
-        <div class="similaires__grille">
-            <?php foreach ($similaires as $sim): ?>
-            <article class="sim-card">
-                <div class="sim-card__img-wrap">
-                    <img
-                        src="<?= htmlspecialchars($sim->url_image ?? 'images/placeholder.png') ?>"
-                        alt="<?= htmlspecialchars($sim->nom) ?>"
-                        loading="lazy"
-                    >
-                    <?php if ((int)$sim->stock <= 5 && (int)$sim->stock > 0): ?>
-                        <span class="sim-card__badge sim-card__badge--low">Dernières pièces</span>
-                    <?php elseif ((int)$sim->stock === 0): ?>
-                        <span class="sim-card__badge sim-card__badge--rupture">Épuisé</span>
-                    <?php else: ?>
-                        <span class="sim-card__badge sim-card__badge--new">Disponible</span>
-                    <?php endif; ?>
-                </div>
-
-                <div class="sim-card__body">
-                    <h3 class="sim-card__nom"><?= htmlspecialchars($sim->nom) ?></h3>
-                    <p class="sim-card__desc"><?= htmlspecialchars($sim->description) ?></p>
-                </div>
-
-                <div class="sim-card__footer">
-                    <span class="sim-card__prix"><?= number_format($sim->prix, 2) ?> €</span>
-                    <div class="sim-card__actions">
-                        <a href="decouvrir.php?id=<?= (int)$sim->id_produit ?>" class="sim-card__btn-voir">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                            Voir
-                        </a>
-                        <button
-                            class="sim-card__btn-panier"
-                            data-id="<?= (int)$sim->id_produit ?>"
-                            onclick="ajouterAuPanierSim(this)"
-                            <?= (int)$sim->stock === 0 ? 'disabled' : '' ?>
-                        >
-                            <?php if ((int)$sim->stock === 0): ?>
-                                Indisponible
-                            <?php else: ?>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                                Panier
-                            <?php endif; ?>
-                        </button>
-                    </div>
-                </div>
-            </article>
-            <?php endforeach; ?>
-        </div>
-    </section>
-    <?php endif; ?>
 
 </main>
 

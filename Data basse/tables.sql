@@ -470,3 +470,77 @@ INSERT INTO decouvrir_produit (id_produit, description_long, image_url) VALUES
     'BOUNKA réinvente le rituel du café en y insufflant l\'âme épicée de l\'Afrique de l\'Est. Ce mélange sophistiqué transforme votre tasse matinale en une expérience sensorielle inoubliable, où chaque gorgée devient une célébration.\n\nAjoutez une pincée de BOUNKA à votre café et laissez-vous transporter par cette harmonie parfumée qui caresse le palais et éveille l\'esprit. Les épices soigneusement sélectionnées dialoguent avec l\'amertume du café, créant un équilibre délicat entre chaleur, profondeur et douceur aromatique.\n\nBOUNKA, c\'est bien plus qu\'un café : c\'est un voyage, un moment de contemplation, l\'éveil des sens au rythme des traditions ancestrales. Pour ceux qui refusent l\'ordinaire et choisissent de commencer chaque journée avec élégance et caractère.',
     'images/decouvrir/bounka_detail.png'
 );
+
+CREATE TABLE IF NOT EXISTS admins (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    nom           VARCHAR(100) NOT NULL,
+    email         VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. INSÉRER LE COMPTE ADMIN (avec hash temporaire)
+--    ⚠ Ce hash correspond au mot de passe : ChangeMe2026!
+--    → Utilise generate_hash.php pour définir TON vrai mot de passe
+--    → Puis exécute le UPDATE en dessous avec ton propre hash
+-- --------------------------------------------------------------
+INSERT INTO admins (nom, email, password_hash)
+VALUES (
+    'Administrateur',
+    'admin@wakaroma.com',
+    '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
+);
+
+-- 3. CHANGER LE MOT DE PASSE (après avoir utilisé generate_hash.php)
+--    Remplace LE_HASH_GENERE par le hash copié depuis generate_hash.php
+-- --------------------------------------------------------------
+-- UPDATE admins
+-- SET password_hash = 'LE_HASH_GENERE'
+-- WHERE email = 'admin@wakaroma.com';
+
+-- ==========================================
+-- 1. TABLE INGRÉDIENTS INTERNES
+--    (créée automatiquement au chargement,
+--     mais voici la version propre à exécuter)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS ingredients_internes (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    nom         VARCHAR(150) NOT NULL,
+    quantite    DECIMAL(10,2) NOT NULL DEFAULT 0,
+    unite       VARCHAR(30) DEFAULT 'g',
+    prix_achat  DECIMAL(10,2) NOT NULL DEFAULT 0,
+    seuil_alerte INT NOT NULL DEFAULT 10,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ==========================================
+-- 2. INSERTION DES 24 INGRÉDIENTS PAR DÉFAUT
+--    (ignore les doublons si déjà insérés)
+-- ==========================================
+INSERT IGNORE INTO ingredients_internes (nom, quantite, unite, prix_achat, seuil_alerte)
+VALUES
+    ('Ail en poudre',          0, 'g', 0, 10),
+    ('Ail semoule',            0, 'g', 0, 10),
+    ('Baies de genièvre',      0, 'g', 0, 10),
+    ('Baies roses',            0, 'g', 0, 10),
+    ('Cannelle bâton',         0, 'g', 0, 10),
+    ('Coriandre',              0, 'g', 0, 10),
+    ('Cumin',                  0, 'g', 0, 10),
+    ('Curry de Madras',        0, 'g', 0, 10),
+    ('Curry en poudre',        0, 'g', 0, 10),
+    ('Curry rouge Thaï',       0, 'g', 0, 10),
+    ('Fenugrec',               0, 'g', 0, 10),
+    ('Fleurs d\'hibiscus',     0, 'g', 0, 10),
+    ('Graine de moutarde',     0, 'g', 0, 10),
+    ('Graines de lin',         0, 'g', 0, 10),
+    ('Graines de nigelle',     0, 'g', 0, 10),
+    ('Mélange 4 baies',        0, 'g', 0, 10),
+    ('Muscade en poudre',      0, 'g', 0, 10),
+    ('Oignon semoule',         0, 'g', 0, 10),
+    ('Pétales de roses',       0, 'g', 0, 10),
+    ('Poivre noir',            0, 'g', 0, 10),
+    ('Romarin',                0, 'g', 0, 10),
+    ('Sel rose de l\'Himalaya',0, 'g', 0, 10),
+    ('Sésame doré',            0, 'g', 0, 10),
+    ('Sumac',                  0, 'g', 0, 10);

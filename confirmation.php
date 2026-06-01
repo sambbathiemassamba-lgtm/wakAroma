@@ -56,8 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 <?php if (!empty($_SESSION['email'])): ?>
     <?php require_once 'header_login.php'?>
 
-            <!-- RETOUR -->
-            <a href="index.php" class="login-card__back">← Retour</a>
+            
 
             <!-- SUCCESS -->
             <?php if (!empty($_SESSION['success'])): ?>
