@@ -22,119 +22,126 @@ function compterArticlesPanier($pdo, $id_user) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
 
-    // L'utilisateur doit être connecté
-    if (empty($_SESSION['auth'])) {
-        echo json_encode(['success' => false, 'message' => 'Non connecté', 'nb_articles' => 0]);
-        exit();
-    }
-
-    $id_user = (int) $_SESSION['auth']['id_user'];
-    $action  = $_POST['action'];
-
-    // ── Compter les articles (appelé au chargement de page) ──
-    if ($action === 'get_count') {
-        echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
-        exit();
-    }
-
-    // ── Récupérer ou créer le panier de l'utilisateur ──
-    $panier = $pdo->prepare("SELECT id_panier FROM paniers WHERE id_user = :id");
-    $panier->execute([':id' => $id_user]);
-    $row = $panier->fetch(PDO::FETCH_OBJ);
-
-    if (!$row) {
-        $pdo->prepare("INSERT INTO paniers (id_user) VALUES (:id)")->execute([':id' => $id_user]);
-        $id_panier = (int) $pdo->lastInsertId();
-    } else {
-        $id_panier = (int) $row->id_panier;
-    }
-
-    // ── Ajouter un produit ──
-    if ($action === 'ajouter') {
-        $id_produit = (int) $_POST['id_produit'];
-
-        // Récupérer le prix actuel
-        $prod = $pdo->prepare("SELECT prix, stock FROM produits WHERE id_produit = :id");
-        $prod->execute([':id' => $id_produit]);
-        $produit = $prod->fetch(PDO::FETCH_OBJ);
-
-        if (!$produit || $produit->stock <= 0) {
-            echo json_encode(['success' => false, 'message' => 'Produit indisponible']);
+    try {
+        // L'utilisateur doit être connecté
+        if (empty($_SESSION['auth'])) {
+            echo json_encode(['success' => false, 'message' => 'Non connecté', 'nb_articles' => 0]);
             exit();
         }
 
-        // Vérifier si déjà dans le panier
-        $exist = $pdo->prepare("SELECT id_ligne_panier, quantite FROM lignes_panier WHERE id_panier = :p AND id_produit = :prod");
-        $exist->execute([':p' => $id_panier, ':prod' => $id_produit]);
-        $ligne = $exist->fetch(PDO::FETCH_OBJ);
+        $id_user = (int) $_SESSION['auth']['id_user'];
+        $action  = $_POST['action'];
 
-        if ($ligne) {
-            $newQty = $ligne->quantite + 1;
-            if ($newQty > $produit->stock) {
-                echo json_encode(['success' => false, 'message' => 'Stock insuffisant']);
-                exit();
-            }
-            $pdo->prepare("UPDATE lignes_panier SET quantite = :q WHERE id_ligne_panier = :id")
-                ->execute([':q' => $newQty, ':id' => $ligne->id_ligne_panier]);
-        } else {
-            $pdo->prepare("INSERT INTO lignes_panier (id_panier, id_produit, quantite, prix_capture) VALUES (:p, :prod, 1, :prix)")
-                ->execute([':p' => $id_panier, ':prod' => $id_produit, ':prix' => $produit->prix]);
+        // ── Compter les articles (appelé au chargement de page) ──
+        if ($action === 'get_count') {
+            echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
+            exit();
         }
 
-        echo json_encode(['success' => true, 'message' => 'Produit ajouté au panier', 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
-        exit();
-    }
+        // ── Récupérer ou créer le panier de l'utilisateur ──
+        $panier = $pdo->prepare("SELECT id_panier FROM paniers WHERE id_user = :id");
+        $panier->execute([':id' => $id_user]);
+        $row = $panier->fetch(PDO::FETCH_OBJ);
 
-    // ── Modifier la quantité ──
-    if ($action === 'modifier_quantite') {
-        $id_ligne   = (int) $_POST['id_ligne'];
-        $quantite   = (int) $_POST['quantite'];
+        if (!$row) {
+            $pdo->prepare("INSERT INTO paniers (id_user) VALUES (:id)")->execute([':id' => $id_user]);
+            $id_panier = (int) $pdo->lastInsertId();
+        } else {
+            $id_panier = (int) $row->id_panier;
+        }
 
-        if ($quantite <= 0) {
+        // ── Ajouter un produit ──
+        if ($action === 'ajouter') {
+            $id_produit = (int) $_POST['id_produit'];
+
+            // Récupérer le prix actuel
+            $prod = $pdo->prepare("SELECT prix, stock FROM produits WHERE id_produit = :id");
+            $prod->execute([':id' => $id_produit]);
+            $produit = $prod->fetch(PDO::FETCH_OBJ);
+
+            if (!$produit || $produit->stock <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Produit indisponible']);
+                exit();
+            }
+
+            // Vérifier si déjà dans le panier
+            $exist = $pdo->prepare("SELECT id_ligne_panier, quantite FROM lignes_panier WHERE id_panier = :p AND id_produit = :prod");
+            $exist->execute([':p' => $id_panier, ':prod' => $id_produit]);
+            $ligne = $exist->fetch(PDO::FETCH_OBJ);
+
+            if ($ligne) {
+                $newQty = $ligne->quantite + 1;
+                if ($newQty > $produit->stock) {
+                    echo json_encode(['success' => false, 'message' => 'Stock insuffisant']);
+                    exit();
+                }
+                $pdo->prepare("UPDATE lignes_panier SET quantite = :q WHERE id_ligne_panier = :id")
+                    ->execute([':q' => $newQty, ':id' => $ligne->id_ligne_panier]);
+            } else {
+                $pdo->prepare("INSERT INTO lignes_panier (id_panier, id_produit, quantite, prix_capture) VALUES (:p, :prod, 1, :prix)")
+                    ->execute([':p' => $id_panier, ':prod' => $id_produit, ':prix' => $produit->prix]);
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Produit ajouté au panier', 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
+            exit();
+        }
+
+        // ── Modifier la quantité ──
+        if ($action === 'modifier_quantite') {
+            $id_ligne = (int) $_POST['id_ligne'];
+            $quantite = (int) $_POST['quantite'];
+
+            if ($quantite <= 0) {
+                $pdo->prepare("DELETE FROM lignes_panier WHERE id_ligne_panier = :id AND id_panier = :p")
+                    ->execute([':id' => $id_ligne, ':p' => $id_panier]);
+            } else {
+                // Vérifier le stock
+                $stockCheck = $pdo->prepare("
+                    SELECT p.stock FROM produits p
+                    INNER JOIN lignes_panier lp ON lp.id_produit = p.id_produit
+                    WHERE lp.id_ligne_panier = :id
+                ");
+                $stockCheck->execute([':id' => $id_ligne]);
+                $s = $stockCheck->fetch(PDO::FETCH_OBJ);
+
+                if ($s && $quantite > $s->stock) {
+                    echo json_encode(['success' => false, 'message' => 'Stock insuffisant (max ' . $s->stock . ')']);
+                    exit();
+                }
+
+                $pdo->prepare("UPDATE lignes_panier SET quantite = :q WHERE id_ligne_panier = :id AND id_panier = :p")
+                    ->execute([':q' => $quantite, ':id' => $id_ligne, ':p' => $id_panier]);
+            }
+
+            echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
+            exit();
+        }
+
+        // ── Supprimer une ligne ──
+        if ($action === 'supprimer') {
+            $id_ligne = (int) $_POST['id_ligne'];
             $pdo->prepare("DELETE FROM lignes_panier WHERE id_ligne_panier = :id AND id_panier = :p")
                 ->execute([':id' => $id_ligne, ':p' => $id_panier]);
-        } else {
-            // Vérifier le stock
-            $stockCheck = $pdo->prepare("
-                SELECT p.stock FROM produits p
-                INNER JOIN lignes_panier lp ON lp.id_produit = p.id_produit
-                WHERE lp.id_ligne_panier = :id
-            ");
-            $stockCheck->execute([':id' => $id_ligne]);
-            $s = $stockCheck->fetch(PDO::FETCH_OBJ);
-
-            if ($s && $quantite > $s->stock) {
-                echo json_encode(['success' => false, 'message' => 'Stock insuffisant (max ' . $s->stock . ')']);
-                exit();
-            }
-
-            $pdo->prepare("UPDATE lignes_panier SET quantite = :q WHERE id_ligne_panier = :id AND id_panier = :p")
-                ->execute([':q' => $quantite, ':id' => $id_ligne, ':p' => $id_panier]);
+            echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
+            exit();
         }
 
-        echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
+        // ── Vider le panier ──
+        if ($action === 'vider') {
+            $pdo->prepare("DELETE FROM lignes_panier WHERE id_panier = :p")
+                ->execute([':p' => $id_panier]);
+            echo json_encode(['success' => true, 'nb_articles' => 0]);
+            exit();
+        }
+
+        echo json_encode(['success' => false, 'message' => 'Action inconnue']);
+        exit();
+
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()]);
         exit();
     }
-
-    // ── Supprimer une ligne ──
-    if ($action === 'supprimer') {
-        $id_ligne = (int) $_POST['id_ligne'];
-        $pdo->prepare("DELETE FROM lignes_panier WHERE id_ligne_panier = :id AND id_panier = :p")
-            ->execute([':id' => $id_ligne, ':p' => $id_panier]);
-        echo json_encode(['success' => true, 'nb_articles' => compterArticlesPanier($pdo, $id_user)]);
-        exit();
-    }
-
-    // ── Vider le panier ──
-    if ($action === 'vider') {
-        $pdo->prepare("DELETE FROM lignes_panier WHERE id_panier = :p")
-            ->execute([':p' => $id_panier]);
-        echo json_encode(['success' => true, 'nb_articles' => 0]);
-        exit();
-    }
-
-    echo json_encode(['success' => false, 'message' => 'Action inconnue']);
-    exit();
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -200,7 +207,7 @@ foreach ($lignes as $l) {
         <div class="panier-vide__icone">🛒</div>
         <h2>Votre panier est vide</h2>
         <p>Découvrez nos épices et thés d'exception</p>
-        <a href="boutique.php" class="btn-continuer">Explorer la boutique</a>
+        <a href="index.php" class="btn-continuer">Explorer la boutique</a>
     </div>
 
     <?php else: ?>
@@ -346,9 +353,6 @@ function updateCartBadge(nb) {
 }
 document.addEventListener('DOMContentLoaded', () => {
   wrapCartIcon();
-  // Initialiser le badge avec le nombre de lignes déjà dans le panier
-  const nbLignes = <?= count($lignes) ?>;
-  // Calculer la vraie somme des quantités
   const totalQte = <?= array_sum(array_column((array)$lignes, 'quantite')) ?? 0 ?>;
   updateCartBadge(totalQte);
 });
@@ -377,7 +381,6 @@ function recalculerTotaux() {
         const qte   = parseInt(document.getElementById('qte-' + id)?.textContent || '0');
         const stEl  = document.getElementById('sous-total-' + id);
         if (!stEl) return;
-        // Extraire le prix unitaire affiché
         const prixEl = ligne.querySelector('.ligne-prix-unit');
         const prix   = parseFloat(prixEl?.textContent?.replace(',', '.')) || 0;
         const st     = prix * qte;
@@ -405,10 +408,9 @@ async function changerQuantite(idLigne, nouvelleQte) {
         if (json.nb_articles !== undefined) updateCartBadge(json.nb_articles);
 
         if (nouvelleQte <= 0) {
-            // Supprimer la ligne du DOM
             const el = document.getElementById('ligne-' + idLigne);
             if (el) {
-                el.style.opacity  = '0';
+                el.style.opacity   = '0';
                 el.style.transform = 'translateX(-30px)';
                 setTimeout(() => {
                     el.remove();
@@ -421,7 +423,6 @@ async function changerQuantite(idLigne, nouvelleQte) {
             if (qteEl) {
                 qteEl.textContent = nouvelleQte;
                 const stock = parseInt(qteEl.dataset.stock) || 0;
-                // Mettre à jour l'état disabled des boutons +/−
                 const btnPlus  = document.getElementById('plus-' + idLigne);
                 const btnMoins = qteEl.previousElementSibling;
                 if (btnPlus)  btnPlus.disabled  = (nouvelleQte >= stock);
@@ -435,13 +436,14 @@ async function changerQuantite(idLigne, nouvelleQte) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// SUPPRIMER UNE LIGNE
+// SUPPRIMER UNE LIGNE — CORRIGÉ : el était manquant
 // ──────────────────────────────────────────────────────────────
 async function supprimerLigne(idLigne) {
     try {
         const json = await postAction({ action: 'supprimer', id_ligne: idLigne });
         if (!json.success) { toast('Erreur', 'error'); return; }
         if (json.nb_articles !== undefined) updateCartBadge(json.nb_articles);
+        const el = document.getElementById('ligne-' + idLigne); // CORRIGÉ
         if (el) {
             el.style.opacity   = '0';
             el.style.transform = 'translateX(-30px)';

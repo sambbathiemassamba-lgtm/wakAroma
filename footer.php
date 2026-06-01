@@ -11,7 +11,7 @@
             <div class="footer__col footer__links">
                 <h4>Découvrir</h4>
                 <ul>
-                    <li><a href="#produit">Nos produits</a></li>
+                    <li><a href="index.php">Nos produits</a></li>
                     <li><a href="#historique">Notre historique</a></li>
                     <li><a href="#salon">Nos salons</a></li>
                 </ul>

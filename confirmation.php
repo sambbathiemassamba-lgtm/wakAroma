@@ -7,6 +7,8 @@ require_once 'function.php';
 // temps
 $expire_time = 120;
 
+// Initialiser code_time UNE SEULE FOIS (avant tout traitement POST)
+// Si on le fait après, un POST réinitialise le timer et le code expire immédiatement
 if (!isset($_SESSION['code_time']) || empty($_SESSION['code_time'])) {
     $_SESSION['code_time'] = time();
 }
@@ -17,6 +19,7 @@ $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
+    // Recalculer le temps restant au moment du POST (code_time est déjà fixé)
     $remaining_time = getRemainingTime($expire_time);
 
     if ($remaining_time <= 0) {

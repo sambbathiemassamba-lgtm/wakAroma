@@ -12,7 +12,7 @@
         <div class="header__brgitand">
             
             <div class="header__title">
-                <a href="index.php">
+                <a href="index.php" style="text-decoration:none;">
                     <h1>WakAroma</h1>
                     <p class="header__subtitle">Épices d'Afrique</p>
                 </a>

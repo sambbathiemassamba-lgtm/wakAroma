@@ -244,7 +244,7 @@ require_once 'headear.php';
     </div>
 
     <span class="sidebar-nav__label">Mon espace</span>
-    <a href="boutique.php" class="sidebar-nav__item"><span class="sidebar-nav__icon">🏠</span>Tableau de bord</a>
+    <a href="compte.php" class="sidebar-nav__item"><span class="sidebar-nav__icon">🏠</span>Tableau de bord</a>
     <a href="commandes.php" class="sidebar-nav__item"><span class="sidebar-nav__icon">📦</span>Mes commandes<span class="sidebar-nav__pill">3</span></a>
     <a href="favoris.php"  class="sidebar-nav__item sidebar-nav__item--active"><span class="sidebar-nav__icon">❤️</span>Mes favoris</a>
     <a href="avis.php"     class="sidebar-nav__item"><span class="sidebar-nav__icon">⭐</span>Mes avis</a>
@@ -269,7 +269,7 @@ require_once 'headear.php';
         <h1 class="fav-topbar__title">Mes Favoris</h1>
         <p class="fav-topbar__count" id="fav-count-text">Chargement…</p>
       </div>
-      <a href="boutique.php" class="btn-outline">
+      <a href="index.php" class="btn-outline">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         Retour à la boutique
       </a>
@@ -296,7 +296,7 @@ require_once 'headear.php';
       <div class="fav-empty__icon">❤️</div>
       <div class="fav-empty__title">Votre liste est vide</div>
       <p class="fav-empty__sub">Parcourez notre catalogue et ajoutez vos épices préférées en cliquant sur le cœur ❤</p>
-      <a href="boutique.php" class="btn-primary">
+      <a href="index.php" class="btn-primary">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         Découvrir les produits
       </a>
