@@ -28,21 +28,17 @@
         </div>
     
         <!-- Actions utilisateur -->
-        <nav class="header__actions">
-            <?php if(!empty($_SESSION['auth'])):?>
-                <a href="logout.php" class="header__link header__link--login">
-                    <img src="icones/deconnexion.png" alt="deonnexion">
-                    <span>Déconnexion</span>
+            <nav class="header__actions">
+
+                <a href="compte.php" class="header__link header__link--login">
+                    <img src="icones/moncompte.png" alt="Mon compte">
+                    <span>Mon compte</span>
                 </a>
-            <?php else:?>
-                <a href="login.php" class="header__link header__link--login">
-                    <img src="icones/login.png" alt="Connexion">
-                    <span>Connexion</span>
+
+                <a href="panier.php" class="header__link header__link--cart">
+                    <img src="icones/calebass.png" alt="Panier">
+                    <span>Panier</span>
                 </a>
-            <?php endif; ?>
-            <a href="panier.php" class="header__link header__link--cart">
-                <img src="icones/calebass.png" alt="Panier">
-                <span>Panier</span>
-            </a>
-        </nav>
+
+            </nav>
     </header>

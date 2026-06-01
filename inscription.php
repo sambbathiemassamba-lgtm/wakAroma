@@ -2,13 +2,9 @@
 // $_SESSION['eamil']  session pour recuperer l'email besion dans la page rendNewCode
 // $_SESSION['auth'] = $nom; // authentification de l'utilisateur
 
-
-
 session_start();
 require_once 'sendEmail.php'; // PHHMailer
 require_once 'function.php'; // founction 
-
-
 
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
@@ -21,8 +17,16 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $password =   htmlspecialchars($_POST['password'] ?? '');
     $password_conf = htmlspecialchars($_POST['password_conf'] ?? '');
 
+    // checkbox conditions
+    $accept_cgv = $_POST['accept_cgv'] ?? null;
+
     // message d'erreur
     $errors = message_errors($nom, $prenom, $numero, $email, $email_conf,$password,$password_conf);
+
+    // verification CGV
+    if (!$accept_cgv) {
+        $errors[] = "Vous devez accepter les conditions générales.";
+    }
 
     // INSERT USER
     if (empty($errors)) 
@@ -44,11 +48,67 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         $_SESSION['error'] = "E-mail est incorrect.";
     }
 
-
 }
 ?>
 
 <?php require_once 'header_login.php' ?>
+
+<style>
+
+/* CONDITIONS */
+
+.terms-group{
+    margin-top:20px;
+}
+
+.terms-check{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    font-size:14px;
+    line-height:1.5;
+    color:#444;
+}
+
+.terms-check input{
+    margin-top:4px;
+    transform:scale(1.1);
+}
+
+.terms-check a{
+    color:#c97b2b;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.terms-check a:hover{
+    text-decoration:underline;
+}
+
+.terms-preview{
+    margin-top:12px;
+    padding:12px;
+    background:#faf7f2;
+    border:1px solid #eee;
+    border-radius:10px;
+    font-size:13px;
+    color:#666;
+}
+
+.read-more{
+    display:inline-block;
+    margin-top:8px;
+    color:#000;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.read-more:hover{
+    text-decoration:underline;
+}
+
+</style>
+
         <h1 class="login-title">Bienvenue</h1>
         <p class="login-subtitle">Rejoignez WakAroma et découvrez nos saveurs d’Afrique.</p><br>
 
@@ -66,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
         <!-- FORMULAIRE -->
         <form method="POST" class="login-form">
+
             <!-- champ cache -->
             <input type="hidden" name="indicatif" value="+33" />
            
@@ -83,23 +144,28 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
             <!-- numero -->
             <div class="form-group">
-            <label>Numéro</label>
-            <div class="phone-wrap">
-                <div class="dd-wrap">
-                <div class="dd-trigger" id="trigger">
-                    <span id="flag-display">🇫🇷</span>
-                    <span id="dial-display">+33</span>
-                    <i class="ti ti-chevron-down"></i>
+                <label>Numéro</label>
+            
+                <div class="phone-wrap">
+                    
+                    <div class="dd-wrap">
+                        <div class="dd-trigger" id="trigger">
+                            <span id="flag-display">🇫🇷</span>
+                            <span id="dial-display">+33</span>
+                            <i class="ti ti-chevron-down"></i>
+                        </div>
+            
+                        <div class="dd-panel" id="panel">
+                            <div class="dd-search-wrap">
+                            <input type="text" id="search" placeholder="Rechercher..." autocomplete="off" />
+                            </div>
+                                <div class="dd-list" id="list"></div>
+                            </div>
+                        </div>
+            
+                    <input class="phone-input" type="tel" name="numero" placeholder="06 12 34 56 78" id="phone"/>
+            
                 </div>
-                <div class="dd-panel" id="panel">
-                    <div class="dd-search-wrap">
-                    <input type="text" id="search" name="numero" placeholder="Rechercher..." autocomplete="off" />
-                    </div>
-                    <div class="dd-list" id="list"></div>
-                </div>
-                </div>
-                <input class="phone-input" type="tel" name="numero" placeholder="06 12 34 56 78" id="phone" />
-            </div>
             </div>
 
             <!-- email -->
@@ -126,11 +192,49 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                 <input type="password" name="password_conf" placeholder="***************">
             </div>
 
+            <!-- CONDITIONS -->
+            <div class="form-group terms-group">
+
+                <label class="terms-check">
+
+                    <input type="checkbox" name="accept_cgv" value="1" required>
+
+                    <span>
+                        J’accepte les
+                        <a href="conditions.php" target="_blank">
+                            Conditions Générales de Vente
+                        </a>,
+                        la
+                        <a href="confidentialite.php" target="_blank">
+                            Politique de confidentialité
+                        </a>
+                        et l’utilisation des cookies.
+                    </span>
+
+                </label>
+
+                <div class="terms-preview">
+
+                    <p>
+                        Wakaroma protège vos données conformément au RGPD.
+                        Vos informations sont utilisées uniquement pour la gestion
+                        de votre compte et de vos commandes.
+                    </p>
+
+                    <a href="mentionsLegale.php" target="_blank" class="read-more">
+                        Lire la suite
+                    </a>
+
+                </div>
+
+            </div>
+
             <button type="submit" class="btn-login">S'INSCRIRE</button>
 
         </form>
 
         <br>
+
         <p class="login-register">
             Vous avez déjà un compte ?
             <a href="login.php">Connectez-vous</a>
@@ -142,6 +246,5 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
 <!-- FOOTER -->
 <?php require_once "footer.php"; ?>
-
 
 <script src="script/inscription.js"></script>

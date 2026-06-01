@@ -3,8 +3,8 @@
 // CONFIGURATION BASE DE DONNÉES
 // ==========================================
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');         // Modifier selon votre config phpMyAdmin
-define('DB_PASS', '');             // Modifier selon votre config phpMyAdmin
+define('DB_USER', 'samzo');         // Modifier selon votre config phpMyAdmin
+define('DB_PASS', 'Touba:55');             // Modifier selon votre config phpMyAdmin
 define('DB_NAME', 'wakaroma'); // Modifier si nécessaire
 
 // ==========================================
@@ -655,13 +655,121 @@ td {
 /* ==========================================
    RESPONSIVE
    ========================================== */
+
+/* ── Tablette (≤ 900px) ── */
+@media (max-width: 900px) {
+    .header { padding: 14px 20px; gap: 12px; }
+    .toolbar { padding: 14px 20px; gap: 10px; }
+    .main { padding: 16px 20px; }
+
+    /* Masquer colonnes moins importantes */
+    thead th:nth-child(6),  /* Unité */
+    td:nth-child(6)  { display: none; }
+
+    thead th:nth-child(7),  /* Prix */
+    td:nth-child(7)  { display: none; }
+}
+
+/* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
-    .header { padding: 14px 16px; flex-wrap: wrap; gap: 12px; }
-    .header-stats { gap: 10px; }
-    .toolbar { padding: 14px 16px; }
-    .main { padding: 16px; }
-    thead th:nth-child(4),
-    td:nth-child(4) { display: none; }
+    /* Header : empiler brand + stats */
+    .header {
+        padding: 12px 14px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .header-brand { width: 100%; }
+    .header-title { font-size: 1.2rem; }
+    .header-stats {
+        width: 100%;
+        gap: 8px;
+        justify-content: stretch;
+    }
+    .stat-badge {
+        flex: 1;
+        padding: 6px 10px;
+    }
+    .stat-badge .num { font-size: 1.1rem; }
+
+    /* Toolbar : tout en colonne */
+    .toolbar {
+        padding: 12px 14px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .search-wrap { min-width: unset; width: 100%; }
+    .search-wrap input { font-size: 1rem; } /* évite zoom iOS */
+
+    select.filter-select {
+        width: 100%;
+        font-size: 1rem;
+    }
+
+    .seuil-global {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    .seuil-global input { width: 80px; font-size: 1rem; }
+
+    .btn-primary { width: 100%; justify-content: center; padding: 12px; }
+
+    /* Main */
+    .main { padding: 12px 14px; }
+
+    /* Tableau : masquer colonnes secondaires */
+    thead th:nth-child(4),  /* Niveau (barre) */
+    td:nth-child(4)  { display: none; }
+
+    thead th:nth-child(5),  /* Seuil alerte */
+    td:nth-child(5)  { display: none; }
+
+    thead th:nth-child(8),  /* Statut */
+    td:nth-child(8)  { display: none; }
+
+    td { padding: 10px 12px; font-size: .85rem; }
+    thead th { padding: 10px 12px; }
+
+    /* Agrandir inputs pour le touch */
+    .stock-input { width: 70px; font-size: 1rem; padding: 8px; }
+    .save-btn { padding: 8px 10px; font-size: .78rem; }
+    .action-btn { padding: 8px 12px; font-size: 1rem; }
+
+    /* Modal plein écran sur mobile */
+    .modal {
+        max-width: 100%;
+        width: calc(100vw - 28px);
+        padding: 20px 16px;
+        border-radius: 14px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .form-grid { grid-template-columns: 1fr; gap: 12px; }
+    .form-group.full { grid-column: 1; }
+
+    /* Toast plus petit */
+    .toast-container { bottom: 14px; right: 14px; left: 14px; }
+    .toast { font-size: .83rem; padding: 10px 14px; }
+}
+
+/* ── Très petit mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+    .header-title { font-size: 1rem; }
+    .header-sub { font-size: .72rem; }
+    .header-icon { width: 40px; height: 40px; }
+
+    /* Sur très petit écran, simplifier encore le tableau */
+    thead th:nth-child(2),  /* Catégorie */
+    td:nth-child(2)  { display: none; }
+
+    .td-nom { font-size: .82rem; }
+
+    /* Bouton sauver : icône seule */
+    .save-btn .save-label { display: none; }
+
+    .stat-badge .label { font-size: .62rem; }
 }
 </style>
 </head>
@@ -867,7 +975,7 @@ function renderTable(products) {
                 <div class="stock-cell">
                     <input class="stock-input" type="number" value="${stock}" min="0"
                         onchange="markDirty(this)" data-original="${stock}" id="stock-${p.id}">
-                    <button class="save-btn" onclick="saveStock(${p.id})">💾 Sauver</button>
+                    <button class="save-btn" onclick="saveStock(${p.id})">💾 <span class="save-label">Sauver</span></button>
                 </div>
             </td>
             <td>

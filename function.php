@@ -168,7 +168,7 @@ function insertion_users(
  * ========================================================================================================
  */
 
-function confirmation_code($code)
+function confirmation_code(string $code)
 {
     global $pdo;
 
@@ -318,3 +318,60 @@ function souvenirMoi()
         }
     }
 }
+
+
+
+
+// ══════════════════════════════════════════════════════════════
+//  À AJOUTER dans function.php
+//  Récupère un produit complet (images + caractéristiques + catégorie)
+//  par son id_produit
+// ══════════════════════════════════════════════════════════════
+ 
+function recuperation_produit_by_id(int $id_produit): ?object
+{
+    global $pdo;
+ 
+    // ── Produit + fiche découvrir + première image catalogue + catégorie ──
+    $sql = "
+        SELECT
+            p.id_produit,
+            p.nom,
+            p.description,           -- description courte (catalogue)
+            p.reference,
+            p.prix,
+            p.stock,
+            p.seuil_alerte,
+            c.nom                    AS nom_categorie,
+            i.url_image,             -- image catalogue (table images)
+            dp.description_long,     -- description longue (table decouvrir_produit)
+            dp.image_url             -- image dédiée page découvrir
+        FROM produits p
+        LEFT JOIN categories       c  ON c.id_categorie = p.id_categorie
+        LEFT JOIN images           i  ON i.id_produit   = p.id_produit
+        LEFT JOIN decouvrir_produit dp ON dp.id_produit  = p.id_produit
+        WHERE p.id_produit = :id
+        LIMIT 1
+    ";
+ 
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':id' => $id_produit]);
+    $produit = $stmt->fetch(PDO::FETCH_OBJ);
+ 
+    if (!$produit) {
+        return null;
+    }
+ 
+    // ── Caractéristiques ──
+    $stmtCarac = $pdo->prepare("
+        SELECT nom, valeur
+        FROM caracteristiques
+        WHERE id_produit = :id
+        ORDER BY id_caracteristique ASC
+    ");
+    $stmtCarac->execute([':id' => $id_produit]);
+    $produit->caracteristiques = $stmtCarac->fetchAll(PDO::FETCH_OBJ);
+ 
+    return $produit;
+}
+ 

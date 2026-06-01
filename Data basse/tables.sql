@@ -177,7 +177,7 @@
 --         ON UPDATE CASCADE
 -- );
 
---====================================================================================================================================================
+
 
 
 
@@ -354,3 +354,119 @@ VALUES
     (8, 'images/shaah.png'),
     (9, 'images/nabad.png'),
     (10, 'images/bounka.png');
+
+
+
+
+
+
+
+-- ══════════════════════════════════════════════════════════════
+-- TABLE decouvrir_produit
+-- Reliée à la table produits via id_produit (FK)
+-- Contient : description longue + image dédiée page découvrir
+-- ══════════════════════════════════════════════════════════════
+
+-- CREATE TABLE decouvrir_produit (
+--     id_decouvrir     INT AUTO_INCREMENT PRIMARY KEY,
+--     id_produit       INT NOT NULL UNIQUE,           -- 1 fiche par produit
+--     description_long TEXT NOT NULL,                 -- texte long éditorial
+--     image_url        VARCHAR(255) NOT NULL,          -- photo différente de images.url_image
+
+--     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+--     CONSTRAINT fk_decouvrir_produit
+--         FOREIGN KEY (id_produit)
+--         REFERENCES produits(id_produit)
+--         ON DELETE CASCADE
+--         ON UPDATE CASCADE
+-- );
+
+
+-- ══════════════════════════════════════════════════════════════
+-- INSERTION DES FICHES DÉCOUVRIR
+-- (id_produit correspond aux INSERT dans tables.sql)
+--   1  → AYEEYO
+--   2  → DIGAAG
+--   3  → HAWAASH
+--   4  → HILIB
+--   5  → LA BASE
+--   6  → SUMAC
+--   7  → WAKA
+--   8  → SHAAH
+--   9  → NABAD
+--  10  → BOUNKA
+-- ══════════════════════════════════════════════════════════════
+
+INSERT INTO decouvrir_produit (id_produit, description_long, image_url) VALUES
+
+-- ─── 1 · AYEEYO ───────────────────────────────────────────────
+(
+    1,
+    'Un hommage aux recettes transmises de génération en génération, AYEYO incarne la sagesse culinaire des grand-mères africaines. Ce mélange piquant et parfumé est le gardien des saveurs authentiques qui rehaussent chaque plat avec caractère.\n\nVéritable allié de votre cuisine quotidienne, AYEYO sublime vos marinades de poulet et viandes pour des shawarmas irrésistibles, tout en apportant cette touche d\'assaisonnement parfaite directement à table. Sa chaleur maîtrisée réveille les papilles sans les brusquer, offrant cet équilibre délicat entre piquant et profondeur aromatique.\n\nPosez AYEYO sur votre table : il deviendra vite le complice incontournable de vos repas, celui qui transforme l\'ordinaire en extraordinaire, comme le faisaient nos grand-mères avec amour et savoir-faire.',
+    'images/decouvrir/ayeyo_detail.png'
+),
+
+-- ─── 2 · DIGAAG ───────────────────────────────────────────────
+(
+    2,
+    'Laissez-vous transporter par les arômes envoûtants de DIGAAG, le compagnon idéal de tous vos plats de poulet. Ce mélange harmonieux d\'épices soigneusement sélectionnées a été créé pour révéler toute la tendreté et la saveur de vos volailles.\n\nQue vous prépariez un poulet en sauce onctueuse, un rôti du dimanche ou des brochettes grillées, DIGAAG apporte cette dimension parfumée qui fait toute la différence. Son bouquet aromatique enveloppe délicatement la chair du poulet, créant une symphonie de saveurs qui éveille les sens et réchauffe les cœurs.\n\nDIGAAG, c\'est l\'essence même de la cuisine généreuse, celle qui rassemble autour de la table et crée des souvenirs gourmands inoubliables.',
+    'images/decouvrir/digaag_detail.png'
+),
+
+-- ─── 3 · HAWAASH ──────────────────────────────────────────────
+(
+    3,
+    'Découvrez HAWAASH, le secret des plats réconfortants qui réchauffent le cœur et l\'âme. Ce mélange d\'épices aux notes délicates est né pour magnifier vos riz parfumés et vos sauces onctueuses aux légumes.\n\nImaginez un riz moelleux embaumé par les arômes subtils de HAWAASH, ou une sauce aux petits pois qui prend une dimension nouvelle, une sauce aux haricots verts qui éveille les papilles avec douceur. HAWAASH est cette touche magique qui transforme les légumes du quotidien en véritables célébrations gustatives.\n\nPolyvalent et généreux, HAWAASH s\'invite dans votre cuisine pour créer ces plats familiaux qui rassemblent, ces recettes transmises avec amour, ces saveurs qui font voyager sans quitter sa table.',
+    'images/decouvrir/hawaash_detail.png'
+),
+
+-- ─── 4 · HILIB ────────────────────────────────────────────────
+(
+    4,
+    'HILIB est le gardien des traditions culinaires où la viande est reine. Ce mélange robuste et généreux a été pensé pour magnifier toutes vos préparations carnées, de la plus simple à la plus élaborée.\n\nQu\'il s\'agisse d\'une sauce bolognaise mijotée avec amour, d\'un ragoût de bœuf fondant qui embaume toute la maison, ou de toute autre recette où la viande est à l\'honneur, HILIB apporte cette profondeur de saveurs incomparable. Ses épices soigneusement dosées caressent la viande, l\'enrobent et révèlent toute sa richesse.\n\nHILIB, c\'est l\'essence même des plats réconfortants qui se partagent en famille, ces recettes qui mijotent doucement et créent des souvenirs impérissables autour d\'une table généreuse.',
+    'images/decouvrir/hilib_detail.png'
+),
+
+-- ─── 5 · LA BASE ──────────────────────────────────────────────
+(
+    5,
+    'Comme son nom l\'indique, LA BASE est LE mélange indispensable, celui qui ne quitte jamais votre cuisine. C\'est la fondation de toutes vos créations culinaires, l\'essentiel qui transforme l\'ordinaire en extraordinaire.\n\nPolyvalent et équilibré, LA BASE s\'adapte à tous vos plats du quotidien avec une élégance naturelle. Un grain de riz à parfumer, une soupe à rehausser, des légumes à sublimer, une viande à assaisonner… LA BASE répond présent, toujours juste, jamais de trop.\n\nC\'est le compagnon fidèle des cuisiniers avisés, celui qui vous permet d\'improviser avec assurance, de créer sans limites. LA BASE, c\'est votre secret pour une cuisine savoureuse au quotidien, celle qui fait dire "mais qu\'est-ce que tu as mis dedans ?" à chaque bouchée.',
+    'images/decouvrir/base_detail.png'
+),
+
+-- ─── 6 · SUMAC ────────────────────────────────────────────────
+(
+    6,
+    'Laissez-vous séduire par SUMAC, ce mélange précieux qui tire son nom de l\'une des épices les plus emblématiques du Moyen-Orient. Le sumac, baie rouge pourpre au goût acidulé et fruité, est utilisé depuis des millénaires dans les cuisines levantine, turque et persane.\n\nNotre SUMAC marie harmonieusement cette épice ancestrale à d\'autres aromates soigneusement sélectionnés, créant un mélange aux notes citronnées et légèrement acidulées qui réveillent les papilles. Véritable trésor gustatif, il sublime les grillades, apporte fraîcheur aux salades, magnifie les mezze, et transforme vos poissons et légumes rôtis en véritables festins.\n\nSUMAC, c\'est l\'invitation au voyage, la promesse d\'une cuisine ensoleillée où chaque plat devient une célébration des saveurs méditerranéennes et orientales. Un essentiel pour ceux qui aiment explorer et créer.',
+    'images/decouvrir/sumac_detail.png'
+),
+
+-- ─── 7 · WAKA ─────────────────────────────────────────────────
+(
+    7,
+    'WAKA, c\'est l\'âme même de WakAroma concentrée dans un flacon. Ce mélange signature incarne notre philosophie : réveiller les saveurs, célébrer l\'authenticité, et transformer chaque instant culinaire en moment de bonheur partagé.\n\nPolyvalent et audacieux, WAKA est le compagnon idéal de vos grillades fumantes qui embaument l\'air d\'été, de vos sauces pour poissons délicats, et même de vos pizzas maison auxquelles il apporte ce petit quelque chose d\'inattendu. Sa palette aromatique équilibrée s\'adapte avec élégance à une multitude de préparations, prouvant qu\'un seul mélange peut être mille possibilités.\n\nWAKA, c\'est notre signature gustative, celle qui fait dire à vos convives : "Mais d\'où vient ce goût extraordinaire ?" La réponse ? De l\'Afrique qui parfume vos instants.',
+    'images/decouvrir/waka_detail.png'
+),
+
+-- ─── 8 · SHAAH ────────────────────────────────────────────────
+(
+    8,
+    'Voici le joyau de la collection WakAroma, la pépite rare qui transforme l\'ordinaire en extraordinaire. SHAAH, c\'est notre truffe, notre caviar, le trésor précieux que nous avons créé pour les palais exigeants et les âmes créatives.\n\nCe mélange d\'exception sublime vos thés et cafés d\'une dimension aromatique incomparable, comme une caresse parfumée qui réchauffe le cœur. Mais SHAAH ne s\'arrête pas là : il révèle des notes insoupçonnées dans vos pâtisseries, apporte sophistication à vos gâteaux, et crée des boissons épicées envoûtantes qui émerveillent à chaque gorgée.\n\nRare et précieux, SHAAH incarne l\'excellence et l\'art de l\'assemblage. C\'est le mélange des moments d\'exception, celui que l\'on réserve aux instants privilégiés, aux invités de marque, ou simplement à soi-même quand on veut se faire plaisir. SHAAH, c\'est l\'excellence africaine sublimée.',
+    'images/decouvrir/shaah_detail.png'
+),
+
+-- ─── 9 · NABAD ────────────────────────────────────────────────
+(
+    9,
+    'Nabad signifie "paix" et "bonjour" en somali. Ce thé noir épicé incarne l\'essence même de l\'hospitalité est-africaine, cette tradition sacrée où chaque invité est accueilli avec générosité et chaleur humaine.\n\nNABAD marie la profondeur du thé noir aux épices chaleureuses qui réchauffent le cœur et apaisent l\'âme. Chaque tasse est une invitation au partage, un moment suspendu où l\'on prend le temps de se retrouver, d\'échanger, de créer des liens. C\'est le thé des retrouvailles, des conversations qui s\'éternisent, des rires partagés autour d\'une table accueillante.\n\nOffrir NABAD, c\'est offrir la paix, c\'est dire "bienvenue", c\'est perpétuer cette belle tradition africaine où l\'hospitalité n\'est pas un geste mais une philosophie de vie.',
+    'images/decouvrir/nabad_detail.png'
+),
+
+-- ─── 10 · BOUNKA ──────────────────────────────────────────────
+(
+    10,
+    'BOUNKA réinvente le rituel du café en y insufflant l\'âme épicée de l\'Afrique de l\'Est. Ce mélange sophistiqué transforme votre tasse matinale en une expérience sensorielle inoubliable, où chaque gorgée devient une célébration.\n\nAjoutez une pincée de BOUNKA à votre café et laissez-vous transporter par cette harmonie parfumée qui caresse le palais et éveille l\'esprit. Les épices soigneusement sélectionnées dialoguent avec l\'amertume du café, créant un équilibre délicat entre chaleur, profondeur et douceur aromatique.\n\nBOUNKA, c\'est bien plus qu\'un café : c\'est un voyage, un moment de contemplation, l\'éveil des sens au rythme des traditions ancestrales. Pour ceux qui refusent l\'ordinaire et choisissent de commencer chaque journée avec élégance et caractère.',
+    'images/decouvrir/bounka_detail.png'
+);

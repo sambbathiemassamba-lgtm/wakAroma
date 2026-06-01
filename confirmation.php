@@ -4,32 +4,24 @@ session_start();
 require_once 'pdo.php';
 require_once 'function.php';
 
-
-
 // temps
 $expire_time = 120;
 
-if (!isset($_SESSION['code_time']) || empty($_SESSION['code_time']))
-{
+if (!isset($_SESSION['code_time']) || empty($_SESSION['code_time'])) {
     $_SESSION['code_time'] = time();
 }
 
-
-
 $remaining_time = getRemainingTime($expire_time);
-
 
 $errors = [];
 
-
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
-    // recalcul au moment du POST
     $remaining_time = getRemainingTime($expire_time);
 
     if ($remaining_time <= 0) {
 
-        $errors []= "Le code a expiré. Veuillez demander un nouveau code.";
+        $errors[] = "Le code a expiré. Veuillez demander un nouveau code.";
 
     } else {
 
@@ -41,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
             if ($result === true) {
 
-                // nettoyage session
                 unset($_SESSION['code_time']);
 
                 $_SESSION['success'] = "Compte confirmé avec succès.";
@@ -51,73 +42,70 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
             } else {
 
-                $errors [] = $result;
+                $errors[] = $result;
             }
 
         } else {
 
-            $errors [] = "Veuillez entrer le code de confirmation.";
+            $errors[] = "Veuillez entrer le code de confirmation.";
         }
     }
 }
 ?>
 
-<link rel="stylesheet" href="style.css">
+<?php if (!empty($_SESSION['email'])): ?>
+    <?php require_once 'header_login.php'?>
 
-<?php if(!empty(isset($_SESSION['email']))):?>
-    <div class="login-page">
+            <!-- RETOUR -->
+            <a href="index.php" class="login-card__back">← Retour</a>
 
-        <div class="login-card">
-
-            <div class="login-card__brand">
-
-                <a href="index.php"><img src="logo/logo.jpeg" class="login-card__logo"></a>
-
-                <h1 class="login-card__title"> WakAroma </h1>
-
-                <p class="login-card__subtitle"> Épices d'Afrique </p>
-
-            </div>
-
-            <a href="index.php" class="login-card__back"> ← Retour </a>
-
-            <!-- message  succee -->
+            <!-- SUCCESS -->
             <?php if (!empty($_SESSION['success'])): ?>
-                <div class="alert--success">
-                    <?= htmlspecialchars($_SESSION['success']) ?><br>
+                <div class="alert alert--success">
+                    <?= htmlspecialchars($_SESSION['success']) ?>
                 </div>
                 <?php unset($_SESSION['success']); ?>
             <?php endif; ?>
 
-            
-            <!-- message erreur -->
+            <!-- ERREURS -->
+            <?php if (!empty($errors) || !empty($_SESSION['errors'])): ?>
                 <div class="alert alert--error">
-                    <?php if (!empty($errors)): ?>
-                        <ul>
-                            <?php foreach($errors as $error):?>
-                                <li><?= htmlspecialchars($error)?></li>
-                            <?php endforeach;?>
-                        </ul>
-                    <?php endif; ?>
-                    
-                    <!-- session d'erreur lancer dans la page resendCode -->
-                    <?php if(!empty($_SESSION['errors'])):?>
-                        <?= $_SESSION['errors'] ?>
-                    <?php endif;?>
+
+                    <ul>
+
+                        <?php foreach ($errors as $error): ?>
+                            <li><?= htmlspecialchars($error) ?></li>
+                        <?php endforeach; ?>
+
+                        <?php if (!empty($_SESSION['errors'])): ?>
+                            <li><?= htmlspecialchars($_SESSION['errors']) ?></li>
+                            <?php unset($_SESSION['errors']); ?>
+                        <?php endif; ?>
+
+                    </ul>
+
                 </div>
-
-
-
-            <!-- temps -->
-            <?php if ($remaining_time > 0 ): ?>
-                <div class="alert alert--success"> Code valide pendant : <span id="timer"></span> </div>
-            <?php else: ?>
-                <div class="alert alert--error"> Code expiré </div>
             <?php endif; ?>
 
-            <h3 class="login-title"> Confirmation du compte </h3>
+            <!-- TIMER -->
+            <?php if ($remaining_time > 0): ?>
 
-            <!-- formulaire -->
+                <div class="alert alert--success">
+                    Code valide pendant : <span id="timer"></span>
+                </div>
+
+            <?php else: ?>
+
+                <div class="alert alert--error">
+                    Code expiré
+                </div>
+
+            <?php endif; ?>
+
+            <!-- TITLE -->
+            <h3 class="login-title">Confirmation du compte</h3>
+
+            <!-- FORM -->
             <form method="POST" class="code-form">
 
                 <p>Entrez le code reçu par email</p>
@@ -131,34 +119,42 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                     <input type="text" maxlength="1" class="code-input">
                 </div>
 
-                <!--  -->
+                <!-- hidden -->
                 <input type="hidden" name="conf" id="conf">
 
-                <!-- nouveau code -->
+
+                <!-- ESPACE 1 -->
+                <div style="height: 18px;"></div>
+
+                <!-- resend -->
                 <div id="resend-block">
                     <?php if ($remaining_time <= 0 && !empty($_SESSION['code_time'])): ?>
-                        <a href="resendCode.php"> Envoyer un nouveau code </a>
-                    <?php endif; ?>
+                        <a href="resendCode.php" class="resend-link">
+                            Envoyer un nouveau code
+                        </a>           
+                    <?php endif; ?>          
                 </div>
-
+                    
+                    
+                <!-- ESPACE 2 -->
+                <div style="height: 22px;"></div>
+                    
+                    
                 <!-- button -->
-                <button type="submit" id="btn-confirm" class="btn-login" disabled > Confirmer </button>
-
+                <button type="submit" id="btn-confirm" class="btn-login" disabled>
+                    Confirmer
+                </button>  
             </form>
-
         </div>
-
     </div>
 
     <?php require_once 'footer.php'; ?>
-
-    <!-- js -->
     <script>
         const remainingTime = <?= $remaining_time ?>;
     </script>
     <script src="script/confirm.js"></script>
-
-
 <?php else: ?>
-    <?php header("Location: index.php"); exit();?>
-<?php endif;?>
+
+    <?php header("Location: index.php"); exit(); ?>
+
+<?php endif; ?>

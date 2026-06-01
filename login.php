@@ -75,15 +75,19 @@ if ($_SERVER['REQUEST_METHOD'] === "POST")
                             '/'
                         );
                     }
-
-                    // Connexion session
+                    
+                    // // Connexion session
+                    // $_SESSION['auth'] = [
+                    //     'id_user' => $user->id,
+                    //     'prenom'  => $user->prenom
+                    // ];
                     $_SESSION['auth'] = [
-                        'id_user' => $user->id,
+                        'id_user' => $user->id_user,
                         'prenom'  => $user->prenom
                     ];
-
+                    
                     // Redirection
-                    header("Location: boutique.php");
+                    header("Location: compte.php");
                     exit();
 
                 }else{
