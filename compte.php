@@ -798,7 +798,7 @@ session_start();
 
     <span class="sidebar-nav__label">Mon espace</span>
 
-    <a href="boutique.php" class="sidebar-nav__item sidebar-nav__item--active">
+    <a href="compte.php" class="sidebar-nav__item sidebar-nav__item--active">
       <span class="sidebar-nav__icon">🏠</span>
       Tableau de bord
     </a>

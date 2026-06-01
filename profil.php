@@ -597,7 +597,7 @@ HTML;
 
     <span class="sidebar-nav__label">Mon espace</span>
 
-    <a href="boutique.php" class="sidebar-nav__item">
+    <a href="compte.php" class="sidebar-nav__item">
       <span class="sidebar-nav__icon">🏠</span>
       Tableau de bord
     </a>
@@ -655,7 +655,7 @@ HTML;
         </p>
       </div>
       <div>
-        <a href="boutique.php" class="btn-outline">
+        <a href="compte.php" class="btn-outline">
           ← Tableau de bord
         </a>
       </div>

@@ -1,6 +1,13 @@
-<?php
+<?php 
 session_start();
+
+// Suppression du cookie "souvenir"
+setcookie('souvenir', '', time() - 3600, '/');
+
+// Destruction de la session
 session_unset();
 session_destroy();
-header('Location: index.php');
+
+// Réorientation vers la page index.php
+header("Location: index.php");
 exit();
