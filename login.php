@@ -2,12 +2,21 @@
 session_start();
 
 require_once "pdo.php";
+
+
 require_once "function.php";
 
 // souvenir de l'utilisateur
 souvenirMoi();
 
-// Si déjà connecté
+// Si déjà connecté en admin
+if(isset($_SESSION['admin_auth']))
+{
+    header("Location: stock.php");
+    exit();
+}
+
+// Si déjà connecté en user
 if(isset($_SESSION['auth']))
 {
     header("Location: boutique.php");
@@ -18,41 +27,68 @@ $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === "POST")
 {
-    // Vérification champs
     if (!empty($_POST['email']) && !empty($_POST['password']))
     {
-        // Sécurisation données
-        $email = trim($_POST['email']);
+        $email    = trim($_POST['email']);
         $password = $_POST['password'];
 
-        // Recherche utilisateur
+        // -------------------------------------------------------
+        // VÉRIFICATION ADMIN EN PREMIER
+        // -------------------------------------------------------
+        // -------------------------------------------------------
+        // VÉRIFICATION ADMIN EN PREMIER
+        // -------------------------------------------------------
+        try {
+            $reqAdmin = $pdo->prepare("SELECT * FROM admins WHERE email = :email LIMIT 1");
+            $reqAdmin->execute([':email' => $email]);
+            $admin = $reqAdmin->fetch(PDO::FETCH_OBJ);
+        } catch (Exception $e) {
+            $admin = null;
+        }
+
+        if ($admin)
+        {
+            // L'email est un admin : on vérifie le mot de passe et on s'arrête là
+            if (password_verify($password, $admin->password_hash))
+            {
+                session_regenerate_id(true);
+                $_SESSION['admin_auth'] = [
+                    'id'    => $admin->id,
+                    'email' => $admin->email,
+                    'nom'   => $admin->nom,
+                ];
+                header("Location: stock.php");
+                exit();
+            }
+            else
+            {
+                // Email admin reconnu mais mauvais mot de passe → on n'essaie pas la table users
+                $error = "Le mot de passe ou l'email est incorrect.";
+            }
+        }
+        else
+        {
+        // -------------------------------------------------------
+        // CONNEXION UTILISATEUR CLASSIQUE
+        // -------------------------------------------------------
         $req = $pdo->prepare("
             SELECT *
             FROM users
             WHERE email = :email
         ");
-
-        $req->execute([
-            ':email' => $email
-        ]);
-
-        // Récupération utilisateur
+        $req->execute([':email' => $email]);
         $user = $req->fetch(PDO::FETCH_OBJ);
 
-        // Vérification utilisateur
         if($user)
         {
-            // Vérification confirmation
-           if(!empty($user->confirmation_token))
-{
-    $error = "Veuillez confirmer votre compte avant de vous connecter.";
-}
+            if(!empty($user->confirmation_token))
+            {
+                $error = "Veuillez confirmer votre compte avant de vous connecter.";
+            }
             else
             {
-                // Vérification mot de passe
                 if(password_verify($password, $user->password_hash))
                 {
-
                     // souvenir de moi
                     if(isset($_POST['souvenir']))
                     {
@@ -65,44 +101,36 @@ if ($_SERVER['REQUEST_METHOD'] === "POST")
                             WHERE email = :email
                         ")->execute([
                             ':souvenir' => $souvenir,
-                            ':email' => $user->email
-                        ]);
+                            ':email'    => $user->email
+                        ]); 
 
                         setcookie(
                             'souvenir',
-                            $user->id . '===' . $souvenir . '===' . hash('sha256', $user->id . $souvenir),
+                            $user->id_user . '===' . $souvenir . '===' . hash('sha256', $user->id_user . $souvenir),
                             time() + 60 * 60 * 24 * 7,
                             '/'
                         );
                     }
-                    
-                    // // Connexion session
-                    // $_SESSION['auth'] = [
-                    //     'id_user' => $user->id,
-                    //     'prenom'  => $user->prenom
-                    // ];
+
                     $_SESSION['auth'] = [
                         'id_user' => $user->id_user,
                         'prenom'  => $user->prenom
                     ];
-                    
-                    // Redirection
+
                     header("Location: compte.php");
                     exit();
 
-                }else{
-
+                } else {
                     $error = "Le mot de passe est incorrect.";
                 }
             }
 
-        }else{
-
+        } else {
             $error = "Aucun compte trouvé avec cet email.";
         }
+        } // fin else (pas un admin)
 
-    }else{
-
+    } else {
         $error = "Veuillez remplir tous les champs";
     }
 }
@@ -110,71 +138,52 @@ if ($_SERVER['REQUEST_METHOD'] === "POST")
 
 <?php require_once 'header_login.php'?>            
 
-<h1 class="login-title"> Bienvenue</h1>
+<h1 class="login-title">Bienvenue</h1>
 <p class="login-subtitle">Accédez à votre compte WakAroma.</p>
 
-<!-- message success apres inscription -->
-<?php if(!empty($_SESSION['success'])):?>
+<?php if(!empty($_SESSION['success'])): ?>
     <div class="alert--success">
-        <?= $_SESSION['success']?>
+        <?= $_SESSION['success'] ?>
     </div>
     <?php unset($_SESSION['success']); ?>
-<?php endif;?>
+<?php endif; ?>
 
-<!-- ALERTES -->
 <?php if ($error): ?>
     <div class="alert alert--error">
         <?= nl2br(htmlspecialchars($error)); ?>
     </div>
 <?php endif; ?>
 
-<!-- FORMULAIRE -->
 <form method="POST" action="login.php" class="login-form">
 
-    <!-- email -->
     <div class="form-group">
         <label>Email</label>
         <input type="email" name="email" placeholder="nom@exemple.com">
     </div>
 
-    <!-- mot de passe -->
     <div class="form-group">
         <label>Mot de passe</label>
         <input type="password" name="password" placeholder="***************">
     </div>
 
-    <!-- pour se souvenir de l'utilisateur -->
     <div class="login-options">
         <label class="checkbox-label">
             <input type="checkbox" name="souvenir">
-            <span>
-                Se souvenir de moi
-            </span>
+            <span>Se souvenir de moi</span>
         </label>
-
-        <a href="mot-de-passe-oublie.php" class="forgot-link">
-            Mot de passe oublié ?
-        </a>
+        <a href="mot-de-passe-oublie.php" class="forgot-link">Mot de passe oublié ?</a>
     </div>
 
-    <!-- BOUTON -->
-    <button type="submit" class="btn-login">
-        Se connecter
-    </button>
+    <button type="submit" class="btn-login">Se connecter</button>
 
 </form>
 
-<!-- INSCRIPTION -->
 <p class="login-register">
     Pas encore de compte ?
-
-    <a href="inscription.php">
-        Créer un compte
-    </a>
+    <a href="inscription.php">Créer un compte</a>
 </p>
 
 </div>
 </div>
 
-<!-- FOOTER -->
 <?php require_once "footer.php"; ?>
