@@ -3,7 +3,7 @@
 | TIMER
 |--------------------------------------------------------------------------
 */
-let timeLeft = remainingTime;
+let timeLeft = Math.max(0, parseInt(remainingTime, 10) || 0);
 
 const timer = document.getElementById("timer");
 
@@ -94,9 +94,12 @@ function updateCode()
 
         btnConfirm.disabled = false;
 
-    } else {
+    } else if (code.length < 6) {
 
         btnConfirm.disabled = true;
+
+        // Ne pas re-désactiver si le timer vient d'expirer pendant la saisie :
+        // la désactivation est gérée par showResendLink()
     }
 }
 
