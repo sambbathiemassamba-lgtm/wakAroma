@@ -60,6 +60,8 @@ body {
 
 img { max-width: 100%; height: auto; display: block; }
 
+a { text-decoration: none; }
+
 /* ==========================================================================
    BANDEAU ANNONCES DÉFILANT
    ========================================================================== */
@@ -155,6 +157,14 @@ img { max-width: 100%; height: auto; display: block; }
   8%   { opacity: 0.7; }
   85%  { opacity: 0.5; }
   100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
+}
+
+/* Suppression des barres de liens dans tout le header */
+.header a,
+.header__link,
+.header__title a,
+.header__nav a {
+  text-decoration: none !important;
 }
 
 /* Brand */
