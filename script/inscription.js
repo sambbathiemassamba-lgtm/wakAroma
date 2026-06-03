@@ -87,6 +87,9 @@ function render(query) {
       selected = countries.find(c => c[1] === item.dataset.code);
       flagDisplay.innerHTML = flag(selected[1]);
       dialDisplay.textContent = selected[2];
+      // Mettre a jour le champ hidden pour que PHP recoit le bon indicatif
+      const hiddenIndicatif = document.querySelector('input[name="indicatif"]');
+      if (hiddenIndicatif) hiddenIndicatif.value = selected[2];
       closePanel();
       render(search.value);
     });
