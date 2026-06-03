@@ -35,7 +35,7 @@ if (!$produit) {
     --or-light: #e8b860;
     --sable:    #f5f0e8;
     --brun:     #3d2b1a;
-    --texte:    #2c1f0f;
+    --texte:    #070606;
     --gris:     #b0a898;
     --rouge:    #e74c3c;
     --vert:     #2d7a44;
@@ -192,7 +192,7 @@ if (!$produit) {
 .produit-hero__desc {
     font-size: 1rem;
     line-height: 1.75;
-    color: #111;
+    color: #f5f5f5;
 }
 
 /* Caractéristiques */
@@ -666,6 +666,8 @@ if (!$produit) {
             </a>
 
         </div>
+   
+
 
 </main>
 

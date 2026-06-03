@@ -55,42 +55,30 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
 <style>
 
-/* ==========================
-   CONDITIONS / RGPD
-========================== */
+/* CONDITIONS */
 
 .terms-group{
     margin-top:20px;
-    width:100%;
 }
 
 .terms-check{
     display:flex;
     align-items:flex-start;
-    gap:12px;
+    gap:10px;
     font-size:14px;
-    line-height:1.6;
+    line-height:1.5;
     color:#444;
-    width:100%;
 }
 
-.terms-check input[type="checkbox"]{
+.terms-check input{
     margin-top:4px;
-    flex-shrink:0;
-    width:18px;
-    height:18px;
-    cursor:pointer;
-}
-
-.terms-check span{
-    flex:1;
+    transform:scale(1.1);
 }
 
 .terms-check a{
     color:#c97b2b;
     text-decoration:none;
     font-weight:600;
-    transition:0.3s;
 }
 
 .terms-check a:hover{
@@ -98,91 +86,25 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 }
 
 .terms-preview{
-    margin-top:15px;
-    padding:15px;
+    margin-top:12px;
+    padding:12px;
     background:#faf7f2;
     border:1px solid #eee;
-    border-radius:12px;
+    border-radius:10px;
     font-size:13px;
     color:#666;
-    line-height:1.6;
-}
-
-.terms-preview p{
-    margin:0;
 }
 
 .read-more{
     display:inline-block;
-    margin-top:10px;
+    margin-top:8px;
     color:#000;
     font-weight:600;
     text-decoration:none;
-    transition:0.3s;
 }
 
 .read-more:hover{
     text-decoration:underline;
-}
-
-/* ==========================
-   TABLETTE
-========================== */
-
-@media (max-width:768px){
-
-    .terms-check{
-        font-size:13px;
-        gap:10px;
-    }
-
-    .terms-check input[type="checkbox"]{
-        width:16px;
-        height:16px;
-    }
-
-    .terms-preview{
-        padding:12px;
-        font-size:12px;
-    }
-
-    .read-more{
-        font-size:12px;
-    }
-}
-
-/* ==========================
-   MOBILE
-========================== */
-
-@media (max-width:480px){
-
-    .terms-group{
-        margin-top:15px;
-    }
-
-    .terms-check{
-        font-size:12px;
-        gap:8px;
-        line-height:1.5;
-    }
-
-    .terms-check input[type="checkbox"]{
-        width:15px;
-        height:15px;
-        margin-top:3px;
-    }
-
-    .terms-preview{
-        padding:10px;
-        font-size:11px;
-        border-radius:10px;
-    }
-
-    .read-more{
-        font-size:11px;
-        margin-top:8px;
-    }
 }
 
 </style>
