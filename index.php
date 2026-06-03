@@ -1,7 +1,11 @@
 <?php
 session_start();
 require_once 'function.php';
-$datas = recuperation_produits_images();
+// APRÈS
+$query = trim($_GET['q'] ?? '');
+$datas = $query !== ''
+    ? recherche_produits($query)
+    : recuperation_produits_images();
 
 // ── Récupération de la photo de couverture par produit ──
 // is_cover = 1 → photo index  |  fallback : première image de la table
@@ -191,9 +195,31 @@ try {
      ══════════════════════════════════════════ -->
 <div class="section-header" id="produits">
     <div class="section-header__eyebrow">Notre sélection</div>
-    <h2 class="section-header__title">Les Épices du Moment</h2>
-    <p class="section-header__sub">Chaque produit est soigneusement sélectionné pour vous offrir le meilleur de l'Afrique.</p>
+
+    <?php if (!empty($query)): ?>
+        <h2 class="section-header__title">
+            Résultats pour « <?= htmlspecialchars($query) ?> »
+        </h2>
+        <p class="section-header__sub">
+            <?= count($datas) ?> produit<?= count($datas) > 1 ? 's' : '' ?> trouvé<?= count($datas) > 1 ? 's' : '' ?>.
+            <a href="index.php" style="color:#c8943a; text-decoration:underline;">← Voir tout</a>
+        </p>
+    <?php else: ?>
+        <h2 class="section-header__title">Les Épices du Moment</h2>
+        <p class="section-header__sub">Chaque produit est soigneusement sélectionné pour vous offrir le meilleur de l'Afrique.</p>
+    <?php endif; ?>
 </div>
+
+<?php if (empty($datas)): ?>
+    <p style="text-align:center; padding: 40px; color:#b0a898; font-size:1.1rem;">
+        Aucun produit ne correspond à « <?= htmlspecialchars($query) ?> ».<br>
+        <a href="index.php" style="color:#c8943a;">← Retour à tous les produits</a>
+    </p>
+<?php else: ?>
+    <?php foreach($datas as $data): ?>
+        <!-- ... ton code existant ... -->
+    <?php endforeach; ?>
+<?php endif; ?>
 
 <!-- Filtres -->
 <div class="filters-bar">

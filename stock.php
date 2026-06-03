@@ -1,6 +1,13 @@
 <?php
 session_start();
 
+// PHPMailer pour envoi newsletter
+require_once __DIR__ . '/PHPMailer-master/src/PHPMailer.php';
+require_once __DIR__ . '/PHPMailer-master/src/SMTP.php';
+require_once __DIR__ . '/PHPMailer-master/src/Exception.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 // ==========================================
 // PROTECTION ADMIN — redirection si non connecté
 // ==========================================
@@ -35,6 +42,24 @@ function getDB() {
             $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS seuil_alerte INT NOT NULL DEFAULT " . SEUIL_ALERTE_DEFAULT);
             $pdo->exec("ALTER TABLE images ADD COLUMN IF NOT EXISTS is_cover TINYINT(1) NOT NULL DEFAULT 0");
             // Table ingrédients internes
+            $pdo->exec("CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+                id            INT AUTO_INCREMENT PRIMARY KEY,
+                email         VARCHAR(255) NOT NULL UNIQUE,
+                nom           VARCHAR(150) DEFAULT '',
+                source        ENUM('newsletter','compte','manuel') NOT NULL DEFAULT 'newsletter',
+                actif         TINYINT(1) NOT NULL DEFAULT 1,
+                subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS newsletter_campaigns (
+                id            INT AUTO_INCREMENT PRIMARY KEY,
+                sujet         VARCHAR(255) NOT NULL,
+                contenu_html  LONGTEXT NOT NULL,
+                destinataires TEXT,
+                nb_envoyes    INT DEFAULT 0,
+                statut        ENUM('brouillon','envoye') DEFAULT 'brouillon',
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                sent_at       TIMESTAMP NULL
+            )");
             $pdo->exec("CREATE TABLE IF NOT EXISTS ingredients_internes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nom VARCHAR(150) NOT NULL,
@@ -263,6 +288,190 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $id = (int)$_POST['id'];
             $pdo->prepare("DELETE FROM users WHERE id_user = ?")->execute([$id]);
             echo json_encode(['success' => true]);
+            break;
+
+        // ---- NEWSLETTER : ABONNÉS ----
+        case 'nl_get_subscribers':
+            $stmt = $pdo->query("SELECT * FROM newsletter_subscribers ORDER BY subscribed_at DESC");
+            echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            break;
+
+        case 'nl_add_subscriber':
+            $email = trim(filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL));
+            $nom   = trim($_POST['nom'] ?? '');
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['success' => false, 'error' => 'Email invalide']); break;
+            }
+            $stmtChk = $pdo->prepare("SELECT id FROM newsletter_subscribers WHERE email = ?");
+            $stmtChk->execute([$email]);
+            if ($stmtChk->fetch()) {
+                echo json_encode(['success' => false, 'error' => 'Cet email est déjà enregistré']); break;
+            }
+            $pdo->prepare("INSERT INTO newsletter_subscribers (email, nom, source) VALUES (?, ?, 'manuel')")
+                ->execute([$email, $nom]);
+            echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
+            break;
+
+        case 'nl_toggle_subscriber':
+            $id = (int)$_POST['id'];
+            $pdo->prepare("UPDATE newsletter_subscribers SET actif = NOT actif WHERE id = ?")->execute([$id]);
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'nl_delete_subscriber':
+            $id = (int)$_POST['id'];
+            $pdo->prepare("DELETE FROM newsletter_subscribers WHERE id = ?")->execute([$id]);
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'nl_sync_clients':
+            $stmt  = $pdo->query("SELECT email, CONCAT(COALESCE(prenom,''),' ',COALESCE(nom,'')) AS nom FROM users WHERE email IS NOT NULL AND email != ''");
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $added = 0;
+            foreach ($users as $u) {
+                try {
+                    $pdo->prepare("INSERT IGNORE INTO newsletter_subscribers (email, nom, source) VALUES (?, ?, 'compte')")
+                        ->execute([trim($u['email']), trim($u['nom'])]);
+                    if ((int)$pdo->lastInsertId() > 0) $added++;
+                } catch (PDOException $e) {}
+            }
+            echo json_encode(['success' => true, 'added' => $added]);
+            break;
+
+        // ---- NEWSLETTER : CAMPAGNES ----
+        case 'nl_get_campaigns':
+            $stmt = $pdo->query("SELECT id, sujet, nb_envoyes, statut, created_at, sent_at FROM newsletter_campaigns ORDER BY created_at DESC");
+            echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            break;
+
+        case 'nl_get_campaign':
+            $id   = (int)$_POST['id'];
+            $stmt = $pdo->prepare("SELECT * FROM newsletter_campaigns WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(['success' => true, 'data' => $stmt->fetch(PDO::FETCH_ASSOC)]);
+            break;
+
+        case 'nl_save_campaign':
+            $id    = (int)($_POST['id'] ?? 0);
+            $sujet = trim($_POST['sujet'] ?? '');
+            $html  = $_POST['contenu_html'] ?? '';
+            $dest  = $_POST['destinataires'] ?? null;
+            if (empty($sujet)) { echo json_encode(['success' => false, 'error' => 'Le sujet est obligatoire']); break; }
+            if (empty($html))  { echo json_encode(['success' => false, 'error' => 'Le contenu est vide']); break; }
+            if ($id > 0) {
+                $pdo->prepare("UPDATE newsletter_campaigns SET sujet=?, contenu_html=?, destinataires=?, statut='brouillon' WHERE id=?")
+                    ->execute([$sujet, $html, $dest, $id]);
+                echo json_encode(['success' => true, 'id' => $id]);
+            } else {
+                $pdo->prepare("INSERT INTO newsletter_campaigns (sujet, contenu_html, destinataires) VALUES (?,?,?)")
+                    ->execute([$sujet, $html, $dest]);
+                echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
+            }
+            break;
+
+        case 'nl_delete_campaign':
+            $id = (int)$_POST['id'];
+            $pdo->prepare("DELETE FROM newsletter_campaigns WHERE id = ?")->execute([$id]);
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'nl_get_all_recipients':
+            // Fusion abonnés newsletter + clients (users), dédupliqués par email
+            $subs  = $pdo->query("SELECT CONCAT('sub_',id) AS uid, email, nom, 'newsletter' AS source, actif FROM newsletter_subscribers ORDER BY email")->fetchAll(PDO::FETCH_ASSOC);
+            $users = $pdo->query("SELECT CONCAT('usr_',id_user) AS uid, email, CONCAT(COALESCE(prenom,''),' ',COALESCE(nom,'')) AS nom, 'client' AS source, 1 AS actif FROM users WHERE email IS NOT NULL AND email != '' ORDER BY email")->fetchAll(PDO::FETCH_ASSOC);
+            // Fusionner en dédupliquant par email (priorité aux abonnés)
+            $seen    = [];
+            $merged  = [];
+            foreach ($subs as $s)  { $seen[strtolower(trim($s['email']))] = true; $merged[] = $s; }
+            foreach ($users as $u) { if (!isset($seen[strtolower(trim($u['email']))])) { $merged[] = $u; } }
+            usort($merged, fn($a,$b) => strcasecmp($a['nom'].$a['email'], $b['nom'].$b['email']));
+            echo json_encode(['success' => true, 'data' => $merged]);
+            break;
+
+        case 'nl_send_campaign':
+            $campId  = (int)$_POST['campaign_id'];
+            $destRaw = $_POST['destinataires'] ?? 'tous';
+            $stmtC   = $pdo->prepare("SELECT * FROM newsletter_campaigns WHERE id = ?");
+            $stmtC->execute([$campId]);
+            $campaign = $stmtC->fetch(PDO::FETCH_ASSOC);
+            if (!$campaign) { echo json_encode(['success' => false, 'error' => 'Campagne introuvable']); break; }
+
+            $recipients = [];
+
+            if ($destRaw === 'tous') {
+                // Tous abonnés actifs
+                $rows = $pdo->query("SELECT email, nom FROM newsletter_subscribers WHERE actif = 1")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($rows as $r) $recipients[strtolower(trim($r['email']))] = ['email' => $r['email'], 'nom' => trim($r['nom'])];
+            } elseif ($destRaw === 'tous_clients') {
+                // Tous les clients (users)
+                $rows = $pdo->query("SELECT email, CONCAT(COALESCE(prenom,''),' ',COALESCE(nom,'')) AS nom FROM users WHERE email IS NOT NULL AND email != ''")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($rows as $r) $recipients[strtolower(trim($r['email']))] = ['email' => $r['email'], 'nom' => trim($r['nom'])];
+            } elseif ($destRaw === 'tous_les_deux') {
+                // Abonnés actifs + tous clients, dédupliqués
+                $subs2  = $pdo->query("SELECT email, nom FROM newsletter_subscribers WHERE actif = 1")->fetchAll(PDO::FETCH_ASSOC);
+                $users2 = $pdo->query("SELECT email, CONCAT(COALESCE(prenom,''),' ',COALESCE(nom,'')) AS nom FROM users WHERE email IS NOT NULL AND email != ''")->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($subs2  as $r) $recipients[strtolower(trim($r['email']))] = ['email' => $r['email'], 'nom' => trim($r['nom'])];
+                foreach ($users2 as $r) $recipients[strtolower(trim($r['email']))] ?? $recipients[strtolower(trim($r['email']))] = ['email' => $r['email'], 'nom' => trim($r['nom'])];
+            } else {
+                // Sélection manuelle : UIDs préfixés sub_X ou usr_X
+                $uids  = json_decode($destRaw, true);
+                if (!is_array($uids) || empty($uids)) { echo json_encode(['success' => false, 'error' => 'Aucun destinataire']); break; }
+                $subIds = []; $usrIds = [];
+                foreach ($uids as $uid) {
+                    if (str_starts_with($uid, 'sub_')) $subIds[] = (int)substr($uid, 4);
+                    if (str_starts_with($uid, 'usr_')) $usrIds[] = (int)substr($uid, 4);
+                }
+                if (!empty($subIds)) {
+                    $ph  = implode(',', array_fill(0, count($subIds), '?'));
+                    $stS = $pdo->prepare("SELECT email, nom FROM newsletter_subscribers WHERE id IN ($ph)");
+                    $stS->execute($subIds);
+                    foreach ($stS->fetchAll(PDO::FETCH_ASSOC) as $r) $recipients[strtolower(trim($r['email']))] = ['email' => $r['email'], 'nom' => trim($r['nom'])];
+                }
+                if (!empty($usrIds)) {
+                    $ph  = implode(',', array_fill(0, count($usrIds), '?'));
+                    $stU = $pdo->prepare("SELECT email, CONCAT(COALESCE(prenom,''),' ',COALESCE(nom,'')) AS nom FROM users WHERE id_user IN ($ph)");
+                    $stU->execute($usrIds);
+                    foreach ($stU->fetchAll(PDO::FETCH_ASSOC) as $r) $recipients[strtolower(trim($r['email']))] ?? $recipients[strtolower(trim($r['email']))] = ['email' => $r['email'], 'nom' => trim($r['nom'])];
+                }
+            }
+
+            if (empty($recipients)) { echo json_encode(['success' => false, 'error' => 'Aucun destinataire trouvé']); break; }
+
+            $sent = 0; $errors = [];
+            foreach ($recipients as $rec) {
+                $to      = $rec['email'];
+                $nomDest = trim($rec['nom']) ?: 'Cher client';
+                $body    = str_replace(
+                    ['{{NOM}}', '{{EMAIL}}'],
+                    [htmlspecialchars($nomDest), htmlspecialchars($to)],
+                    $campaign['contenu_html']
+                );
+                try {
+                    $mail = new PHPMailer(true);
+                    $mail->isSMTP();
+                    $mail->Host       = 'smtp.gmail.com';
+                    $mail->SMTPAuth   = true;
+                    $mail->Username   = 'samzosamb123@gmail.com';
+                    $mail->Password   = 'oxwcjqcvmoettpkx';
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                    $mail->Port       = 465;
+                    $mail->CharSet    = 'UTF-8';
+                    $mail->setFrom('samzosamb123@gmail.com', 'WakAroma');
+                    $mail->addAddress($to, $nomDest);
+                    $mail->addReplyTo('noreply@wakaroma.com', 'No Reply');
+                    $mail->isHTML(true);
+                    $mail->Subject = $campaign['sujet'];
+                    $mail->Body    = $body;
+                    $mail->AltBody = strip_tags($body);
+                    $mail->send();
+                    $sent++;
+                } catch (Exception $e) {
+                    $errors[] = $to . ' (' . $e->getMessage() . ')';
+                }
+            }
+            $pdo->prepare("UPDATE newsletter_campaigns SET nb_envoyes=?, statut='envoye', sent_at=NOW() WHERE id=?")
+                ->execute([$sent, $campId]);
+            echo json_encode(['success' => true, 'sent' => $sent, 'total' => count($recipients), 'errors' => $errors]);
             break;
 
         default:
@@ -501,6 +710,152 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 .empty-state p { font-size: .95rem; }
 
+/* =============================================
+   NEWSLETTER
+   ============================================= */
+.nl-tabs {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    border-bottom: 1px solid var(--border); padding-bottom: 0;
+}
+.nl-tab {
+    padding: 10px 20px; background: transparent; border: none;
+    border-bottom: 3px solid transparent; color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif; font-size: .88rem; font-weight: 500;
+    cursor: pointer; transition: all .2s; margin-bottom: -1px;
+    display: flex; align-items: center; gap: 6px;
+}
+.nl-tab:hover { color: var(--cream); }
+.nl-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.nl-page { display: none; }
+.nl-page.active { display: block; }
+
+/* Stats newsletter */
+.nl-stats {
+    display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap;
+}
+.nl-stat {
+    flex: 1; min-width: 120px; padding: 14px 18px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; display: flex; align-items: center; gap: 12px;
+}
+.nl-stat .ico { font-size: 1.5rem; }
+.nl-stat .num { font-size: 1.4rem; font-weight: 700; color: var(--gold); font-family: 'Playfair Display', serif; line-height: 1; }
+.nl-stat .lbl { font-size: .72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+
+/* Subscriber table extras */
+.sub-avatar-sm {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .72rem; color: #1a1200; flex-shrink: 0;
+}
+.source-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+.source-nl   { background: rgba(201,150,59,.12); border: 1px solid var(--gold-dim); color: var(--gold); }
+.source-compte { background: var(--blue-bg); border: 1px solid var(--blue-border); color: #6fa3e8; }
+.source-manuel { background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); }
+
+/* Bulk action bar */
+.bulk-bar {
+    display: none; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-top: 14px; padding: 12px 16px;
+    background: rgba(201,150,59,.06); border: 1px solid var(--gold-dim);
+    border-radius: 10px;
+}
+.bulk-bar.visible { display: flex; }
+
+/* Campaign cards */
+.campaign-list { display: flex; flex-direction: column; gap: 10px; }
+.campaign-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+    transition: border-color .2s;
+}
+.campaign-card:hover { border-color: var(--border2); }
+.campaign-card .camp-icon { font-size: 1.6rem; flex-shrink: 0; }
+.campaign-card .camp-info { flex: 1; min-width: 0; }
+.camp-sujet { font-weight: 600; color: var(--cream); font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.camp-meta  { font-size: .76rem; color: var(--text-dim); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.camp-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.badge-sent    { background: var(--green-bg); border: 1px solid #1e6b40; color: #4ecb78; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+.badge-draft   { background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+
+/* Rich editor */
+.nl-editor-toolbar {
+    display: flex; flex-wrap: wrap; gap: 3px;
+    padding: 10px 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-bottom: none;
+    border-radius: 8px 8px 0 0;
+}
+.nl-editor-btn {
+    padding: 5px 9px; background: transparent;
+    border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-dim); font-size: .8rem; cursor: pointer;
+    transition: all .15s; font-family: 'DM Sans', sans-serif;
+}
+.nl-editor-btn:hover { background: var(--border); color: var(--cream); }
+.nl-editor-sep { width: 1px; background: var(--border); margin: 2px 3px; }
+#nlRichEditor {
+    min-height: 240px; max-height: 380px; overflow-y: auto;
+    padding: 16px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 0 0 8px 8px;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: .9rem; line-height: 1.6; outline: none;
+}
+#nlRichEditor:focus { border-color: var(--gold); }
+#nlRichEditor:empty::before { content: 'Rédigez votre message… Utilisez {{NOM}} pour personnaliser.'; color: var(--text-dim); pointer-events: none; }
+#nlRichEditor a { color: var(--gold); }
+#nlRichEditor h1, #nlRichEditor h2 { color: var(--cream); font-family: 'Playfair Display', serif; }
+
+/* Recipient selector */
+.dest-option {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; transition: all .2s; margin-bottom: 8px;
+}
+.dest-option:hover  { border-color: var(--gold-dim); }
+.dest-option.active { border-color: var(--gold); background: rgba(201,150,59,.06); }
+.dest-option input[type=radio] { accent-color: var(--gold); width: 15px; height: 15px; }
+.dest-lbl { font-weight: 500; color: var(--cream); font-size: .88rem; }
+.dest-sub { font-size: .76rem; color: var(--text-dim); margin-top: 2px; }
+
+/* Subscriber checklist for modal */
+.nl-sub-list { max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+.nl-sub-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--border); transition: background .15s; }
+.nl-sub-item:last-child { border-bottom: none; }
+.nl-sub-item:hover { background: rgba(201,150,59,.04); }
+.nl-sub-item input[type=checkbox] { accent-color: var(--gold); width: 15px; height: 15px; flex-shrink: 0; }
+
+/* Template chips */
+.tpl-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.tpl-chip { padding: 7px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: .82rem; cursor: pointer; transition: all .15s; }
+.tpl-chip:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+/* Preview iframe */
+.nl-preview-frame { width: 100%; min-height: 400px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+
+/* Modals newsletter */
+.nl-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.75);
+    backdrop-filter: blur(6px); z-index: 250;
+    display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.nl-modal-overlay.open { display: flex; }
+.nl-modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 16px; width: 100%; max-width: 520px;
+    max-height: 92vh; overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0,0,0,.7);
+    animation: modalIn .25s ease;
+}
+.nl-modal--lg  { max-width: 780px; }
+.nl-modal--xl  { max-width: 960px; }
+.nl-mheader { display: flex; align-items: center; justify-content: space-between; padding: 22px 26px 0; }
+.nl-mtitle  { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--cream); }
+.nl-mbody   { padding: 18px 26px; }
+.nl-mfooter { padding: 14px 26px 22px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); margin-top: 4px; }
+
 /* IMAGES PRODUIT dans la modale */
 .img-section { margin-top: 20px; }
 .img-section-title {
@@ -635,7 +990,6 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
     .nav-tab .tab-icon { font-size: 1.3rem; display: block; }
     .nav-tab.active { border-top-color: var(--gold); border-bottom-color: transparent; }
     .nav-tab .tab-badge { position: absolute; top: 6px; right: calc(50% - 22px); font-size: .6rem; padding: 1px 5px; }
-
     /* PADDING BOTTOM pour ne pas être masqué par la barre d'onglets */
     body { padding-bottom: 70px; }
 
@@ -829,6 +1183,10 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
     <button class="nav-tab" onclick="switchPage('users', this)" id="tab-users">
         <span class="tab-icon">👥</span> Clients
     </button>
+    <button class="nav-tab" onclick="switchPage('newsletter', this)" id="tab-newsletter">
+        <span class="tab-icon">✉️</span> Newsletter
+        <span class="tab-badge" id="badge-nl" style="display:none">0</span>
+    </button>
 </nav>
 
 <!-- ===================== PAGE STOCKS ===================== -->
@@ -965,6 +1323,277 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
             </div>
         </div>
     </main>
+</div>
+
+<!-- ===================== PAGE NEWSLETTER ===================== -->
+<div class="page" id="page-newsletter">
+    <!-- Sous-onglets -->
+    <div class="toolbar" style="border-bottom:none; padding-bottom:0;">
+        <div class="nl-tabs">
+            <button class="nl-tab active" onclick="nlSwitchTab('abonnes', this)">📋 Abonnés</button>
+            <button class="nl-tab" onclick="nlSwitchTab('campagnes', this)">✉️ Campagnes</button>
+            <button class="nl-tab" onclick="nlSwitchTab('rediger', this)">✍️ Rédiger</button>
+        </div>
+    </div>
+
+    <!-- ---- SOUS-PAGE : ABONNÉS ---- -->
+    <div class="nl-page active" id="nl-page-abonnes">
+        <main class="main" style="padding-top:0;">
+            <!-- Stats -->
+            <div class="nl-stats" id="nl-stats-wrap">
+                <div class="nl-stat"><div class="ico">📧</div><div><div class="num" id="nl-stat-total">—</div><div class="lbl">Total abonnés</div></div></div>
+                <div class="nl-stat"><div class="ico">✅</div><div><div class="num" id="nl-stat-actifs">—</div><div class="lbl">Actifs</div></div></div>
+                <div class="nl-stat"><div class="ico">📤</div><div><div class="num" id="nl-stat-camps">—</div><div class="lbl">Campagnes</div></div></div>
+                <div class="nl-stat"><div class="ico">📨</div><div><div class="num" id="nl-stat-sent">—</div><div class="lbl">Emails envoyés</div></div></div>
+            </div>
+            <!-- Toolbar abonnés -->
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; align-items:center;">
+                <div class="search-wrap" style="max-width:280px;">
+                    <span class="ico">🔍</span>
+                    <input type="text" id="nl-search-sub" placeholder="Rechercher…" oninput="nlFilterSubs()">
+                </div>
+                <select id="nl-filter-source" class="filter-select" onchange="nlFilterSubs()">
+                    <option value="">Toutes sources</option>
+                    <option value="newsletter">Newsletter</option>
+                    <option value="compte">Compte client</option>
+                    <option value="manuel">Manuel</option>
+                </select>
+                <select id="nl-filter-actif" class="filter-select" onchange="nlFilterSubs()">
+                    <option value="">Tous statuts</option>
+                    <option value="1">Actifs</option>
+                    <option value="0">Inactifs</option>
+                </select>
+                <button class="btn btn-ghost" onclick="nlSyncClients(this)">🔄 Sync. clients</button>
+                <button class="btn btn-primary" onclick="nlOpenAddSub()">＋ Ajouter</button>
+            </div>
+            <!-- Table abonnés -->
+            <div class="table-card">
+                <div class="table-wrap">
+                    <table id="nlSubTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="nl-check-all" onchange="nlToggleAllSubs(this)" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer;"></th>
+                                <th>Email</th>
+                                <th>Nom</th>
+                                <th>Source</th>
+                                <th>Statut</th>
+                                <th>Date d'inscription</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nl-tbody-sub">
+                            <tr><td colspan="7"><div class="empty-state"><div class="icon">⏳</div><p>Chargement…</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Bulk bar -->
+            <div class="bulk-bar" id="nl-bulk-bar">
+                <span id="nl-bulk-count" style="color:var(--gold);font-weight:600;font-size:.88rem;"></span>
+                <button class="btn btn-primary" style="padding:7px 14px;font-size:.82rem;" onclick="nlSendToSelected()">📤 Envoyer une campagne</button>
+                <button class="btn btn-danger"  style="padding:7px 14px;font-size:.82rem;" onclick="nlDeleteSelected()">🗑 Supprimer</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ---- SOUS-PAGE : CAMPAGNES ---- -->
+    <div class="nl-page" id="nl-page-campagnes">
+        <main class="main" style="padding-top:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+                <span style="color:var(--text-dim);font-size:.85rem;" id="nl-camp-count"></span>
+                <button class="btn btn-primary" onclick="nlSwitchTab('rediger', document.querySelectorAll('.nl-tab')[2])">✍️ Nouvelle campagne</button>
+            </div>
+            <div id="nl-camp-list-wrap">
+                <div class="empty-state"><div class="icon">⏳</div><p>Chargement…</p></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ---- SOUS-PAGE : RÉDIGER ---- -->
+    <div class="nl-page" id="nl-page-rediger">
+        <main class="main" style="padding-top:0; max-width:900px;">
+            <!-- Sujet + actions -->
+            <div class="table-card" style="padding:22px 26px; margin-bottom:18px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+                    <h3 style="font-family:'Playfair Display',serif;color:var(--cream);font-size:1.1rem;margin:0;">✍️ Rédiger une campagne</h3>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-ghost" style="padding:7px 14px;font-size:.82rem;" onclick="nlOpenPreview()">👁 Aperçu</button>
+                        <button class="btn btn-ghost" style="padding:7px 14px;font-size:.82rem;" onclick="nlSaveDraft()">💾 Brouillon</button>
+                        <button class="btn btn-primary" style="padding:7px 14px;font-size:.82rem;" onclick="nlOpenSendModal()">📤 Envoyer</button>
+                    </div>
+                </div>
+                <input type="hidden" id="nl-compose-id">
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);">Sujet *</label>
+                    <input type="text" id="nl-compose-sujet" placeholder="Ex : 🌿 Nos nouveautés de printemps sont arrivées !" style="padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;width:100%;transition:border-color .2s;">
+                </div>
+                <!-- Éditeur riche -->
+                <div>
+                    <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);display:block;margin-bottom:8px;">Contenu *</label>
+                    <div class="nl-editor-toolbar">
+                        <button class="nl-editor-btn" onclick="nlCmd('bold')"><b>B</b></button>
+                        <button class="nl-editor-btn" onclick="nlCmd('italic')"><i>I</i></button>
+                        <button class="nl-editor-btn" onclick="nlCmd('underline')"><u>U</u></button>
+                        <div class="nl-editor-sep"></div>
+                        <button class="nl-editor-btn" onclick="nlCmd('formatBlock','h1')">H1</button>
+                        <button class="nl-editor-btn" onclick="nlCmd('formatBlock','h2')">H2</button>
+                        <button class="nl-editor-btn" onclick="nlCmd('formatBlock','p')">¶</button>
+                        <div class="nl-editor-sep"></div>
+                        <button class="nl-editor-btn" onclick="nlCmd('insertUnorderedList')">• Liste</button>
+                        <button class="nl-editor-btn" onclick="nlCmd('insertOrderedList')">1. Liste</button>
+                        <button class="nl-editor-btn" onclick="nlCmd('formatBlock','blockquote')">❝</button>
+                        <div class="nl-editor-sep"></div>
+                        <button class="nl-editor-btn" onclick="nlCmd('justifyLeft')">⬅</button>
+                        <button class="nl-editor-btn" onclick="nlCmd('justifyCenter')">↔</button>
+                        <button class="nl-editor-btn" onclick="nlCmd('justifyRight')">➡</button>
+                        <div class="nl-editor-sep"></div>
+                        <label style="display:flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--text-dim);font-size:.78rem;">
+                            A <input type="color" value="#f5edd8" onchange="nlCmd('foreColor',this.value)" style="width:16px;height:16px;padding:0;border:none;background:none;cursor:pointer;">
+                        </label>
+                        <label style="display:flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;cursor:pointer;color:var(--text-dim);font-size:.78rem;">
+                            🖌 <input type="color" value="#c9963b" onchange="nlCmd('hiliteColor',this.value)" style="width:16px;height:16px;padding:0;border:none;background:none;cursor:pointer;">
+                        </label>
+                        <div class="nl-editor-sep"></div>
+                        <button class="nl-editor-btn" onclick="nlInsertLink()">🔗 Lien</button>
+                        <button class="nl-editor-btn" onclick="nlInsertImg()">🖼 Image</button>
+                        <button class="nl-editor-btn" onclick="nlInsertVar('{{NOM}}')" style="color:var(--gold);">{{NOM}}</button>
+                        <div class="nl-editor-sep"></div>
+                        <button class="nl-editor-btn" onclick="nlCmd('removeFormat')">✕ Format</button>
+                        <button class="nl-editor-btn" onclick="nlClearEditor()" style="color:#e74c3c;">🗑 Vider</button>
+                    </div>
+                    <div id="nlRichEditor" contenteditable="true" spellcheck="true"></div>
+                </div>
+            </div>
+            <!-- Templates -->
+            <div class="table-card" style="padding:18px 22px;">
+                <div style="font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:10px;">✦ Templates rapides</div>
+                <div class="tpl-chips">
+                    <button class="tpl-chip" onclick="nlLoadTemplate('promo')">🎁 Promotion</button>
+                    <button class="tpl-chip" onclick="nlLoadTemplate('nouveaute')">🌿 Nouveauté</button>
+                    <button class="tpl-chip" onclick="nlLoadTemplate('bienvenue')">👋 Bienvenue</button>
+                    <button class="tpl-chip" onclick="nlLoadTemplate('recette')">🍽 Recette</button>
+                    <button class="tpl-chip" onclick="nlLoadTemplate('evenement')">📅 Événement</button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- ===================== MODALS NEWSLETTER ===================== -->
+
+<!-- Modal : Ajouter abonné -->
+<div class="nl-modal-overlay" id="nl-modal-add-sub">
+    <div class="nl-modal">
+        <div class="nl-mheader">
+            <span class="nl-mtitle">➕ Ajouter un abonné</span>
+            <button class="modal-close" onclick="nlCloseModal('add-sub')">✕</button>
+        </div>
+        <div class="nl-mbody">
+            <div class="form-grid" style="grid-template-columns:1fr;">
+                <div class="form-group"><label>Email *</label><input type="email" id="nl-add-email" placeholder="email@exemple.com"></div>
+                <div class="form-group"><label>Nom (facultatif)</label><input type="text" id="nl-add-nom" placeholder="Nom affiché dans les emails"></div>
+            </div>
+        </div>
+        <div class="nl-mfooter">
+            <button class="btn btn-ghost" onclick="nlCloseModal('add-sub')">Annuler</button>
+            <button class="btn btn-primary" onclick="nlSubmitAddSub()">Ajouter</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal : Envoi -->
+<div class="nl-modal-overlay" id="nl-modal-send">
+    <div class="nl-modal nl-modal--xl">
+        <div class="nl-mheader">
+            <span class="nl-mtitle">📤 Envoyer la campagne</span>
+            <button class="modal-close" onclick="nlCloseModal('send')">✕</button>
+        </div>
+        <div class="nl-mbody">
+            <!-- Résumé campagne -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:18px;">
+                <div style="font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Campagne</div>
+                <div style="font-weight:600;color:var(--cream);" id="nl-send-sujet"></div>
+            </div>
+
+            <!-- Choix du type de destinataires -->
+            <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;">Qui doit recevoir cet email ?</div>
+
+            <div class="dest-option active" id="nl-dest-tous" onclick="nlSelectDest('tous')">
+                <input type="radio" name="nl-dest" value="tous" checked>
+                <div>
+                    <div class="dest-lbl">📋 Abonnés newsletter actifs</div>
+                    <div class="dest-sub" id="nl-dest-tous-count">—</div>
+                </div>
+            </div>
+            <div class="dest-option" id="nl-dest-tous_clients" onclick="nlSelectDest('tous_clients')">
+                <input type="radio" name="nl-dest" value="tous_clients">
+                <div>
+                    <div class="dest-lbl">👥 Tous les clients (comptes)</div>
+                    <div class="dest-sub" id="nl-dest-clients-count">—</div>
+                </div>
+            </div>
+            <div class="dest-option" id="nl-dest-tous_les_deux" onclick="nlSelectDest('tous_les_deux')">
+                <input type="radio" name="nl-dest" value="tous_les_deux">
+                <div>
+                    <div class="dest-lbl">✦ Abonnés + Clients (fusionnés, sans doublons)</div>
+                    <div class="dest-sub" id="nl-dest-both-count">—</div>
+                </div>
+            </div>
+            <div class="dest-option" id="nl-dest-selection" onclick="nlSelectDest('selection')">
+                <input type="radio" name="nl-dest" value="selection">
+                <div>
+                    <div class="dest-lbl">🎯 Sélection manuelle</div>
+                    <div class="dest-sub">Choisissez précisément les destinataires parmi abonnés et clients</div>
+                </div>
+            </div>
+
+            <!-- Sélection manuelle -->
+            <div id="nl-sub-selector" style="display:none;margin-top:14px;">
+                <!-- Filtres -->
+                <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                    <input type="text" id="nl-search-send" placeholder="🔍 Filtrer par nom ou email…" oninput="nlFilterSendSubs()" style="flex:1;min-width:180px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.83rem;outline:none;">
+                    <select id="nl-filter-send-type" onchange="nlFilterSendSubs()" style="padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text-dim);font-size:.83rem;outline:none;cursor:pointer;">
+                        <option value="">Tous types</option>
+                        <option value="newsletter">📋 Abonnés</option>
+                        <option value="client">👥 Clients</option>
+                    </select>
+                </div>
+                <div class="nl-sub-list">
+                    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(201,150,59,.05);border-bottom:1px solid var(--border);cursor:pointer;font-size:.8rem;color:var(--gold);" onclick="nlToggleAllSend()">
+                        <input type="checkbox" id="nl-check-all-send" style="accent-color:var(--gold);width:14px;height:14px;"> Tout sélectionner / désélectionner
+                    </div>
+                    <div id="nl-send-sub-list">
+                        <div style="padding:20px;text-align:center;color:var(--text-dim);font-size:.85rem;">⏳ Chargement…</div>
+                    </div>
+                </div>
+                <div style="margin-top:8px;font-size:.8rem;color:var(--gold);font-weight:500;" id="nl-send-sel-count">0 sélectionné(s)</div>
+            </div>
+        </div>
+        <div class="nl-mfooter">
+            <button class="btn btn-ghost" onclick="nlCloseModal('send')">Annuler</button>
+            <button class="btn btn-primary" id="nl-btn-confirm-send" onclick="nlConfirmSend()">📤 Confirmer l'envoi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal : Aperçu -->
+<div class="nl-modal-overlay" id="nl-modal-preview">
+    <div class="nl-modal nl-modal--lg">
+        <div class="nl-mheader">
+            <span class="nl-mtitle">👁 Aperçu</span>
+            <button class="modal-close" onclick="nlCloseModal('preview')">✕</button>
+        </div>
+        <div class="nl-mbody">
+            <div style="background:var(--surface2);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:.83rem;color:var(--text-dim);">
+                Sujet : <span id="nl-preview-sujet" style="color:var(--cream);font-weight:500;"></span>
+            </div>
+            <iframe id="nlPreviewFrame" class="nl-preview-frame" frameborder="0" style="width:100%;min-height:420px;border-radius:8px;"></iframe>
+        </div>
+        <div class="nl-mfooter">
+            <button class="btn btn-ghost" onclick="nlCloseModal('preview')">Fermer</button>
+            <button class="btn btn-primary" onclick="nlCloseModal('preview');nlOpenSendModal();">📤 Envoyer</button>
+        </div>
+    </div>
 </div>
 
 <!-- MODAL ÉDITION PRODUIT -->
@@ -1151,6 +1780,7 @@ function switchPage(page, btn) {
 
     if (page === 'ingredients' && allIngredients.length === 0) loadIngredients();
     if (page === 'users'       && allUsers.length === 0)       loadUsers();
+    if (page === 'newsletter'  && nlAllSubs.length === 0)      nlLoadSubs();
 }
 
 // ==========================================
@@ -1713,6 +2343,424 @@ function showToast(msg, type = 'success') {
     ct.appendChild(el);
     setTimeout(() => el.remove(), 3500);
 }
+
+// ==========================================
+// NEWSLETTER
+// ==========================================
+let nlAllSubs  = [];
+let nlAllCamps = [];
+let nlDestType = 'tous';
+
+// --- Navigation sous-onglets ---
+function nlSwitchTab(tab, btn) {
+    document.querySelectorAll('.nl-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nl-page').forEach(p => p.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    document.getElementById('nl-page-' + tab).classList.add('active');
+    if (tab === 'campagnes') nlLoadCampaigns();
+}
+
+// --- Chargement abonnés ---
+async function nlLoadSubs() {
+    try {
+        const res = await post({ action: 'nl_get_subscribers' });
+        nlAllSubs = res.data || [];
+        nlRenderSubs(nlAllSubs);
+        nlUpdateStats();
+    } catch(e) { showToast('Erreur newsletter : ' + e.message, 'error'); }
+}
+
+function nlRenderSubs(list) {
+    const tbody = document.getElementById('nl-tbody-sub');
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">📭</div><p>Aucun abonné pour l'instant.</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = list.map(s => {
+        const init = s.nom ? s.nom.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) : s.email[0].toUpperCase();
+        const date = s.subscribed_at ? new Date(s.subscribed_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+        const src  = { newsletter:'<span class="source-badge source-nl">Newsletter</span>', compte:'<span class="source-badge source-compte">Compte</span>', manuel:'<span class="source-badge source-manuel">Manuel</span>' }[s.source] || '';
+        const st   = s.actif==1 ? '<span class="alert-icon" style="background:var(--green-bg);border-color:#1e6b40;color:#4ecb78;animation:none;">● Actif</span>' : '<span class="td-cat" style="color:#e74c3c;border-color:var(--red-border);">● Inactif</span>';
+        return `<tr data-id="${s.id}" data-search="${escHtml((s.email+' '+(s.nom||'')).toLowerCase())}" data-actif="${s.actif}" data-source="${s.source}">
+            <td><input type="checkbox" class="nl-sub-check" value="${s.id}" onchange="nlUpdateBulkBar()" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer;"></td>
+            <td style="font-family:monospace;color:var(--cream);font-size:.85rem;">${escHtml(s.email)}</td>
+            <td><div style="display:flex;align-items:center;gap:10px;"><div class="sub-avatar-sm">${escHtml(init)}</div><span>${escHtml(s.nom||'—')}</span></div></td>
+            <td>${src}</td>
+            <td>${st}</td>
+            <td style="font-size:.78rem;color:var(--text-dim);">${date}</td>
+            <td><div style="display:flex;gap:6px;">
+                <button class="save-btn" style="background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue);" onclick="nlToggleSub(${s.id})" title="${s.actif==1?'Désactiver':'Réactiver'}">${s.actif==1?'⏸':'▶'}</button>
+                <button class="action-btn" onclick="nlDeleteSub(${s.id},'${escHtml(s.email)}')" title="Supprimer">🗑</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+}
+
+function nlFilterSubs() {
+    const search = document.getElementById('nl-search-sub').value.toLowerCase();
+    const src    = document.getElementById('nl-filter-source').value;
+    const actif  = document.getElementById('nl-filter-actif').value;
+    const filt   = nlAllSubs.filter(s =>
+        (s.email+' '+(s.nom||'')).toLowerCase().includes(search) &&
+        (!src   || s.source   === src) &&
+        (!actif || String(s.actif) === actif)
+    );
+    nlRenderSubs(filt);
+}
+
+async function nlToggleSub(id) {
+    await post({ action: 'nl_toggle_subscriber', id });
+    showToast('Statut mis à jour', 'success');
+    nlLoadSubs();
+}
+
+async function nlDeleteSub(id, email) {
+    if (!confirm(`Supprimer "${email}" de la newsletter ?`)) return;
+    await post({ action: 'nl_delete_subscriber', id });
+    showToast(`${email} supprimé`, 'success');
+    nlLoadSubs();
+}
+
+async function nlSyncClients(btn) {
+    btn.disabled = true; btn.textContent = '⏳ Sync…';
+    try {
+        const res = await post({ action: 'nl_sync_clients' });
+        showToast(`${res.added} nouveau(x) abonné(s) importé(s)`, 'success');
+        nlLoadSubs();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+    btn.disabled = false; btn.textContent = '🔄 Sync. clients';
+}
+
+function nlUpdateBulkBar() {
+    const n   = document.querySelectorAll('.nl-sub-check:checked').length;
+    const bar = document.getElementById('nl-bulk-bar');
+    document.getElementById('nl-bulk-count').textContent = n + ' abonné(s) sélectionné(s)';
+    bar.classList.toggle('visible', n > 0);
+}
+
+function nlToggleAllSubs(cb) {
+    document.querySelectorAll('.nl-sub-check').forEach(c => c.checked = cb.checked);
+    nlUpdateBulkBar();
+}
+
+function nlSendToSelected() {
+    const ids = [...document.querySelectorAll('.nl-sub-check:checked')].map(c => c.value);
+    if (!ids.length) { showToast('Aucun abonné sélectionné', 'error'); return; }
+    nlSwitchTab('rediger', document.querySelectorAll('.nl-tab')[2]);
+    setTimeout(() => nlOpenSendModalWithIds(ids), 200);
+}
+
+async function nlDeleteSelected() {
+    const ids = [...document.querySelectorAll('.nl-sub-check:checked')].map(c => c.value);
+    if (!ids.length || !confirm(`Supprimer ${ids.length} abonné(s) ?`)) return;
+    for (const id of ids) await post({ action: 'nl_delete_subscriber', id });
+    showToast(`${ids.length} abonné(s) supprimé(s)`, 'success');
+    nlLoadSubs();
+}
+
+// --- Ajouter manuellement ---
+function nlOpenAddSub() { nlOpenModal('add-sub'); }
+async function nlSubmitAddSub() {
+    const email = document.getElementById('nl-add-email').value.trim();
+    const nom   = document.getElementById('nl-add-nom').value.trim();
+    if (!email) { showToast('Email obligatoire', 'error'); return; }
+    try {
+        await post({ action: 'nl_add_subscriber', email, nom });
+        showToast(`"${email}" ajouté ✓`, 'success');
+        nlCloseModal('add-sub');
+        document.getElementById('nl-add-email').value = '';
+        document.getElementById('nl-add-nom').value   = '';
+        nlLoadSubs();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+// --- Stats ---
+function nlUpdateStats() {
+    const total  = nlAllSubs.length;
+    const actifs = nlAllSubs.filter(s => s.actif==1).length;
+    const camps  = nlAllCamps.length;
+    const sent   = nlAllCamps.reduce((a,c) => a + (parseInt(c.nb_envoyes)||0), 0);
+    document.getElementById('nl-stat-total').textContent  = total;
+    document.getElementById('nl-stat-actifs').textContent = actifs;
+    document.getElementById('nl-stat-camps').textContent  = camps;
+    document.getElementById('nl-stat-sent').textContent   = sent;
+    // Badge onglet
+    const badge = document.getElementById('badge-nl');
+    badge.textContent   = total;
+    badge.style.display = total > 0 ? '' : 'none';
+}
+
+// --- Campagnes ---
+async function nlLoadCampaigns() {
+    try {
+        const res = await post({ action: 'nl_get_campaigns' });
+        nlAllCamps = res.data || [];
+        nlRenderCampaigns(nlAllCamps);
+        nlUpdateStats();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+function nlRenderCampaigns(list) {
+    const wrap = document.getElementById('nl-camp-list-wrap');
+    document.getElementById('nl-camp-count').textContent = list.length + ' campagne(s)';
+    if (!list.length) {
+        wrap.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>Aucune campagne. Rédigez votre première !</p></div>`;
+        return;
+    }
+    wrap.innerHTML = '<div class="campaign-list">' + list.map(c => {
+        const date  = new Date(c.sent_at || c.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+        const badge = c.statut === 'envoye' ? '<span class="badge-sent">✓ Envoyée</span>' : '<span class="badge-draft">💾 Brouillon</span>';
+        return `<div class="campaign-card">
+            <div class="camp-icon">${c.statut==='envoye'?'📨':'📝'}</div>
+            <div class="camp-info">
+                <div class="camp-sujet">${escHtml(c.sujet)}</div>
+                <div class="camp-meta">${badge}<span>${date}</span>${c.nb_envoyes>0?`<span>📤 ${c.nb_envoyes} envoyé(s)</span>`:''}</div>
+            </div>
+            <div class="camp-actions">
+                <button class="save-btn" style="background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue);" onclick="nlEditCampaign(${c.id})">✏ Modifier</button>
+                ${c.statut==='brouillon'?`<button class="save-btn" onclick="nlEditCampaign(${c.id},true)">📤 Envoyer</button>`:''}
+                <button class="action-btn" onclick="nlDeleteCampaign(${c.id})" title="Supprimer">🗑</button>
+            </div>
+        </div>`;
+    }).join('') + '</div>';
+}
+
+async function nlEditCampaign(id, sendDirect=false) {
+    const res = await post({ action: 'nl_get_campaign', id });
+    const c   = res.data;
+    document.getElementById('nl-compose-id').value    = c.id;
+    document.getElementById('nl-compose-sujet').value = c.sujet;
+    document.getElementById('nlRichEditor').innerHTML  = c.contenu_html || '';
+    nlSwitchTab('rediger', document.querySelectorAll('.nl-tab')[2]);
+    if (sendDirect) setTimeout(nlOpenSendModal, 300);
+}
+
+async function nlDeleteCampaign(id) {
+    if (!confirm('Supprimer cette campagne ?')) return;
+    await post({ action: 'nl_delete_campaign', id });
+    showToast('Campagne supprimée', 'success');
+    nlLoadCampaigns();
+}
+
+// --- Éditeur ---
+function nlCmd(cmd, val=null) { document.getElementById('nlRichEditor').focus(); document.execCommand(cmd, false, val); }
+function nlInsertLink()  { const u=prompt('URL :','https://'); if(u) document.execCommand('createLink',false,u); }
+function nlInsertImg()   { const u=prompt('URL image :','https://'); if(u) document.execCommand('insertImage',false,u); }
+function nlInsertVar(v)  { document.getElementById('nlRichEditor').focus(); document.execCommand('insertText',false,v); }
+function nlClearEditor() { if(confirm('Effacer le contenu ?')){ document.getElementById('nlRichEditor').innerHTML=''; document.getElementById('nl-compose-sujet').value=''; document.getElementById('nl-compose-id').value=''; } }
+
+// --- Templates ---
+const NL_TEMPLATES = {
+    promo: {
+        sujet: '🎁 Offre exclusive — -15% sur votre prochaine commande',
+        html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#faf8f3;border-radius:12px;overflow:hidden;"><div style="background:linear-gradient(135deg,#1a1611,#2a2218);padding:40px 32px;text-align:center;"><h1 style="color:#c9963b;font-size:2rem;margin:0 0 8px;">WakAroma</h1><p style="color:#a89878;margin:0;font-size:.9rem;">Des épices d'exception</p></div><div style="padding:32px;"><p style="color:#5c4a2a;">Bonjour {{NOM}},</p><h2 style="color:#1a1611;">Une offre rien que pour vous ✦</h2><p style="color:#5c4a2a;line-height:1.7;">Bénéficiez de <strong style="color:#c9963b;">-15% sur toute votre prochaine commande</strong>.</p><div style="margin:28px 0;text-align:center;"><a href="https://wakaroma.fr" style="background:#c9963b;color:#1a1200;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;">Profiter de l'offre →</a></div><p style="color:#8a7a62;font-size:.82rem;">Offre valable jusqu'au [DATE]. Non cumulable.</p></div><div style="background:#2a2218;padding:20px 32px;text-align:center;"><p style="color:#7a5a22;font-size:.78rem;margin:0;">© WakAroma</p></div></div>`
+    },
+    nouveaute: {
+        sujet: '🌿 Nouvelle collection — Découvrez nos dernières épices',
+        html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#faf8f3;border-radius:12px;overflow:hidden;"><div style="background:linear-gradient(135deg,#1a1611,#2a2218);padding:40px 32px;text-align:center;"><h1 style="color:#c9963b;font-size:2rem;margin:0 0 8px;">WakAroma</h1><p style="color:#a89878;margin:0;">Les saveurs du monde</p></div><div style="padding:32px;"><p style="color:#5c4a2a;">Bonjour {{NOM}},</p><h2 style="color:#1a1611;">Nos nouvelles épices sont arrivées 🌿</h2><p style="color:#5c4a2a;line-height:1.7;">Nous avons sélectionné pour vous de nouvelles épices rares directement sourced auprès de producteurs passionnés.</p><div style="background:#fff;border:1px solid #e8dcc8;border-radius:8px;padding:20px;margin:20px 0;"><p style="margin:0;color:#5c4a2a;font-style:italic;">✦ [Épice] — [Description]</p></div><div style="text-align:center;margin:24px 0;"><a href="https://wakaroma.fr" style="background:#c9963b;color:#1a1200;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;">Découvrir →</a></div></div><div style="background:#2a2218;padding:20px 32px;text-align:center;"><p style="color:#7a5a22;font-size:.78rem;margin:0;">© WakAroma</p></div></div>`
+    },
+    bienvenue: {
+        sujet: '👋 Bienvenue dans la communauté WakAroma !',
+        html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#faf8f3;border-radius:12px;overflow:hidden;"><div style="background:linear-gradient(135deg,#1a1611,#2a2218);padding:48px 32px;text-align:center;"><h1 style="color:#c9963b;font-size:2.2rem;margin:0 0 8px;">Bienvenue ✦</h1><p style="color:#a89878;margin:0;">Vous faites partie de la famille WakAroma</p></div><div style="padding:32px;"><p style="color:#5c4a2a;font-size:1.05rem;">Bonjour {{NOM}},</p><p style="color:#5c4a2a;line-height:1.7;">Merci de nous rejoindre ! Vous recevrez désormais nos actualités, recettes exclusives et offres en avant-première.</p><div style="border-left:3px solid #c9963b;padding-left:16px;margin:20px 0;color:#8a7a62;font-style:italic;">« Les épices ne sont pas seulement des ingrédients, ce sont des histoires. »</div><div style="text-align:center;margin:28px 0;"><a href="https://wakaroma.fr" style="background:#c9963b;color:#1a1200;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;">Visiter la boutique →</a></div></div><div style="background:#2a2218;padding:20px 32px;text-align:center;"><p style="color:#7a5a22;font-size:.78rem;margin:0;">© WakAroma</p></div></div>`
+    },
+    recette: {
+        sujet: '🍽 Recette du mois — [Titre de la recette]',
+        html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#faf8f3;border-radius:12px;overflow:hidden;"><div style="background:linear-gradient(135deg,#1a1611,#2a2218);padding:40px 32px;text-align:center;"><h1 style="color:#c9963b;font-size:2rem;margin:0 0 8px;">La recette du mois</h1><p style="color:#a89878;margin:0;">[Titre]</p></div><div style="padding:32px;"><p style="color:#5c4a2a;">Bonjour {{NOM}},</p><h3 style="color:#1a1611;margin:16px 0 8px;">Ingrédients</h3><ul style="color:#5c4a2a;line-height:2;padding-left:18px;"><li>[Ingrédient 1]</li><li>[Épice WakAroma]</li></ul><h3 style="color:#1a1611;margin:16px 0 8px;">Préparation</h3><p style="color:#5c4a2a;line-height:1.7;">[Étapes…]</p><div style="text-align:center;margin:24px 0;"><a href="https://wakaroma.fr" style="background:#c9963b;color:#1a1200;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;">Commander les épices →</a></div></div><div style="background:#2a2218;padding:20px 32px;text-align:center;"><p style="color:#7a5a22;font-size:.78rem;margin:0;">© WakAroma</p></div></div>`
+    },
+    evenement: {
+        sujet: '📅 Événement — [Nom]',
+        html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#faf8f3;border-radius:12px;overflow:hidden;"><div style="background:linear-gradient(135deg,#1a1611,#2a2218);padding:40px 32px;text-align:center;"><p style="color:#a89878;margin:0 0 8px;font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;">[DATE]</p><h1 style="color:#c9963b;font-size:1.8rem;margin:0;">[Nom de l'événement]</h1></div><div style="padding:32px;"><p style="color:#5c4a2a;">Bonjour {{NOM}},</p><p style="color:#5c4a2a;line-height:1.7;">Nous vous invitons à [description].</p><div style="background:#fff;border:1px solid #e8dcc8;border-radius:8px;padding:20px;margin:20px 0;display:flex;gap:20px;flex-wrap:wrap;"><div><strong style="color:#c9963b;">📅</strong> [Date]</div><div><strong style="color:#c9963b;">📍</strong> [Lieu]</div><div><strong style="color:#c9963b;">⏰</strong> [Heure]</div></div><div style="text-align:center;margin:24px 0;"><a href="https://wakaroma.fr" style="background:#c9963b;color:#1a1200;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block;">Je participe →</a></div></div><div style="background:#2a2218;padding:20px 32px;text-align:center;"><p style="color:#7a5a22;font-size:.78rem;margin:0;">© WakAroma</p></div></div>`
+    }
+};
+
+function nlLoadTemplate(key) {
+    if (!confirm('Charger ce template ? Le contenu actuel sera remplacé.')) return;
+    const t = NL_TEMPLATES[key];
+    document.getElementById('nl-compose-sujet').value = t.sujet;
+    document.getElementById('nlRichEditor').innerHTML  = t.html;
+    document.getElementById('nl-compose-id').value    = '';
+    showToast('Template chargé ✓', 'success');
+}
+
+// --- Brouillon ---
+async function nlSaveDraft() {
+    const sujet = document.getElementById('nl-compose-sujet').value.trim();
+    const html  = document.getElementById('nlRichEditor').innerHTML.trim();
+    const id    = document.getElementById('nl-compose-id').value;
+    if (!sujet) { showToast('Le sujet est obligatoire', 'error'); return; }
+    if (!html)  { showToast('Le contenu est vide', 'error'); return; }
+    try {
+        const res = await post({ action: 'nl_save_campaign', id, sujet, contenu_html: html });
+        document.getElementById('nl-compose-id').value = res.id;
+        showToast('Brouillon sauvegardé ✓', 'success');
+        nlLoadCampaigns();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+// --- Aperçu ---
+function nlOpenPreview() {
+    const sujet = document.getElementById('nl-compose-sujet').value || '(sans sujet)';
+    const html  = document.getElementById('nlRichEditor').innerHTML;
+    document.getElementById('nl-preview-sujet').textContent = sujet;
+    document.getElementById('nlPreviewFrame').srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:16px;background:#fff;font-family:Georgia,serif;}</style></head><body>${html}</body></html>`;
+    nlOpenModal('preview');
+}
+
+// --- Envoi modal ---
+let nlAllRecipients = []; // liste fusionnée abonnés + clients
+
+async function nlOpenSendModal() {
+    const sujet = document.getElementById('nl-compose-sujet').value.trim();
+    const html  = document.getElementById('nlRichEditor').innerHTML.trim();
+    if (!sujet) { showToast('Le sujet est obligatoire', 'error'); return; }
+    if (!html)  { showToast('Le contenu est vide', 'error'); return; }
+    document.getElementById('nl-send-sujet').textContent = sujet;
+
+    // Charger tous les destinataires (fusionnés)
+    try {
+        const res = await post({ action: 'nl_get_all_recipients' });
+        nlAllRecipients = res.data || [];
+    } catch(e) { nlAllRecipients = []; }
+
+    const subs    = nlAllRecipients.filter(r => r.source === 'newsletter' && r.actif == 1);
+    const clients = nlAllRecipients.filter(r => r.source === 'client');
+    const both    = nlAllRecipients; // déjà dédupliqués côté serveur
+
+    document.getElementById('nl-dest-tous-count').textContent    = `${subs.length} abonné(s) actif(s)`;
+    document.getElementById('nl-dest-clients-count').textContent = `${clients.length} client(s) avec un compte`;
+    document.getElementById('nl-dest-both-count').textContent    = `${both.length} destinataire(s) au total (sans doublons)`;
+
+    nlSelectDest('tous');
+    nlPopulateSendList(nlAllRecipients);
+    nlOpenModal('send');
+}
+
+function nlOpenSendModalWithIds(ids) {
+    nlOpenSendModal().then ? nlOpenSendModal().then(() => {
+        nlSelectDest('selection');
+        setTimeout(() => {
+            document.querySelectorAll('.nl-send-check').forEach(cb => cb.checked = ids.includes(cb.value));
+            nlUpdateSendCount();
+        }, 150);
+    }) : setTimeout(() => {
+        nlSelectDest('selection');
+        setTimeout(() => {
+            document.querySelectorAll('.nl-send-check').forEach(cb => cb.checked = ids.map(String).includes(cb.value));
+            nlUpdateSendCount();
+        }, 150);
+    }, 400);
+}
+
+function nlSelectDest(type) {
+    nlDestType = type;
+    document.querySelectorAll('.dest-option').forEach(el => el.classList.remove('active'));
+    const el = document.getElementById('nl-dest-' + type);
+    if (el) el.classList.add('active');
+    document.querySelectorAll('.dest-option input[type=radio]').forEach(r => r.checked = (r.value === type));
+    document.getElementById('nl-sub-selector').style.display = type === 'selection' ? 'block' : 'none';
+}
+
+function nlPopulateSendList(list) {
+    const wrap = document.getElementById('nl-send-sub-list');
+    if (!list.length) {
+        wrap.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-dim);font-size:.85rem;">Aucun destinataire disponible</div>';
+        return;
+    }
+    wrap.innerHTML = list.map(s => {
+        const init   = s.nom ? s.nom.trim().split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2) : s.email[0].toUpperCase();
+        const isNews = s.source === 'newsletter';
+        const srcBadge = isNews
+            ? '<span class="source-badge source-nl" style="font-size:.65rem;">📋 Abonné</span>'
+            : '<span class="source-badge source-compte" style="font-size:.65rem;">👥 Client</span>';
+        const inactive = s.actif == 0 ? ' (inactif)' : '';
+        return `<div class="nl-sub-item" data-source="${s.source}" data-search="${(s.email+' '+(s.nom||'')).toLowerCase()}">
+            <input type="checkbox" class="nl-send-check" value="${s.uid}" onchange="nlUpdateSendCount()" style="accent-color:var(--gold);width:14px;height:14px;flex-shrink:0;">
+            <div class="sub-avatar-sm" style="width:28px;height:28px;font-size:.68rem;flex-shrink:0;">${escHtml(init)}</div>
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <span style="font-size:.85rem;color:var(--cream);font-weight:500;">${escHtml((s.nom||'').trim()||'—')}${inactive}</span>
+                    ${srcBadge}
+                </div>
+                <div style="font-size:.75rem;color:var(--text-dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(s.email)}</div>
+            </div>
+        </div>`;
+    }).join('');
+    nlUpdateSendCount();
+}
+
+function nlFilterSendSubs() {
+    const q    = document.getElementById('nl-search-send').value.toLowerCase();
+    const type = document.getElementById('nl-filter-send-type').value;
+    document.querySelectorAll('#nl-send-sub-list .nl-sub-item').forEach(item => {
+        const matchQ = !q || item.dataset.search.includes(q);
+        const matchT = !type || item.dataset.source === type;
+        item.style.display = (matchQ && matchT) ? '' : 'none';
+    });
+}
+
+function nlToggleAllSend() {
+    const cb = document.getElementById('nl-check-all-send');
+    cb.checked = !cb.checked;
+    document.querySelectorAll('#nl-send-sub-list .nl-sub-item:not([style*="display: none"]) .nl-send-check').forEach(c => c.checked = cb.checked);
+    nlUpdateSendCount();
+}
+
+function nlUpdateSendCount() {
+    const n = document.querySelectorAll('.nl-send-check:checked').length;
+    document.getElementById('nl-send-sel-count').textContent = n + ' sélectionné(s)';
+}
+
+async function nlConfirmSend() {
+    let campId = document.getElementById('nl-compose-id').value;
+    const sujet = document.getElementById('nl-compose-sujet').value.trim();
+    const html  = document.getElementById('nlRichEditor').innerHTML.trim();
+
+    if (!campId) {
+        try {
+            const res = await post({ action: 'nl_save_campaign', id: '', sujet, contenu_html: html });
+            campId = res.id;
+            document.getElementById('nl-compose-id').value = campId;
+        } catch(e) { showToast('Erreur sauvegarde : ' + e.message, 'error'); return; }
+    }
+
+    let destinataires = nlDestType; // 'tous', 'tous_clients', 'tous_les_deux'
+    let nbDest = 0;
+
+    if (nlDestType === 'selection') {
+        const uids = [...document.querySelectorAll('.nl-send-check:checked')].map(c => c.value);
+        if (!uids.length) { showToast('Sélectionnez au moins un destinataire', 'error'); return; }
+        destinataires = JSON.stringify(uids);
+        nbDest = uids.length;
+    } else if (nlDestType === 'tous') {
+        nbDest = nlAllRecipients.filter(r => r.source === 'newsletter' && r.actif == 1).length;
+    } else if (nlDestType === 'tous_clients') {
+        nbDest = nlAllRecipients.filter(r => r.source === 'client').length;
+    } else if (nlDestType === 'tous_les_deux') {
+        nbDest = nlAllRecipients.length;
+    }
+
+    if (!confirm(`Envoyer cet email à ${nbDest} destinataire(s) ?`)) return;
+
+    const btn = document.getElementById('nl-btn-confirm-send');
+    btn.disabled = true; btn.textContent = '⏳ Envoi en cours…';
+
+    try {
+        const res = await post({ action: 'nl_send_campaign', campaign_id: campId, destinataires });
+        nlCloseModal('send');
+        showToast(`✓ ${res.sent}/${res.total} email(s) envoyé(s) avec succès !`, 'success');
+        if (res.errors?.length) showToast(`⚠ ${res.errors.length} échec(s) d'envoi`, 'error');
+        nlLoadCampaigns();
+        nlLoadSubs();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+    btn.disabled = false; btn.textContent = '📤 Confirmer l\'envoi';
+}
+
+// --- Modals ---
+function nlOpenModal(id)  { document.getElementById('nl-modal-' + id).classList.add('open'); }
+function nlCloseModal(id) { document.getElementById('nl-modal-' + id).classList.remove('open'); }
+document.querySelectorAll('.nl-modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
 
 // ==========================================
 // PRÉ-CHARGEMENT INGRÉDIENTS PAR DÉFAUT

@@ -427,10 +427,11 @@
 
 .hist-timeline__title {
     font-family: 'Playfair Display', 'Cormorant Garamond', serif;
-    font-size: 2.3rem;
+    font-size: 3rem;
     font-weight: 700;
     color: #fff;
     letter-spacing: -0.01em;
+    margin-top: 0.8rem;
     text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
@@ -484,7 +485,7 @@
     backdrop-filter: blur(12px);
     border: var(--border-luxury);
     border-radius: 20px;
-    padding: 1.8rem 2rem;
+    padding: 2.4rem 2.6rem;
     box-shadow: var(--shadow-luxury);
     transition: all 0.3s cubic-bezier(0.2,0.9,0.4,1.1);
     position: relative;
@@ -502,32 +503,34 @@
 
 .hist-timeline__year {
     display: inline-block;
-    font-size: 0.65rem;
+    font-size: 0.78rem;
     letter-spacing: 0.25em;
     text-transform: uppercase;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--gold-light);
-    margin-bottom: 0.6rem;
-    background: rgba(232,200,154,0.15);
-    padding: 0.2rem 0.7rem;
+    margin-bottom: 0.9rem;
+    background: rgba(232,200,154,0.18);
+    padding: 0.3rem 1rem;
     border-radius: 20px;
+    border: 1px solid rgba(232,200,154,0.3);
 }
 
 .hist-timeline__card h4 {
     font-family: 'Playfair Display', 'Cormorant Garamond', serif;
-    font-size: 1.25rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: #fff;
-    margin-bottom: 0.75rem;
-    line-height: 1.35;
+    margin-bottom: 1rem;
+    line-height: 1.3;
 }
 
 .hist-timeline__card p {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.75;
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.85;
     font-weight: 400;
+    letter-spacing: 0.01em;
 }
 
 .hist-timeline__icon {
@@ -593,7 +596,7 @@
 
 .hist-valeurs__title {
     font-family: 'Playfair Display', 'Cormorant Garamond', serif;
-    font-size: 2.3rem;
+    font-size: 3rem;
     font-weight: 700;
     color: #fff;
     letter-spacing: -0.01em;
@@ -620,7 +623,7 @@
     backdrop-filter: blur(8px);
     border: var(--border-luxury);
     border-radius: 24px;
-    padding: 2.2rem 1.8rem;
+    padding: 2.8rem 2.2rem;
     box-shadow: var(--shadow-luxury);
     transition: all 0.3s ease;
     text-align: center;
@@ -634,26 +637,27 @@
 }
 
 .hist-valeurs__icon {
-    font-size: 2.5rem;
-    margin-bottom: 1.2rem;
+    font-size: 3rem;
+    margin-bottom: 1.4rem;
     color: var(--gold-light);
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
 .hist-valeurs__card h4 {
     font-family: 'Playfair Display', 'Cormorant Garamond', serif;
-    font-size: 1.2rem;
+    font-size: 1.55rem;
     font-weight: 700;
     color: #fff;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
 }
 
 .hist-valeurs__card p {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 0.87rem;
-    color: rgba(255,255,255,0.65);
-    line-height: 1.7;
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.82);
+    line-height: 1.85;
     font-weight: 400;
+    letter-spacing: 0.01em;
 }
 
 /* ── CTA ── */
@@ -693,20 +697,21 @@
 
 .hist-cta__title {
     font-family: 'Playfair Display', 'Cormorant Garamond', serif;
-    font-size: 2.2rem;
+    font-size: 2.8rem;
     font-weight: 700;
     color: #fff;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.4rem;
     letter-spacing: -0.01em;
 }
 
 .hist-cta__sub {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 0.96rem;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.75;
+    font-size: 1.25rem;
+    color: rgba(255,255,255,0.88);
+    line-height: 1.85;
     margin-bottom: 2.5rem;
     font-weight: 400;
+    letter-spacing: 0.01em;
 }
 
 .hist-cta__btn {
@@ -762,7 +767,7 @@
     }
     
     .hist-cta__title {
-        font-size: 1.8rem;
+        font-size: 2rem;
     }
 }
 
@@ -772,11 +777,11 @@
     }
     
     .hist-timeline__card h4 {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
     }
     
     .hist-valeurs__card {
-        padding: 1.5rem 1.2rem;
+        padding: 2rem 1.6rem;
     }
 }
 

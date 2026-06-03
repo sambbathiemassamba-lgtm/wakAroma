@@ -19,13 +19,19 @@
             </div>
         </div>
 
-        <!-- Barre de recherche -->
-        <div class="header__search">
-            <form action="" method="POST" class="search-form">
-                <input type="search" placeholder="Rechercher un produit" class="search-form__input">
-                <button type="submit" class="search-form__button">Rechercher</button>
-            </form>
-        </div>
+       <!-- Barre de recherche -->
+<div class="header__search">
+    <form action="index.php" method="GET" class="search-form">
+        <input 
+            type="search" 
+            name="q"
+            placeholder="Rechercher un produit" 
+            class="search-form__input"
+            value="<?= htmlspecialchars($_GET['q'] ?? '') ?>"
+        >
+        <button type="submit" class="search-form__button">Rechercher</button>
+    </form>
+</div>
     
         <!-- Actions utilisateur -->
             <nav class="header__actions">

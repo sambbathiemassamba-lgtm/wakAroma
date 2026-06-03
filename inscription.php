@@ -10,8 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
     $nom = htmlspecialchars(trim($_POST['nom'] ?? ''));
     $prenom = htmlspecialchars(trim($_POST['prenom'] ?? ''));
-    $numero = htmlspecialchars($_POST['indicatif']);
-    $numero .= htmlspecialchars(trim($_POST['numero'] ?? ''));
+    // Indicatif vient du champ hidden mis a jour par le JS du dropdown
+    $indicatif = trim($_POST['indicatif'] ?? '+33');
+    $tel        = trim($_POST['numero']    ?? '');
+    // Nettoyer les espaces/tirets et recoller indicatif + numero
+    $tel_clean  = preg_replace('/[\s\-\.]/', '', $tel);
+    // Eviter la double presence de l'indicatif si le user tape +33...
+    if (str_starts_with($tel_clean, $indicatif)) {
+        $numero = $tel_clean;
+    } else {
+        $numero = $indicatif . ltrim($tel_clean, '0');
+    }
     $email =  htmlspecialchars(trim($_POST['email'] ?? ''));
     $email_conf = htmlspecialchars(trim($_POST['email_conf'] ?? ''));
     $password =   htmlspecialchars($_POST['password'] ?? '');
@@ -38,14 +47,23 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         // on cree l'utilisateur
         $inserted = insertion_users($nom, $prenom, $email, $numero, $password_hash, $tokend);
 
-        if ($inserted) {
+        if ($inserted === true) {
             $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
-            $_SESSION['email'] = $email;
+            $_SESSION['email']   = $email;
             header("Location: confirmation.php");
             exit();
         }
 
-        $_SESSION['error'] = "E-mail est incorrect.";
+        if ($inserted === 'mail_failed') {
+            // Compte cree mais mail non envoye -> on redirige quand meme
+            $_SESSION['warning'] = "Compte créé ! L'email de confirmation n'a pas pu être envoyé. Vérifiez vos spams ou demandez un renvoi.";
+            $_SESSION['email']   = $email;
+            header("Location: confirmation.php");
+            exit();
+        }
+
+        // false -> doublon ou erreur SQL
+        $_SESSION['error'] = "Cette adresse email ou ce numéro est déjà utilisé.";
     }
 
 }
@@ -122,6 +140,11 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         <?php if(!empty($_SESSION['error'])):?>
             <div class="alert alert--error"><?= $_SESSION['error'] ?></div>
             <?php unset($_SESSION['error']); ?>
+        <?php endif;?>
+
+        <?php if(!empty($_SESSION['warning'])):?>
+            <div class="alert alert--warning" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;padding:10px 14px;border-radius:8px;margin-bottom:10px;"><?= $_SESSION['warning'] ?></div>
+            <?php unset($_SESSION['warning']); ?>
         <?php endif;?>
 
         <!-- FORMULAIRE -->

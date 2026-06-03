@@ -103,27 +103,30 @@ function message_errors(
         }
     }
 
-    // verification si l'email exist dans la base de donne 
+    // verification si l'email ou le numero existe deja en base
     global $pdo;
-    $check = $pdo->prepare("
-        SELECT id_user 
-        FROM users 
-        WHERE email = :email OR numero = :numero
-    ");
-
-    $check->execute([
-        ':email' => $email,
-        ':numero' => $numero
-    ]);
-
-    if ($check->fetch()) {
-        $errors[] = "L'email ou le numéro existe déjà.";
+    try {
+        $check = $pdo->prepare("
+            SELECT id_user 
+            FROM users 
+            WHERE email = :email OR numero = :numero
+        ");
+        $check->execute([
+            ':email'  => $email,
+            ':numero' => $numero
+        ]);
+        if ($check->fetch()) {
+            $errors[] = "L'email ou le numéro est déjà utilisé.";
+        }
+    } catch (Exception $e) {
+        // La table ou colonne n'existe pas encore — on ignore le check doublon
+        // (la contrainte UNIQUE en base bloquera de toute façon l'INSERT)
     }
 
     return $errors;
 }
 
-// fonction pour connecter l'utilisateur
+// Retourne : true | 'mail_failed' | false
 function insertion_users(
     string $nom,
     string $prenom,
@@ -131,37 +134,37 @@ function insertion_users(
     string $numero,
     string $password_hash,
     string $tokend
-): bool
+): bool|string
 {
     global $pdo;
 
+    // 1. INSERT en base
     try {
         $insert = $pdo->prepare("
             INSERT INTO users (nom, prenom, email, numero, password_hash, confirmation_token)
             VALUES (:nom, :prenom, :email, :numero, :password_hash, :confirmation_token)
         ");
-
         $insert->execute([
-            ':nom' => $nom,
-            ':prenom' => $prenom,
-            ':email' => $email,
-            ':numero' => $numero,
-            ':password_hash' => $password_hash,
+            ':nom'                => $nom,
+            ':prenom'             => $prenom,
+            ':email'              => $email,
+            ':numero'             => $numero,
+            ':password_hash'      => $password_hash,
             ':confirmation_token' => $tokend
         ]);
+    } catch (Exception $e) {
+        return false; // doublon ou erreur SQL
+    }
 
+    // 2. Envoi du mail — ne bloque plus l'inscription si ca echoue
+    try {
         $mail = new PHPMailer(true);
-        $sendmail = EnvoieMail($mail, $email, $tokend);
-
-        if ($sendmail === true) {
+        if (EnvoieMail($mail, $email, $tokend) === true) {
             return true;
         }
-
-        $pdo->prepare("DELETE FROM users WHERE email = :email")->execute([':email' => $email]);
-        return false;
+        return 'mail_failed';
     } catch (Exception $e) {
-        $pdo->prepare("DELETE FROM users WHERE email = :email")->execute([':email' => $email]);
-        return false;
+        return 'mail_failed';
     }
 }
 
@@ -387,4 +390,48 @@ function recuperation_produit_by_id(int $id_produit): ?object
     $produit->caracteristiques = $stmtCarac->fetchAll(PDO::FETCH_OBJ);
  
     return $produit;
+}
+
+/**
+ * ===============================================================================
+ * RECHERCHE PRODUITS
+ * ===============================================================================
+ */
+function recherche_produits(string $query): array
+{
+    global $pdo;
+
+    $search = '%' . trim($query) . '%';
+
+    try {
+        $req = $pdo->prepare("
+            SELECT 
+                produits.id_produit,
+                produits.nom,
+                produits.description,
+                produits.prix,
+                produits.stock,
+                COALESCE(
+                    MAX(CASE WHEN images.is_cover = 1 THEN images.url_image END),
+                    MIN(images.url_image)
+                ) AS url_image
+            FROM produits
+            LEFT JOIN images ON produits.id_produit = images.id_produit
+            WHERE produits.nom LIKE :q
+               OR produits.description LIKE :q
+            GROUP BY
+                produits.id_produit,
+                produits.nom,
+                produits.description,
+                produits.prix,
+                produits.stock
+            ORDER BY produits.nom ASC
+        ");
+
+        $req->execute([':q' => $search]);
+        return $req->fetchAll(PDO::FETCH_OBJ);
+
+    } catch (Exception $e) {
+        return [];
+    }
 }
