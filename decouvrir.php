@@ -22,6 +22,24 @@ if (!$produit) {
     header('Location: index.php');
     exit();
 }
+
+// ── Récupération de TOUTES les images depuis la table `images` ──
+// (indépendamment de ce que retourne recuperation_produit_by_id)
+try {
+    $pdo_dec = new PDO(
+        "mysql:host=localhost;dbname=wakaroma;charset=utf8",
+        "root", "",
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+    $stmt_imgs = $pdo_dec->prepare("SELECT id_image, url_image FROM images WHERE id_produit = ? ORDER BY id_image");
+    $stmt_imgs->execute([$id_produit]);
+    $images_bdd = $stmt_imgs->fetchAll(PDO::FETCH_OBJ);
+    if (!empty($images_bdd)) {
+        $produit->images = $images_bdd;
+    }
+} catch (Exception $e) {
+    // Si la requête échoue, on laisse $produit->images tel quel (fallback natif)
+}
 ?>
 <?php require_once 'headear.php'; ?>
 
@@ -79,32 +97,53 @@ if (!$produit) {
     .produit-hero { grid-template-columns: 1fr; gap: 32px; }
 }
 
-/* Galerie image */
+/* ─── CAROUSEL ─── */
 .produit-hero__galerie {
     position: sticky;
     top: 100px;
 }
-.produit-hero__img-main {
+
+/* Conteneur principal du carousel */
+.carousel {
+    position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
     border-radius: 20px;
     overflow: hidden;
     background: var(--sable);
+    box-shadow: 0 20px 60px rgba(61,43,26,0.12);
+    user-select: none;
+}
+
+/* Track qui glisse */
+.carousel__track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+/* Chaque slide */
+.carousel__slide {
+    min-width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    box-shadow: 0 20px 60px rgba(61,43,26,0.12);
+    background: var(--sable);
 }
-.produit-hero__img-main img {
-    width: 85%;
-    height: 85%;
+.carousel__slide img {
+    width: 82%;
+    height: 82%;
     object-fit: contain;
-    transition: transform 0.5s cubic-bezier(0.22,1,0.36,1);
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
 }
-.produit-hero__img-main:hover img { transform: scale(1.06); }
+.carousel:hover .carousel__slide.active img {
+    transform: scale(1.05);
+}
 
-/* Badge statut dans l'image */
+/* Badge statut */
 .produit-hero__badge {
     position: absolute;
     top: 16px;
@@ -115,6 +154,7 @@ if (!$produit) {
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
+    z-index: 10;
 }
 .produit-hero__badge--new      { background: #e8f5ee; color: var(--vert); }
 .produit-hero__badge--low      { background: #fff3e0; color: #e67e22; }
@@ -137,9 +177,99 @@ if (!$produit) {
     justify-content: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 10;
 }
-.produit-hero__wishlist:hover { transform: scale(1.1); box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
-.produit-hero__wishlist.actif { color: #e74c3c; }
+.produit-hero__wishlist:hover  { transform: scale(1.1); box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
+.produit-hero__wishlist.actif  { color: #e74c3c; }
+
+/* Flèches */
+.carousel__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: rgba(255,255,255,0.92);
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(61,43,26,0.18);
+    transition: background 0.2s, transform 0.2s, opacity 0.2s;
+    opacity: 0;
+}
+.carousel:hover .carousel__arrow { opacity: 1; }
+.carousel__arrow:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
+.carousel__arrow svg { width: 18px; height: 18px; stroke: var(--brun); stroke-width: 2.5; fill: none; }
+.carousel__arrow--prev { left: 12px; }
+.carousel__arrow--next { right: 12px; }
+.carousel__arrow:disabled { opacity: 0.3 !important; cursor: default; }
+
+/* Toujours visibles sur mobile */
+@media (max-width: 768px) {
+    .carousel__arrow { opacity: 1; width: 36px; height: 36px; }
+}
+
+/* Points de navigation */
+.carousel__dots {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 7px;
+    z-index: 10;
+}
+.carousel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(61,43,26,0.25);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.25s, transform 0.25s;
+}
+.carousel__dot.active {
+    background: var(--or);
+    transform: scale(1.3);
+}
+
+/* Miniatures sous le carousel */
+.carousel__thumbs {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+.carousel__thumbs::-webkit-scrollbar { display: none; }
+.carousel__thumb {
+    flex-shrink: 0;
+    width: 68px;
+    height: 68px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--sable);
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.carousel__thumb img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+    pointer-events: none;
+}
+.carousel__thumb.active { border-color: var(--or); transform: scale(1.05); }
+.carousel__thumb:hover:not(.active) { border-color: #d4c4a8; }
 
 /* ─── Infos produit ─── */
 .produit-hero__infos {
@@ -192,7 +322,8 @@ if (!$produit) {
 .produit-hero__desc {
     font-size: 1rem;
     line-height: 1.75;
-    color: #f5f5f5;
+    color: #ffffff;
+    font-weight: border;
 }
 
 /* Caractéristiques */
@@ -541,13 +672,42 @@ if (!$produit) {
     <!-- ── Hero Produit ── -->
     <div class="produit-hero">
 
-        <!-- Image -->
+        <!-- Carousel -->
         <div class="produit-hero__galerie">
-            <div class="produit-hero__img-main">
-                <img
-                    src="<?= htmlspecialchars($produit->image_url ?? $produit->url_image ?? 'images/placeholder.png') ?>"
-                    alt="<?= htmlspecialchars($produit->nom) ?>"
-                >
+
+            <?php
+                // Récupération de toutes les images du produit
+                $images_produit = [];
+                if (!empty($produit->images) && is_array($produit->images)) {
+                    $images_produit = $produit->images;
+                } elseif (!empty($produit->url_image)) {
+                    $images_produit = [(object)['url_image' => $produit->url_image]];
+                } elseif (!empty($produit->image_url)) {
+                    $images_produit = [(object)['url_image' => $produit->image_url]];
+                }
+                if (empty($images_produit)) {
+                    $images_produit = [(object)['url_image' => 'images/placeholder.png']];
+                }
+                $nb_images = count($images_produit);
+            ?>
+
+            <div class="carousel" id="carousel-produit"
+                 data-total="<?= $nb_images ?>"
+                 data-autoplay="4000">
+
+                <!-- Track -->
+                <div class="carousel__track" id="carousel-track">
+                    <?php foreach ($images_produit as $idx => $img): ?>
+                    <div class="carousel__slide <?= $idx === 0 ? 'active' : '' ?>">
+                        <img
+                            src="<?= htmlspecialchars($img->url_image ?? 'images/placeholder.png') ?>"
+                            alt="<?= htmlspecialchars($produit->nom) ?> — photo <?= $idx + 1 ?>"
+                            loading="<?= $idx === 0 ? 'eager' : 'lazy' ?>"
+                        >
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
                 <!-- Badge stock -->
                 <?php if ((int)$produit->stock <= 5 && (int)$produit->stock > 0): ?>
                     <span class="produit-hero__badge produit-hero__badge--low">Dernières pièces</span>
@@ -559,8 +719,45 @@ if (!$produit) {
 
                 <!-- Wishlist -->
                 <button class="produit-hero__wishlist" aria-label="Ajouter aux favoris" onclick="this.classList.toggle('actif')">♡</button>
+
+                <?php if ($nb_images > 1): ?>
+                <!-- Flèche gauche -->
+                <button class="carousel__arrow carousel__arrow--prev" id="carousel-prev" aria-label="Photo précédente">
+                    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <!-- Flèche droite -->
+                <button class="carousel__arrow carousel__arrow--next" id="carousel-next" aria-label="Photo suivante">
+                    <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+                </button>
+
+                <!-- Points -->
+                <div class="carousel__dots" id="carousel-dots">
+                    <?php for ($i = 0; $i < $nb_images; $i++): ?>
+                        <button class="carousel__dot <?= $i === 0 ? 'active' : '' ?>"
+                                data-index="<?= $i ?>"
+                                aria-label="Photo <?= $i + 1 ?>">
+                        </button>
+                    <?php endfor; ?>
+                </div>
+                <?php endif; ?>
+
+            </div><!-- /.carousel -->
+
+            <?php if ($nb_images > 1): ?>
+            <!-- Miniatures -->
+            <div class="carousel__thumbs" id="carousel-thumbs">
+                <?php foreach ($images_produit as $idx => $img): ?>
+                <button class="carousel__thumb <?= $idx === 0 ? 'active' : '' ?>"
+                        data-index="<?= $idx ?>"
+                        aria-label="Voir photo <?= $idx + 1 ?>">
+                    <img src="<?= htmlspecialchars($img->url_image ?? 'images/placeholder.png') ?>"
+                         alt="Miniature <?= $idx + 1 ?>" loading="lazy">
+                </button>
+                <?php endforeach; ?>
             </div>
-        </div>
+            <?php endif; ?>
+
+        </div><!-- /.produit-hero__galerie -->
 
         <!-- Informations -->
         <div class="produit-hero__infos">
@@ -699,6 +896,130 @@ if (!$produit) {
 @keyframes starPop { 0%{transform:scale(1)} 40%{transform:scale(1.4)} 70%{transform:scale(.9)} 100%{transform:scale(1.1)} }
 .star-btn.pop { animation:starPop .35s ease forwards; }
 </style>
+
+<script>
+// ══════════════════════════════════════════
+// CAROUSEL
+// ══════════════════════════════════════════
+(function() {
+    const carousel  = document.getElementById('carousel-produit');
+    if (!carousel) return;
+
+    const track     = document.getElementById('carousel-track');
+    const btnPrev   = document.getElementById('carousel-prev');
+    const btnNext   = document.getElementById('carousel-next');
+    const dotsWrap  = document.getElementById('carousel-dots');
+    const thumbsWrap= document.getElementById('carousel-thumbs');
+    const total     = parseInt(carousel.dataset.total) || 1;
+    const delay     = parseInt(carousel.dataset.autoplay) || 4000;
+
+    if (total <= 1) return; // pas de carousel si 1 seule image
+
+    let current    = 0;
+    let autoTimer  = null;
+    let isAnimating= false;
+
+    // ── Aller à un slide ──────────────────────────
+    function goTo(index, userAction = false) {
+        if (isAnimating) return;
+        if (index < 0) index = total - 1;
+        if (index >= total) index = 0;
+        if (index === current) return;
+
+        isAnimating = true;
+        current = index;
+
+        // Déplacer le track
+        track.style.transform = `translateX(-${current * 100}%)`;
+
+        // Mettre à jour les slides actives
+        track.querySelectorAll('.carousel__slide').forEach((s, i) => {
+            s.classList.toggle('active', i === current);
+        });
+
+        // Dots
+        if (dotsWrap) {
+            dotsWrap.querySelectorAll('.carousel__dot').forEach((d, i) => {
+                d.classList.toggle('active', i === current);
+            });
+        }
+
+        // Thumbs
+        if (thumbsWrap) {
+            thumbsWrap.querySelectorAll('.carousel__thumb').forEach((t, i) => {
+                t.classList.toggle('active', i === current);
+            });
+            // Scroll thumb visible
+            const activeThumb = thumbsWrap.querySelector('.carousel__thumb.active');
+            if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+
+        setTimeout(() => { isAnimating = false; }, 520);
+
+        // Relancer l'autoplay si action utilisateur
+        if (userAction) resetAutoplay();
+    }
+
+    // ── Autoplay ──────────────────────────────────
+    function startAutoplay() {
+        autoTimer = setInterval(() => goTo(current + 1), delay);
+    }
+    function stopAutoplay() {
+        clearInterval(autoTimer);
+    }
+    function resetAutoplay() {
+        stopAutoplay();
+        startAutoplay();
+    }
+
+    // ── Flèches ───────────────────────────────────
+    btnPrev?.addEventListener('click', () => goTo(current - 1, true));
+    btnNext?.addEventListener('click', () => goTo(current + 1, true));
+
+    // ── Dots ──────────────────────────────────────
+    dotsWrap?.querySelectorAll('.carousel__dot').forEach(dot => {
+        dot.addEventListener('click', () => goTo(parseInt(dot.dataset.index), true));
+    });
+
+    // ── Thumbs ────────────────────────────────────
+    thumbsWrap?.querySelectorAll('.carousel__thumb').forEach(thumb => {
+        thumb.addEventListener('click', () => goTo(parseInt(thumb.dataset.index), true));
+    });
+
+    // ── Swipe tactile ─────────────────────────────
+    let touchStartX = 0;
+    let touchDeltaX = 0;
+    carousel.addEventListener('touchstart', e => {
+        touchStartX = e.touches[0].clientX;
+        stopAutoplay();
+    }, { passive: true });
+    carousel.addEventListener('touchmove', e => {
+        touchDeltaX = e.touches[0].clientX - touchStartX;
+    }, { passive: true });
+    carousel.addEventListener('touchend', () => {
+        if (Math.abs(touchDeltaX) > 50) {
+            goTo(touchDeltaX < 0 ? current + 1 : current - 1, true);
+        } else {
+            resetAutoplay();
+        }
+        touchDeltaX = 0;
+    });
+
+    // ── Pause au survol ───────────────────────────
+    carousel.addEventListener('mouseenter', stopAutoplay);
+    carousel.addEventListener('mouseleave', startAutoplay);
+
+    // ── Keyboard ──────────────────────────────────
+    carousel.setAttribute('tabindex', '0');
+    carousel.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft')  goTo(current - 1, true);
+        if (e.key === 'ArrowRight') goTo(current + 1, true);
+    });
+
+    // ── Lancement ─────────────────────────────────
+    startAutoplay();
+})();
+</script>
 
 <script>
 // ── Toast ──────────────────────────────────────────────

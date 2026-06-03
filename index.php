@@ -2,6 +2,31 @@
 session_start();
 require_once 'function.php';
 $datas = recuperation_produits_images();
+
+// ── Récupération de la photo de couverture par produit ──
+// is_cover = 1 → photo index  |  fallback : première image de la table
+try {
+    $pdo_idx = new PDO(
+        "mysql:host=localhost;dbname=wakaroma;charset=utf8",
+        "root", "",
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+    $stmt_covers = $pdo_idx->query("
+        SELECT id_produit,
+               COALESCE(
+                   MAX(CASE WHEN is_cover = 1 THEN url_image END),
+                   MIN(url_image)
+               ) AS cover_url
+        FROM images
+        GROUP BY id_produit
+    ");
+    $covers = [];
+    foreach ($stmt_covers->fetchAll(PDO::FETCH_OBJ) as $row) {
+        $covers[(int)$row->id_produit] = $row->cover_url;
+    }
+} catch (Exception $e) {
+    $covers = [];
+}
 ?>
 
 <?php require_once 'headear.php'; ?>
@@ -186,8 +211,12 @@ $datas = recuperation_produits_images();
         <article class="produit" data-category="epices">
 
             <div class="produit__img-wrap">
+                <?php
+                    $img_index = $covers[(int)$data->id_produit]
+                        ?? ($data->url_image ?? 'images/placeholder.png');
+                ?>
                 <img
-                    src="<?= htmlspecialchars($data->url_image ?? 'images/placeholder.png'); ?>"
+                    src="<?= htmlspecialchars($img_index) ?>"
                     alt="<?= htmlspecialchars($data->nom); ?>"
                     loading="lazy"
                 >

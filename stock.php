@@ -33,6 +33,7 @@ function getDB() {
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
             );
             $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS seuil_alerte INT NOT NULL DEFAULT " . SEUIL_ALERTE_DEFAULT);
+            $pdo->exec("ALTER TABLE images ADD COLUMN IF NOT EXISTS is_cover TINYINT(1) NOT NULL DEFAULT 0");
             // Table ingrédients internes
             $pdo->exec("CREATE TABLE IF NOT EXISTS ingredients_internes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -58,6 +59,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
     $pdo = getDB();
     $action = $_POST['action'];
+
+    // Traitement upload image (fichier multipart, hors switch classique)
+    if ($action === 'add_image') {
+        $id_produit = (int)($_POST['id_produit'] ?? 0);
+        if ($id_produit <= 0) { echo json_encode(['success' => false, 'error' => 'ID produit invalide']); exit; }
+        if (empty($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'error' => 'Aucun fichier reçu ou erreur upload']); exit;
+        }
+        $file     = $_FILES['image'];
+        $allowed  = ['image/jpeg','image/png','image/webp','image/gif'];
+        $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+        $mime     = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        if (!in_array($mime, $allowed)) {
+            echo json_encode(['success' => false, 'error' => 'Type de fichier non autorisé (JPG, PNG, WEBP, GIF)']); exit;
+        }
+        $ext      = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif'][$mime];
+        $dir      = __DIR__ . '/uploads/produits/';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $filename = 'produit_' . $id_produit . '_' . uniqid() . '.' . $ext;
+        $dest     = $dir . $filename;
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            echo json_encode(['success' => false, 'error' => 'Impossible de déplacer le fichier']); exit;
+        }
+        $url = 'uploads/produits/' . $filename;
+        $pdo->prepare("INSERT INTO images (id_produit, url_image) VALUES (?, ?)")->execute([$id_produit, $url]);
+        $new_id = (int)$pdo->lastInsertId();
+        echo json_encode(['success' => true, 'id_image' => $new_id, 'url_image' => $url]);
+        exit;
+    }
 
     switch ($action) {
 
@@ -114,9 +145,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(['success' => true, 'id' => $newId]);
             break;
 
+        case 'update_produit':
+            $id        = (int)$_POST['id'];
+            $nom       = trim($_POST['nom']);
+            $categorie = trim($_POST['categorie']);
+            $stock     = (int)$_POST['stock'];
+            $seuil     = (int)$_POST['seuil'];
+            $unite     = trim($_POST['unite']) ?: 'g';
+            $prix      = (float)$_POST['prix'];
+            if (empty($nom)) { echo json_encode(['success' => false, 'error' => 'Nom obligatoire']); break; }
+            $stmtC = $pdo->prepare("SELECT id_categorie FROM categories WHERE nom = ?");
+            $stmtC->execute([$categorie]);
+            $cat = $stmtC->fetch(PDO::FETCH_OBJ);
+            if ($cat) { $id_cat = $cat->id_categorie; }
+            else {
+                $pdo->prepare("INSERT INTO categories (nom) VALUES (?)")->execute([$categorie]);
+                $id_cat = (int)$pdo->lastInsertId();
+            }
+            $pdo->prepare("UPDATE produits SET nom = ?, id_categorie = ?, stock = ?, seuil_alerte = ?, prix = ? WHERE id_produit = ?")
+                ->execute([$nom, $id_cat, $stock, $seuil, $prix, $id]);
+            $stmtCar = $pdo->prepare("SELECT id_caracteristique FROM caracteristiques WHERE id_produit = ? AND nom = 'Poids' LIMIT 1");
+            $stmtCar->execute([$id]);
+            $car = $stmtCar->fetch(PDO::FETCH_OBJ);
+            if ($car) {
+                $pdo->prepare("UPDATE caracteristiques SET valeur = ? WHERE id_caracteristique = ?")
+                    ->execute([$unite, $car->id_caracteristique]);
+            } else {
+                $pdo->prepare("INSERT INTO caracteristiques (id_produit, nom, valeur) VALUES (?, 'Poids', ?)")
+                    ->execute([$id, $unite]);
+            }
+            echo json_encode(['success' => true]);
+            break;
+
         case 'delete_produit':
             $id = (int)$_POST['id'];
             $pdo->prepare("DELETE FROM produits WHERE id_produit = ?")->execute([$id]);
+            echo json_encode(['success' => true]);
+            break;
+
+        // ---- IMAGES PRODUIT ----
+        case 'get_images':
+            $id = (int)$_POST['id'];
+            $stmt = $pdo->prepare("SELECT id_image, url_image, is_cover FROM images WHERE id_produit = ? ORDER BY is_cover DESC, id_image");
+            $stmt->execute([$id]);
+            echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            break;
+
+        case 'delete_image':
+            $id_image = (int)$_POST['id_image'];
+            // Récupérer le chemin pour supprimer le fichier physique si uploadé
+            $stmt = $pdo->prepare("SELECT url_image FROM images WHERE id_image = ?");
+            $stmt->execute([$id_image]);
+            $row = $stmt->fetch(PDO::FETCH_OBJ);
+            $pdo->prepare("DELETE FROM images WHERE id_image = ?")->execute([$id_image]);
+            // Supprimer le fichier physique si c'est un upload (préfixe uploads/)
+            if ($row && strpos($row->url_image, 'uploads/') === 0) {
+                $path = __DIR__ . '/' . $row->url_image;
+                if (file_exists($path)) @unlink($path);
+            }
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'set_cover':
+            $id_image   = (int)$_POST['id_image'];
+            $id_produit = (int)$_POST['id_produit'];
+            // Retirer l'ancienne couverture pour ce produit
+            $pdo->prepare("UPDATE images SET is_cover = 0 WHERE id_produit = ?")->execute([$id_produit]);
+            // Définir la nouvelle
+            $pdo->prepare("UPDATE images SET is_cover = 1 WHERE id_image = ?")->execute([$id_image]);
             echo json_encode(['success' => true]);
             break;
 
@@ -379,6 +475,7 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; }
 .modal-overlay.open { display: flex; }
 .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 24px 80px rgba(0,0,0,.6); animation: modalIn .25s ease; }
+.modal--wide { max-width: 600px; max-height: 90vh; overflow-y: auto; }
 @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(.97); } to { opacity: 1; transform: none; } }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
 .modal-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--cream); }
@@ -403,6 +500,80 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 .empty-state p { font-size: .95rem; }
+
+/* IMAGES PRODUIT dans la modale */
+.img-section { margin-top: 20px; }
+.img-section-title {
+    font-size: .78rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text-dim); margin-bottom: 12px;
+}
+.img-grid {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+    min-height: 48px;
+}
+.img-thumb {
+    position: relative; width: 72px; height: 72px;
+    border-radius: 8px; overflow: hidden;
+    border: 2px solid var(--border2); background: var(--bg);
+    flex-shrink: 0;
+}
+.img-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.img-thumb__del {
+    position: absolute; top: 3px; right: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(192,57,43,.85); border: none;
+    color: #fff; font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s; line-height: 1;
+}
+.img-thumb__del:hover { background: var(--red); }
+.img-thumb__cover-btn {
+    position: absolute; bottom: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(30,30,20,.7); border: none;
+    color: #888; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s; line-height: 1;
+    title: "Définir comme photo de couverture (index)";
+}
+.img-thumb__cover-btn:hover { background: rgba(201,150,59,.9); color: #fff; }
+.img-thumb.is-cover { border-color: var(--gold); }
+.img-thumb.is-cover .img-thumb__cover-btn { background: var(--gold); color: #1a1200; }
+.img-cover-badge {
+    position: absolute; bottom: 2px; right: 2px;
+    background: var(--gold); color: #1a1200;
+    font-size: 8px; font-weight: 700;
+    padding: 1px 4px; border-radius: 3px;
+    letter-spacing: .03em; pointer-events: none;
+    line-height: 1.4;
+}
+.img-empty { color: var(--text-dim); font-size: .82rem; font-style: italic; align-self: center; }
+
+/* Zone d'upload */
+.img-upload-zone {
+    border: 2px dashed var(--border2); border-radius: 10px;
+    padding: 14px 16px; text-align: center;
+    cursor: pointer; transition: border-color .2s, background .2s;
+    background: var(--bg);
+}
+.img-upload-zone:hover, .img-upload-zone.drag-over {
+    border-color: var(--gold); background: rgba(201,150,59,.05);
+}
+.img-upload-zone input[type="file"] { display: none; }
+.img-upload-label {
+    font-size: .82rem; color: var(--text-dim); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.img-upload-label span { color: var(--gold); font-weight: 600; }
+.img-upload-preview {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; justify-content: center;
+}
+.img-upload-preview img {
+    width: 56px; height: 56px; object-fit: contain;
+    border-radius: 6px; border: 1px solid var(--border2); background: var(--bg);
+}
+.img-uploading { font-size: .8rem; color: var(--gold-dim); margin-top: 6px; }
+
 
 /* =============================================
    RESPONSIVE MOBILE
@@ -796,6 +967,79 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
     </main>
 </div>
 
+<!-- MODAL ÉDITION PRODUIT -->
+<div class="modal-overlay" id="modal-edit-produit">
+    <div class="modal modal--wide">
+        <div class="modal-header">
+            <div class="modal-title">✏ Modifier le produit</div>
+            <button class="modal-close" onclick="closeModal('edit-produit')">✕</button>
+        </div>
+        <div class="form-grid">
+            <div class="form-group full">
+                <label>Nom du produit *</label>
+                <input type="text" id="ep-nom" placeholder="Nom du produit">
+            </div>
+            <div class="form-group">
+                <label>Catégorie</label>
+                <input type="text" id="ep-cat" list="ep-cat-list" placeholder="Catégorie">
+                <datalist id="ep-cat-list"></datalist>
+            </div>
+            <div class="form-group">
+                <label>Unité</label>
+                <select id="ep-unite">
+                    <option value="g">Grammes (g)</option>
+                    <option value="kg">Kilogrammes (kg)</option>
+                    <option value="pièce">Pièce</option>
+                    <option value="sachet">Sachet</option>
+                    <option value="boîte">Boîte</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Stock actuel</label>
+                <input type="number" id="ep-stock" min="0">
+            </div>
+            <div class="form-group">
+                <label>Seuil d'alerte</label>
+                <input type="number" id="ep-seuil" min="0">
+            </div>
+            <div class="form-group">
+                <label>Prix (€)</label>
+                <input type="number" id="ep-prix" step="0.01" min="0">
+            </div>
+        </div>
+
+        <!-- ── Section images ── -->
+        <div class="img-section">
+            <div class="img-section-title">🖼 Images du carousel (page Découvrir)</div>
+
+            <!-- Images existantes -->
+            <div class="img-grid" id="ep-img-grid">
+                <span class="img-empty">Chargement…</span>
+            </div>
+
+            <!-- Zone d'upload de nouvelles images -->
+            <div class="img-upload-zone" id="ep-upload-zone"
+                 ondragover="event.preventDefault();this.classList.add('drag-over')"
+                 ondragleave="this.classList.remove('drag-over')"
+                 ondrop="handleImgDrop(event)">
+                <label class="img-upload-label" for="ep-img-input">
+                    📁 <span>Choisir des images</span> ou glisser-déposer ici
+                </label>
+                <input type="file" id="ep-img-input" accept="image/jpeg,image/png,image/webp,image/gif"
+                       multiple onchange="handleImgSelect(this.files)">
+                <div class="img-upload-preview" id="ep-img-preview"></div>
+                <div class="img-uploading" id="ep-img-status"></div>
+            </div>
+        </div>
+
+        <input type="hidden" id="ep-id">
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('edit-produit')">Annuler</button>
+            <button class="btn btn-primary" onclick="saveEditProduit()">💾 Enregistrer</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL AJOUT PRODUIT -->
 <div class="modal-overlay" id="modal-produit">
     <div class="modal">
@@ -1077,6 +1321,159 @@ async function deleteProduit(id, nom) {
     } catch (e) { showToast('Erreur : ' + e.message, 'error'); }
 }
 
+function openEditProduit(id) {
+    const p = allProducts.find(x => x.id == id);
+    if (!p) return;
+    document.getElementById('ep-id').value    = p.id;
+    document.getElementById('ep-nom').value   = p.nom;
+    document.getElementById('ep-cat').value   = p.categorie || '';
+    document.getElementById('ep-stock').value = p.stock;
+    document.getElementById('ep-seuil').value = p.seuil_alerte;
+    document.getElementById('ep-prix').value  = parseFloat(p.prix || 0).toFixed(2);
+    // Unité
+    const sel = document.getElementById('ep-unite');
+    const val = p.unite || 'g';
+    let found = false;
+    for (let opt of sel.options) { if (opt.value === val) { opt.selected = true; found = true; break; } }
+    if (!found) {
+        const o = document.createElement('option'); o.value = val; o.textContent = val; o.selected = true;
+        sel.appendChild(o);
+    }
+    // Datalist catégories
+    const dl = document.getElementById('ep-cat-list');
+    dl.innerHTML = '';
+    [...new Set(allProducts.map(x => x.categorie).filter(Boolean))].forEach(cat => {
+        const o = document.createElement('option'); o.value = cat; dl.appendChild(o);
+    });
+    // Reset zone upload
+    document.getElementById('ep-img-preview').innerHTML = '';
+    document.getElementById('ep-img-status').textContent = '';
+    document.getElementById('ep-img-input').value = '';
+    // Charger les images existantes
+    loadProduitImages(p.id);
+    openModal('edit-produit');
+}
+
+// ==========================================
+// GESTION IMAGES PRODUIT
+// ==========================================
+async function loadProduitImages(id_produit) {
+    const grid = document.getElementById('ep-img-grid');
+    grid.innerHTML = '<span class="img-empty">Chargement…</span>';
+    try {
+        const res = await post({ action: 'get_images', id: id_produit });
+        const imgs = res.data || [];
+        if (!imgs.length) {
+            grid.innerHTML = '<span class="img-empty">Aucune image — ajoutez-en ci-dessous</span>';
+            return;
+        }
+        grid.innerHTML = imgs.map(img => {
+            const isCover = parseInt(img.is_cover) === 1;
+            return `
+            <div class="img-thumb ${isCover ? 'is-cover' : ''}" id="imgthumb-${img.id_image}">
+                <img src="${escHtml(img.url_image)}" alt="Image produit" onerror="this.src='images/placeholder.png'">
+                <button class="img-thumb__cover-btn"
+                    onclick="setCover(${img.id_image}, ${id_produit})"
+                    title="${isCover ? 'Photo de couverture (index)' : 'Définir comme couverture index'}">★</button>
+                ${isCover ? '<span class="img-cover-badge">INDEX</span>' : ''}
+                <button class="img-thumb__del" onclick="deleteProduitImage(${img.id_image}, ${id_produit})" title="Supprimer cette image">✕</button>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        grid.innerHTML = '<span class="img-empty" style="color:var(--red)">Erreur de chargement</span>';
+    }
+}
+
+async function setCover(id_image, id_produit) {
+    try {
+        await post({ action: 'set_cover', id_image, id_produit });
+        showToast('Photo de couverture mise à jour ✓', 'success');
+        loadProduitImages(id_produit);
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function deleteProduitImage(id_image, id_produit) {
+    if (!confirm('Supprimer cette image ?')) return;
+    try {
+        await post({ action: 'delete_image', id_image });
+        loadProduitImages(id_produit);
+        showToast('Image supprimée ✓', 'success');
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+function handleImgDrop(event) {
+    event.preventDefault();
+    document.getElementById('ep-upload-zone').classList.remove('drag-over');
+    const files = event.dataTransfer.files;
+    if (files.length) handleImgSelect(files);
+}
+
+async function handleImgSelect(files) {
+    const id_produit = document.getElementById('ep-id').value;
+    if (!id_produit) return;
+
+    const preview  = document.getElementById('ep-img-preview');
+    const statusEl = document.getElementById('ep-img-status');
+    const allowed  = ['image/jpeg','image/png','image/webp','image/gif'];
+
+    // Prévisualisation immédiate
+    for (const file of files) {
+        if (!allowed.includes(file.type)) { showToast(`"${file.name}" : format non supporté`, 'error'); continue; }
+        const url = URL.createObjectURL(file);
+        const img = document.createElement('img');
+        img.src = url; preview.appendChild(img);
+    }
+
+    // Upload un par un
+    let uploaded = 0;
+    for (const file of files) {
+        if (!allowed.includes(file.type)) continue;
+        statusEl.textContent = `Upload en cours… (${uploaded + 1}/${files.length})`;
+        try {
+            const formData = new FormData();
+            formData.append('action', 'add_image');
+            formData.append('id_produit', id_produit);
+            formData.append('image', file);
+            const res  = await fetch(SCRIPT_URL, { method: 'POST', body: formData });
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error || 'Erreur upload');
+            uploaded++;
+        } catch(e) { showToast(`Erreur upload "${file.name}" : ` + e.message, 'error'); }
+    }
+
+    if (uploaded > 0) {
+        statusEl.textContent = `${uploaded} image${uploaded > 1 ? 's' : ''} ajoutée${uploaded > 1 ? 's' : ''} ✓`;
+        showToast(`${uploaded} image${uploaded > 1 ? 's' : ''} ajoutée${uploaded > 1 ? 's' : ''} au carousel ✓`, 'success');
+        // Recharger la grille et vider la preview
+        setTimeout(() => {
+            loadProduitImages(id_produit);
+            preview.innerHTML = '';
+            document.getElementById('ep-img-input').value = '';
+            statusEl.textContent = '';
+        }, 800);
+    } else {
+        statusEl.textContent = '';
+    }
+}
+
+async function saveEditProduit() {
+    const id        = document.getElementById('ep-id').value;
+    const nom       = document.getElementById('ep-nom').value.trim();
+    const categorie = document.getElementById('ep-cat').value.trim();
+    const stock     = document.getElementById('ep-stock').value;
+    const seuil     = document.getElementById('ep-seuil').value;
+    const unite     = document.getElementById('ep-unite').value;
+    const prix      = document.getElementById('ep-prix').value;
+    if (!nom) { showToast('Le nom est obligatoire', 'error'); return; }
+    try {
+        await post({ action: 'update_produit', id, nom, categorie, stock, seuil, unite, prix });
+        showToast(`"${nom}" mis à jour ✓`, 'success');
+        closeModal('edit-produit');
+        loadStocks();
+        loadCategoriesRefresh();
+    } catch (e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
 // ==========================================
 // INGRÉDIENTS INTERNES
 // ==========================================
@@ -1289,6 +1686,7 @@ function closeModal(type) {
 }
 
 // Fermer modals si clic dehors
+document.getElementById('modal-edit-produit').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('edit-produit'); });
 document.getElementById('modal-produit').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('produit'); });
 document.getElementById('modal-ingredient').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('ingredient'); });
 

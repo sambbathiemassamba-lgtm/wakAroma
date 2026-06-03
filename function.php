@@ -26,10 +26,19 @@ function recuperation_produits_images()
             produits.description,
             produits.prix,
             produits.stock,
-            images.url_image
+            COALESCE(
+                MAX(CASE WHEN images.is_cover = 1 THEN images.url_image END),
+                MIN(images.url_image)
+            ) AS url_image
         FROM produits
         LEFT JOIN images
             ON produits.id_produit = images.id_produit
+        GROUP BY
+            produits.id_produit,
+            produits.nom,
+            produits.description,
+            produits.prix,
+            produits.stock
         ORDER BY produits.id_produit ASC";
 
         return $pdo->query($req)->fetchAll(PDO::FETCH_OBJ);
