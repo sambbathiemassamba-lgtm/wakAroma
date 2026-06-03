@@ -404,16 +404,216 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 .empty-state p { font-size: .95rem; }
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
-    .header { padding: 14px 16px; flex-wrap: wrap; gap: 12px; }
+/* =============================================
+   RESPONSIVE MOBILE
+   ============================================= */
+
+/* --- Tablette (< 900px) --- */
+@media (max-width: 900px) {
+    .header { padding: 14px 20px; gap: 12px; }
     .header-stats { gap: 10px; }
-    .toolbar { padding: 14px 16px; }
-    .main { padding: 16px; }
-    .nav-tabs { padding: 0 16px; }
-    .nav-tab { padding: 12px 16px; font-size: .82rem; }
-    thead th:nth-child(4), td:nth-child(4) { display: none; }
+    .stat-badge { padding: 6px 12px; }
+    .stat-badge .num { font-size: 1.1rem; }
+    .toolbar { padding: 14px 20px; gap: 10px; }
+    .main { padding: 20px; }
+    .nav-tabs { padding: 0 20px; }
 }
+
+/* --- Mobile (< 640px) --- */
+@media (max-width: 640px) {
+
+    /* HEADER : logo + titre à gauche, déconnexion en icône */
+    .header {
+        padding: 12px 16px;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+    .header-icon { width: 40px; height: 40px; }
+    .header-title { font-size: 1.1rem; }
+    .header-sub { display: none; }
+    .header-stats { display: none; } /* stats masquées, visibles sous forme de badges dans la page */
+    .btn-logout span { display: none; } /* juste l'icône 🚪 */
+    .btn-logout { padding: 8px 10px; font-size: 1rem; }
+
+    /* ONGLETS : barre fixe en bas type app mobile */
+    .nav-tabs {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        padding: 0;
+        justify-content: stretch;
+        border-top: 1px solid var(--border2);
+        border-bottom: none;
+        z-index: 150;
+        box-shadow: 0 -4px 20px rgba(0,0,0,.5);
+    }
+    .nav-tab {
+        flex: 1;
+        flex-direction: column;
+        padding: 10px 4px 12px;
+        font-size: .62rem;
+        gap: 4px;
+        border-bottom: none;
+        border-top: 3px solid transparent;
+        margin-bottom: 0;
+        justify-content: center;
+        text-align: center;
+    }
+    .nav-tab .tab-icon { font-size: 1.3rem; display: block; }
+    .nav-tab.active { border-top-color: var(--gold); border-bottom-color: transparent; }
+    .nav-tab .tab-badge { position: absolute; top: 6px; right: calc(50% - 22px); font-size: .6rem; padding: 1px 5px; }
+
+    /* PADDING BOTTOM pour ne pas être masqué par la barre d'onglets */
+    body { padding-bottom: 70px; }
+
+    /* TOOLBAR : colonne */
+    .toolbar {
+        padding: 12px 14px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .search-wrap { min-width: unset; }
+    .seuil-global { flex-wrap: wrap; }
+    .seuil-global label { font-size: .78rem; }
+    .btn { width: 100%; justify-content: center; }
+    select.filter-select { width: 100%; }
+
+    /* MAIN */
+    .main { padding: 12px 14px; }
+
+    /* TABLE → CARTES MOBILES */
+    /* On cache le thead et on transforme chaque ligne en carte */
+    .table-wrap { overflow-x: unset; }
+    table { display: block; }
+    thead { display: none; }
+    tbody { display: flex; flex-direction: column; gap: 12px; }
+    tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 14px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+        border-bottom: 1px solid var(--border);
+        border-left: none;
+    }
+    tbody tr.row-alert {
+        border-color: var(--red-border);
+        border-left: 3px solid var(--red);
+        background: rgba(192,57,43,.06);
+    }
+    tbody tr:hover { background: var(--surface2); }
+
+    /* Chaque td prend toute la largeur ou la moitié selon son contenu */
+    td { padding: 0; font-size: .88rem; }
+
+    /* Ajout d'un label data-label visible sur mobile */
+    td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: .68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-dim);
+        margin-bottom: 4px;
+    }
+
+    /* Nom produit : pleine largeur */
+    td:nth-child(1) { grid-column: 1 / -1; }
+    /* Catégorie + statut côte à côte */
+    td:nth-child(2), td:nth-child(8) { }
+    /* Stock : pleine largeur */
+    td:nth-child(3) { grid-column: 1 / -1; }
+    /* Niveau (barre) : pleine largeur */
+    td:nth-child(4) { grid-column: 1 / -1; }
+    /* Actions : pleine largeur */
+    td:last-child { grid-column: 1 / -1; }
+
+    /* Stock cell sur mobile */
+    .stock-cell { flex-wrap: wrap; gap: 8px; }
+    .stock-input { width: 90px; }
+    .save-btn { flex: 1; justify-content: center; text-align: center; }
+
+    /* Actions sur mobile */
+    td[style*="display:flex"] { display: flex !important; gap: 8px; }
+    .action-btn, .save-btn { padding: 8px 12px; font-size: .82rem; flex: 1; text-align: center; justify-content: center; }
+
+    /* MODAL : plein écran sur mobile */
+    .modal-overlay { align-items: flex-end; }
+    .modal {
+        border-radius: 20px 20px 0 0;
+        max-width: 100%;
+        max-height: 92vh;
+        overflow-y: auto;
+        padding: 24px 20px 32px;
+        animation: modalUp .3s ease;
+    }
+    @keyframes modalUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+
+    /* TOASTS en bas à gauche sur mobile */
+    .toast-container { bottom: 80px; right: 14px; left: 14px; }
+    .toast { font-size: .82rem; }
+
+    /* UTILISATEURS : cartes */
+    #usersTable thead { display: none; }
+    #usersTable tbody { display: flex; flex-direction: column; gap: 12px; }
+    #usersTable tbody tr {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+    }
+    #usersTable td { padding: 0; }
+    #usersTable td:nth-child(1) { grid-column: 1; grid-row: 1 / 3; }
+    #usersTable td:nth-child(2) { grid-column: 2; grid-row: 1; font-size: .82rem; }
+    #usersTable td:nth-child(3) { grid-column: 2; grid-row: 2; }
+    #usersTable td:nth-child(4) { display: none; } /* date masquée */
+    #usersTable td:nth-child(5) { grid-column: 3; grid-row: 1 / 3; }
+
+    /* INGRÉDIENTS : cartes */
+    #ingrTable thead { display: none; }
+    #ingrTable tbody { display: flex; flex-direction: column; gap: 12px; }
+    #ingrTable tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 14px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+    }
+    #ingrTable tbody tr.row-alert { border-color: var(--red-border); border-left: 3px solid var(--red); }
+    #ingrTable td { padding: 0; }
+    #ingrTable td:nth-child(1) { grid-column: 1 / -1; }
+    #ingrTable td:nth-child(2) { grid-column: 1 / -1; }
+    #ingrTable td:last-child   { grid-column: 1 / -1; display: flex; gap: 8px; }
+
+    /* Stats mini en haut de page stocks */
+    .mobile-stats {
+        display: flex !important;
+        gap: 10px;
+        padding: 12px 14px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+    }
+    .mobile-stats .stat-badge { flex: 1; padding: 8px 6px; }
+    .mobile-stats .stat-badge .num { font-size: 1.2rem; }
+}
+
+/* Desktop : masquer mobile-stats */
+.mobile-stats { display: none; }
+
 </style>
 </head>
 <body>
@@ -449,19 +649,34 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 <!-- NAVIGATION PAR ONGLETS -->
 <nav class="nav-tabs">
     <button class="nav-tab active" onclick="switchPage('stocks', this)" id="tab-stocks">
-        📦 Stocks produits
+        <span class="tab-icon">📦</span> Stocks
     </button>
     <button class="nav-tab" onclick="switchPage('ingredients', this)" id="tab-ingredients">
-        🌿 Ingrédients internes
+        <span class="tab-icon">🌿</span> Ingrédients
         <span class="tab-badge" id="badge-ingr" style="display:none">!</span>
     </button>
     <button class="nav-tab" onclick="switchPage('users', this)" id="tab-users">
-        👥 Utilisateurs
+        <span class="tab-icon">👥</span> Clients
     </button>
 </nav>
 
 <!-- ===================== PAGE STOCKS ===================== -->
 <div class="page active" id="page-stocks">
+    <!-- Stats mini visible uniquement sur mobile -->
+    <div class="mobile-stats">
+        <div class="stat-badge">
+            <span class="num" id="stat-total-m">—</span>
+            <span class="label">Produits</span>
+        </div>
+        <div class="stat-badge">
+            <span class="num" id="stat-ok-m">—</span>
+            <span class="label">OK</span>
+        </div>
+        <div class="stat-badge alert-badge">
+            <span class="num" id="stat-alert-m">—</span>
+            <span class="label">⚠ Alertes</span>
+        </div>
+    </div>
     <div class="toolbar">
         <div class="search-wrap">
             <span class="ico">🔍</span>
@@ -742,25 +957,28 @@ function renderTable(products) {
         const pct   = Math.min(100, Math.round((stock / max) * 100));
         const barClass = stock === 0 ? 'danger' : isAlert ? 'warn' : 'ok';
         return `<tr class="${isAlert ? 'row-alert' : ''}" data-id="${p.id}" data-nom="${p.nom.toLowerCase()}" data-cat="${(p.categorie||'').toLowerCase()}" data-alert="${isAlert ? 'alert' : 'ok'}">
-            <td class="td-nom">🌿 ${escHtml(p.nom)}</td>
-            <td><span class="td-cat">${escHtml(p.categorie || 'Sans catégorie')}</span></td>
-            <td>
+            <td class="td-nom" data-label="Produit">🌿 ${escHtml(p.nom)}</td>
+            <td data-label="Catégorie"><span class="td-cat">${escHtml(p.categorie || 'Sans catégorie')}</span></td>
+            <td data-label="Stock actuel">
                 <div class="stock-cell">
                     <input class="stock-input" type="number" value="${stock}" min="0" onchange="markDirty(this)" data-original="${stock}" id="stock-${p.id}">
                     <button class="save-btn" onclick="saveStock(${p.id})">💾 Sauver</button>
                 </div>
             </td>
-            <td>
+            <td data-label="Niveau">
                 <div class="stock-bar-wrap">
                     <div class="stock-bar"><div class="stock-bar-fill ${barClass}" style="width:${pct}%"></div></div>
                     <span style="font-size:.8rem;color:var(--text-dim);min-width:30px;">${pct}%</span>
                 </div>
             </td>
-            <td><input class="seuil-input" type="number" value="${seuil}" min="0" onchange="saveSeuil(${p.id}, this.value)" id="seuil-${p.id}"></td>
-            <td style="color:var(--text-dim)">${escHtml(p.unite || 'g')}</td>
-            <td style="color:var(--gold)">${parseFloat(p.prix || 0).toFixed(2)} €</td>
-            <td>${isAlert ? `<span class="alert-icon">⚠ Stock faible</span>` : `<span class="ok-icon">✓</span>`}</td>
-            <td><button class="action-btn" onclick="deleteProduit(${p.id}, '${escHtml(p.nom)}')" title="Supprimer">🗑</button></td>
+            <td data-label="Seuil alerte"><input class="seuil-input" type="number" value="${seuil}" min="0" onchange="saveSeuil(${p.id}, this.value)" id="seuil-${p.id}"></td>
+            <td data-label="Unité" style="color:var(--text-dim)">${escHtml(p.unite || 'g')}</td>
+            <td data-label="Prix" style="color:var(--gold)">${parseFloat(p.prix || 0).toFixed(2)} €</td>
+            <td data-label="Statut">${isAlert ? `<span class="alert-icon">⚠ Stock faible</span>` : `<span class="ok-icon">✓</span>`}</td>
+            <td data-label="Actions" style="display:flex;gap:6px;">
+                <button class="save-btn" style="background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)" onclick="openEditProduit(${p.id})">✏ Modifier</button>
+                <button class="action-btn" onclick="deleteProduit(${p.id}, '${escHtml(p.nom)}')" title="Supprimer">🗑</button>
+            </td>
         </tr>`;
     }).join('');
 }
@@ -772,6 +990,10 @@ function updateStats(products) {
     document.getElementById('stat-total').textContent = products.length;
     document.getElementById('stat-ok').textContent    = products.length - alertCount;
     document.getElementById('stat-alert').textContent = alertCount;
+    // Badges mobiles
+    document.getElementById('stat-total-m').textContent = products.length;
+    document.getElementById('stat-ok-m').textContent    = products.length - alertCount;
+    document.getElementById('stat-alert-m').textContent = alertCount;
 }
 
 function filterTable() {
@@ -877,20 +1099,20 @@ function renderIngredients(list) {
         const seuil   = parseInt(i.seuil_alerte) || 0;
         const isAlert = qty <= seuil;
         return `<tr class="${isAlert ? 'row-alert' : ''}" data-id="${i.id}" data-nom="${i.nom.toLowerCase()}" data-alert="${isAlert ? 'alert' : 'ok'}">
-            <td class="td-nom">🌶 ${escHtml(i.nom)}</td>
-            <td>
+            <td class="td-nom" data-label="Ingrédient">🌶 ${escHtml(i.nom)}</td>
+            <td data-label="Quantité en stock">
                 <div class="stock-cell">
                     <input class="stock-input" type="number" value="${qty}" min="0" step="0.1"
                         onchange="markDirty(this)" id="ingr-qty-${i.id}">
                     <button class="save-btn" onclick="saveIngredient(${i.id})">💾 Sauver</button>
                 </div>
             </td>
-            <td style="color:var(--text-dim)">${escHtml(i.unite || 'g')}</td>
-            <td style="color:var(--gold)">${parseFloat(i.prix_achat || 0).toFixed(2)} €</td>
-            <td><input class="seuil-input" type="number" value="${seuil}" min="0"
+            <td data-label="Unité" style="color:var(--text-dim)">${escHtml(i.unite || 'g')}</td>
+            <td data-label="Prix achat" style="color:var(--gold)">${parseFloat(i.prix_achat || 0).toFixed(2)} €</td>
+            <td data-label="Seuil alerte"><input class="seuil-input" type="number" value="${seuil}" min="0"
                 onchange="saveIngrSeuil(${i.id}, this.value)" id="ingr-seuil-${i.id}"></td>
-            <td>${isAlert ? `<span class="alert-icon">⚠ Stock faible</span>` : `<span class="ok-icon">✓</span>`}</td>
-            <td style="display:flex;gap:6px;">
+            <td data-label="Statut">${isAlert ? `<span class="alert-icon">⚠ Stock faible</span>` : `<span class="ok-icon">✓</span>`}</td>
+            <td data-label="Actions" style="display:flex;gap:6px;">
                 <button class="save-btn" style="background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)" onclick="editIngredient(${i.id})">✏ Modifier</button>
                 <button class="action-btn" onclick="deleteIngredient(${i.id}, '${escHtml(i.nom)}')" title="Supprimer">🗑</button>
             </td>
@@ -1018,7 +1240,7 @@ function renderUsers(list) {
             <td class="user-email">${escHtml(u.email || '—')}</td>
             <td class="user-tel">${escHtml(u.numero || '—')}</td>
             <td class="user-date">${dateStr}</td>
-            <td><button class="action-btn" onclick="deleteUser(${u.id}, '${escHtml((u.prenom||'')+' '+(u.nom||''))}')" title="Supprimer">🗑</button></td>
+            <td><button class="action-btn" style="width:100%;justify-content:center;" onclick="deleteUser(${u.id}, '${escHtml((u.prenom||'')+' '+(u.nom||''))}')" title="Supprimer">🗑 Supprimer</button></td>
         </tr>`;
     }).join('');
 }
