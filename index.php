@@ -139,31 +139,6 @@ try {
 .star-btn.pop {
     animation: starPop 0.35s ease forwards;
 }
-
-/* ── Image produit pleine largeur ── */
-.produit__img-wrap {
-    margin: 0 !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    width: 100% !important;
-    overflow: hidden;
-}
-
-.produit__img-wrap img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-}
-
-/* Supprimer le padding du haut de la carte produit */
-.produit {
-    padding-top: 0 !important;
-    overflow: hidden;
-}
 </style>
 
 <section class="hero" aria-label="Bannière principale">
@@ -464,7 +439,7 @@ try {
 // ── Badge panier ──────────────────────────────────────────────
 function wrapCartIcon() {
   // Cherche le lien vers panier.php dans le header
-  const cartLink = document.querySelector('a[href*="panier"]');
+  const cartLink = document.getElementById('header-cart-link');
   if (!cartLink) return;
   // Évite de wrapper deux fois
   if (cartLink.querySelector('#cart-badge-count')) return;
