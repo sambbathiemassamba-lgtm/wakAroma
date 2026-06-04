@@ -9,7 +9,7 @@
         <div class="hist-hero__overlay"></div>
         <div class="hist-hero__content">
             <span class="hist-hero__label">Héritage & Élégance</span>
-            <h2 class="hist-hero__title">Quand l'Afrique<br><em>parfume vos instants</em></h2>
+            <h2 class="hist-hero__title">L'Appel du goût,<br><em>L'Écho du continent</em></h2>
             <p class="hist-hero__sub">De la Corne de l'Afrique à votre table, une aventure d'exception portée par la passion des saveurs les plus précieuses.</p>
             <div class="hist-hero__separator"></div>
         </div>
@@ -63,11 +63,10 @@
 
             <div class="hist-timeline__item hist-timeline__item--right">
                 <div class="hist-timeline__card">
-                    <span class="hist-timeline__year">L'exil & la nostalgie</span>
+                    <span class="hist-timeline__year"> La nostalgie du continent</span>
                     <h4>L'arrivée en France</h4>
                     <p>
-                        Installée en France, la fondatrice ressent l'absence d'une certaine élégance culinaire. Impossible de retrouver la cardamome fumée ou le xawaash authentique dans le commerce. Naît alors l'idée d'une passerelle d'exception.
-                    </p>
+                        Installée en France, la fondatrice ressent l’absence d’une certaine élégance culinaire. Impossible de retrouver la cardamome fumée ou le xawaash authentique dans le commerce. Pourtant, derrière cette nostalgie se cachent vingt ans de travail silencieux — sélectionner, doser, affiner chaque mélange jusqu’à la perfection. Naît alors l’idée d’une passerelle d’exception.
                     <span class="hist-timeline__icon">✧</span>
                 </div>
                 <div class="hist-timeline__dot"></div>
@@ -78,8 +77,7 @@
                     <span class="hist-timeline__year">La naissance</span>
                     <h4>WakAroma voit le jour</h4>
                     <p>
-                        Les premières préparations sont élaborées à la main, dans l'écrin de la cuisine familiale, avec des épices d'exception directement importées. Le bouche-à-oreille d'une clientèle exigeante révèle ces trésors uniques.
-                    </p>
+                        Les premières préparations sont élaborées à la main, dans l’écrin de la cuisine familiale. Un mariage subtil entre des épices d’exception directement importées et des trésors dénichés en France — car WakAroma est née de ces deux mondes. Le bouche-à-oreille d’une clientèle exigeante révèle ces trésors uniques.
                     <span class="hist-timeline__icon">⚜️</span>
                 </div>
                 <div class="hist-timeline__dot"></div>
@@ -90,8 +88,7 @@
                     <span class="hist-timeline__year">L'expansion</span>
                     <h4>Au-delà des frontières</h4>
                     <p>
-                        WakAroma dépasse les cercles communautaires. Chefs étoilés, épiceries fines et amateurs éclairés s'intéressent à ces mélanges rares. La boutique en ligne ouvre ses portes à une clientèle internationale.
-                    </p>
+                        WakAroma a vocation à dépasser les cercles communautaires. Des chefs étoilés, des épiceries fines et des amateurs éclairés pourraient un jour s’approprier ces mélanges rares. La boutique en ligne, elle, est prête à accueillir une clientèle internationale.
                     <span class="hist-timeline__icon">🛋️</span>
                 </div>
                 <div class="hist-timeline__dot"></div>
@@ -102,7 +99,7 @@
                     <span class="hist-timeline__year">Aujourd'hui</span>
                     <h4>WakAroma, un pont d'excellence</h4>
                     <p>
-                        Une collection complète d'épices rares, d'encens précieux et de cosmétiques naturels. Chaque produit raconte un territoire, un savoir-faire d'exception, une femme qui cultive et transforme avec fierté et élégance.
+                        Une collection d’épices rares et de mélanges soigneusement élaborés, pensés pour révéler la profondeur et la complexité des cuisines du monde. Chaque produit est une invitation au voyage — il porte en lui la mémoire d’un terroir, la précision d’un geste, et la vision d’une femme qui a fait de la transmission culinaire sa raison d’être.
                     </p>
                     <span class="hist-timeline__icon">🕊️</span>
                 </div>

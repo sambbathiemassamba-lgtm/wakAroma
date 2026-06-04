@@ -27,7 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $password_conf = htmlspecialchars($_POST['password_conf'] ?? '');
 
     // checkbox conditions
-    $accept_cgv = $_POST['accept_cgv'] ?? null;
+    $accept_cgv    = $_POST['accept_cgv']    ?? null;
+    $is_entreprise  = !empty($_POST['is_entreprise']) ? 1 : 0;
+    $nom_entreprise = htmlspecialchars(trim($_POST['nom_entreprise'] ?? ''));
 
     // message d'erreur
     $errors = message_errors($nom, $prenom, $numero, $email, $email_conf,$password,$password_conf);
@@ -48,6 +50,15 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         $inserted = insertion_users($nom, $prenom, $email, $numero, $password_hash, $tokend);
 
         if ($inserted === true) {
+            // Mise à jour des champs entreprise si nécessaire
+            if ($is_entreprise) {
+                try {
+                    $pdo_ent = new PDO("mysql:host=localhost;dbname=wakaroma;charset=utf8", "root", "",
+                        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+                    $pdo_ent->prepare("UPDATE users SET is_entreprise=1, nom_entreprise=? WHERE email=?")
+                        ->execute([$nom_entreprise, $email]);
+                } catch (Exception $e) { /* silencieux */ }
+            }
             $_SESSION['success'] = "Votre inscription a été effectuée avec succès.";
             $_SESSION['email']   = $email;
             header("Location: confirmation.php");
@@ -72,6 +83,58 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 <?php require_once 'header_login.php' ?>
 
 <style>
+
+
+/* ENTREPRISE */
+.entreprise-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #444;
+    font-weight: 600;
+}
+.entreprise-toggle input {
+    transform: scale(1.2);
+    accent-color: #c97b2b;
+}
+.entreprise-field {
+    display: none;
+    margin-top: 10px;
+}
+.entreprise-field.visible {
+    display: block;
+}
+
+/* MOT DE PASSE — TOGGLE VISIBILITÉ */
+.pw-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.pw-wrap .pw-input {
+    width: 100%;
+    padding-right: 2.8rem;
+}
+.pw-toggle {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #9a9088;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 0.2s;
+}
+.pw-toggle:hover {
+    color: #c8943a;
+}
 
 /* CONDITIONS */
 
@@ -206,13 +269,39 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
             <!-- mot de passe -->
             <div class="form-group">
                 <label>Mot de passe</label>
-                <input type="password" name="password" placeholder="***************" >
+                <div class="pw-wrap">
+                    <input type="password" name="password" placeholder="***************" class="pw-input">
+                    <button type="button" class="pw-toggle" aria-label="Afficher le mot de passe" onclick="togglePw(this)">
+                        <svg class="pw-eye pw-eye--show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="pw-eye pw-eye--hide" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                </div>
             </div>
 
             <!-- confirmation du mot de passe  -->
             <div class="form-group">
                 <label>Confirmation mot de passe</label>
-                <input type="password" name="password_conf" placeholder="***************">
+                <div class="pw-wrap">
+                    <input type="password" name="password_conf" placeholder="***************" class="pw-input">
+                    <button type="button" class="pw-toggle" aria-label="Afficher le mot de passe" onclick="togglePw(this)">
+                        <svg class="pw-eye pw-eye--show" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="pw-eye pw-eye--hide" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- entreprise -->
+            <div class="form-group">
+                <label class="entreprise-toggle">
+                    <input type="checkbox" name="is_entreprise" id="isEntreprise" value="1"
+                        <?= !empty($_POST['is_entreprise']) ? 'checked' : '' ?>>
+                    Je représente une entreprise
+                </label>
+                <div class="entreprise-field" id="entrepriseField">
+                    <input type="text" name="nom_entreprise" placeholder="Nom de l'entreprise"
+                        value="<?= htmlspecialchars($_POST['nom_entreprise'] ?? '') ?>">
+                </div>
             </div>
 
             <!-- CONDITIONS -->
@@ -270,4 +359,26 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 <!-- FOOTER -->
 <?php require_once "footer.php"; ?>
 
+
+<script>
+document.getElementById('isEntreprise').addEventListener('change', function() {
+    const field = document.getElementById('entrepriseField');
+    field.classList.toggle('visible', this.checked);
+});
+// Au rechargement si erreur, garder le champ visible si coché
+if (document.getElementById('isEntreprise').checked) {
+    document.getElementById('entrepriseField').classList.add('visible');
+}
+
+function togglePw(btn) {
+    const input   = btn.closest('.pw-wrap').querySelector('.pw-input');
+    const eyeShow = btn.querySelector('.pw-eye--show');
+    const eyeHide = btn.querySelector('.pw-eye--hide');
+    const visible = input.type === 'text';
+    input.type          = visible ? 'password' : 'text';
+    eyeShow.style.display = visible ? '' : 'none';
+    eyeHide.style.display = visible ? 'none' : '';
+    btn.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+}
+</script>
 <script src="script/inscription.js"></script>

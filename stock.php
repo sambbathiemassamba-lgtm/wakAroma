@@ -60,6 +60,23 @@ function getDB() {
                 created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 sent_at       TIMESTAMP NULL
             )");
+            $pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_entreprise TINYINT(1) DEFAULT 0");
+            $pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS nom_entreprise VARCHAR(255) DEFAULT ''");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS salons (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nom VARCHAR(255) NOT NULL,
+                lieu VARCHAR(255) NOT NULL,
+                ville VARCHAR(150) NOT NULL,
+                adresse VARCHAR(255) DEFAULT '',
+                date_debut DATE NOT NULL,
+                date_fin DATE NOT NULL,
+                heure_debut VARCHAR(10) DEFAULT '10:00',
+                heure_fin VARCHAR(10) DEFAULT '18:00',
+                description TEXT DEFAULT '',
+                stand VARCHAR(255) DEFAULT '',
+                actif TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )");
             $pdo->exec("CREATE TABLE IF NOT EXISTS ingredients_internes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nom VARCHAR(150) NOT NULL,
@@ -280,7 +297,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         // ---- UTILISATEURS ----
         case 'get_users':
-            $stmt = $pdo->query("SELECT id_user AS id, nom, prenom, email, numero, created_at FROM users ORDER BY created_at DESC");
+            $stmt = $pdo->query("SELECT id_user AS id, nom, prenom, email, numero, created_at, is_entreprise, nom_entreprise FROM users ORDER BY created_at DESC");
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             break;
 
@@ -472,6 +489,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $pdo->prepare("UPDATE newsletter_campaigns SET nb_envoyes=?, statut='envoye', sent_at=NOW() WHERE id=?")
                 ->execute([$sent, $campId]);
             echo json_encode(['success' => true, 'sent' => $sent, 'total' => count($recipients), 'errors' => $errors]);
+            break;
+
+
+        // ---- SALONS ----
+        case 'get_salons':
+            $stmt = $pdo->query("SELECT * FROM salons ORDER BY date_debut ASC");
+            echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            break;
+
+        case 'add_salon':
+            $sNom   = trim($_POST['nom']   ?? '');
+            $sLieu  = trim($_POST['lieu']  ?? '');
+            $sVille = trim($_POST['ville'] ?? '');
+            if (empty($sNom)||empty($sLieu)||empty($sVille)||empty($_POST['date_debut'])||empty($_POST['date_fin'])) {
+                echo json_encode(['success'=>false,'error'=>'Champs obligatoires manquants']); break;
+            }
+            $pdo->prepare("INSERT INTO salons (nom,lieu,ville,adresse,date_debut,date_fin,heure_debut,heure_fin,description,stand,actif) VALUES (?,?,?,?,?,?,?,?,?,?,1)")
+                ->execute([$sNom,$sLieu,$sVille,trim($_POST['adresse']??''),trim($_POST['date_debut']),trim($_POST['date_fin']),trim($_POST['heure_debut']??'10:00'),trim($_POST['heure_fin']??'18:00'),trim($_POST['description']??''),trim($_POST['stand']??'')]);
+            echo json_encode(['success'=>true,'id'=>(int)$pdo->lastInsertId()]);
+            break;
+
+        case 'update_salon':
+            $sId = (int)$_POST['id'];
+            $pdo->prepare("UPDATE salons SET nom=?,lieu=?,ville=?,adresse=?,date_debut=?,date_fin=?,heure_debut=?,heure_fin=?,description=?,stand=?,actif=? WHERE id=?")
+                ->execute([trim($_POST['nom']),trim($_POST['lieu']),trim($_POST['ville']),trim($_POST['adresse']??''),trim($_POST['date_debut']),trim($_POST['date_fin']),trim($_POST['heure_debut']??'10:00'),trim($_POST['heure_fin']??'18:00'),trim($_POST['description']??''),trim($_POST['stand']??''),(int)($_POST['actif']??1),$sId]);
+            echo json_encode(['success'=>true]);
+            break;
+
+        case 'delete_salon':
+            $sId = (int)$_POST['id'];
+            $pdo->prepare("DELETE FROM salons WHERE id=?")->execute([$sId]);
+            echo json_encode(['success'=>true]);
             break;
 
         default:
@@ -1187,7 +1236,92 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
         <span class="tab-icon">✉️</span> Newsletter
         <span class="tab-badge" id="badge-nl" style="display:none">0</span>
     </button>
+    <button class="nav-tab" onclick="switchPage('salons', this)" id="tab-salons">
+        <span class="tab-icon">🏪</span> Salons
+    </button>
 </nav>
+
+
+<!-- ===================== PAGE SALONS ===================== -->
+<div class="page" id="page-salons">
+<div class="toolbar">
+    <div style="flex:1">
+        <span style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--cream)">🏪 Gestion des salons</span>
+        <span style="font-size:.8rem;color:var(--text-dim);margin-left:10px">Planning visible sur salon.php</span>
+    </div>
+    <button class="btn btn-primary" onclick="salonOpenModal()">＋ Ajouter un salon</button>
+</div>
+
+<div class="main">
+  <div id="salon-list" style="display:flex;flex-direction:column;gap:14px;max-width:900px;margin:0 auto;padding-top:8px;">
+    <div style="text-align:center;color:var(--text-dim);padding:3rem;">Chargement…</div>
+  </div>
+</div>
+
+<!-- Modal salon -->
+<div class="modal-overlay" id="salon-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex !important;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s">
+  <div class="modal" style="background:#1c1610;border:1px solid var(--border);border-radius:18px;padding:32px;width:min(600px,95vw);max-height:90vh;overflow-y:auto;transform:scale(.96);transition:transform .25s">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--cream)" id="salon-modal-title">Nouveau salon</h3>
+      <button onclick="salonCloseModal()" style="background:none;border:none;color:var(--text-dim);font-size:1.4rem;cursor:pointer">✕</button>
+    </div>
+    <input type="hidden" id="salon-id">
+    <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group full" style="grid-column:1/-1">
+        <label class="form-label">Nom du salon *</label>
+        <input class="form-input" type="text" id="salon-nom" placeholder="Ex : Salon Saveurs d'Afrique 2025">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lieu / Espace *</label>
+        <input class="form-input" type="text" id="salon-lieu" placeholder="Ex : Parc des Expositions">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ville *</label>
+        <input class="form-input" type="text" id="salon-ville" placeholder="Ex : Paris">
+      </div>
+      <div class="form-group full" style="grid-column:1/-1">
+        <label class="form-label">Adresse complète</label>
+        <input class="form-input" type="text" id="salon-adresse" placeholder="Ex : 1 Place de la Porte de Versailles">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date de début *</label>
+        <input class="form-input" type="date" id="salon-date-debut">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date de fin *</label>
+        <input class="form-input" type="date" id="salon-date-fin">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heure d'ouverture</label>
+        <input class="form-input" type="time" id="salon-heure-debut" value="10:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heure de fermeture</label>
+        <input class="form-input" type="time" id="salon-heure-fin" value="18:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">N° / Nom du stand</label>
+        <input class="form-input" type="text" id="salon-stand" placeholder="Ex : Stand B42">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Actif (visible sur le site)</label>
+        <select class="form-input" id="salon-actif">
+          <option value="1">✅ Oui — visible</option>
+          <option value="0">❌ Non — masqué</option>
+        </select>
+      </div>
+      <div class="form-group full" style="grid-column:1/-1">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" id="salon-desc" rows="3" placeholder="Quelques mots pour donner envie…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end">
+      <button class="btn" onclick="salonCloseModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim)">Annuler</button>
+      <button class="btn btn-primary" onclick="salonSave()" id="salon-save-btn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+</div>
 
 <!-- ===================== PAGE STOCKS ===================== -->
 <div class="page active" id="page-stocks">
@@ -1781,6 +1915,7 @@ function switchPage(page, btn) {
     if (page === 'ingredients' && allIngredients.length === 0) loadIngredients();
     if (page === 'users'       && allUsers.length === 0)       loadUsers();
     if (page === 'newsletter'  && nlAllSubs.length === 0)      nlLoadSubs();
+    if (page === 'salons'       && allSalons.length === 0)      loadSalons();
 }
 
 // ==========================================
@@ -2253,14 +2388,24 @@ function renderUsers(list) {
         return;
     }
     tbody.innerHTML = list.map(u => {
-        const initials = ((u.prenom||'?')[0] + (u.nom||'?')[0]).toUpperCase();
-        const dateStr  = u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }) : '—';
-        return `<tr data-id="${u.id}" data-search="${(u.nom+' '+u.prenom+' '+u.email).toLowerCase()}">
+        const initials   = ((u.prenom||'?')[0] + (u.nom||'?')[0]).toUpperCase();
+        const dateStr    = u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+        const isEntreprise = u.is_entreprise == 1;
+        const rowStyle   = isEntreprise ? 'border-left:3px solid #e74c3c;background:rgba(231,76,60,.06);' : '';
+        const avatarStyle= isEntreprise ? 'background:linear-gradient(135deg,#c0392b,#e74c3c);' : '';
+        const entrepriseBadge = isEntreprise
+            ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:2px 8px;border-radius:999px;background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);color:#e74c3c;margin-left:6px">🏢 ${escHtml(u.nom_entreprise || 'Entreprise')}</span>`
+            : '';
+        const searchStr = (u.nom+' '+u.prenom+' '+u.email+' '+(u.nom_entreprise||'')).toLowerCase();
+        return `<tr data-id="${u.id}" data-search="${searchStr}" style="${rowStyle}">
             <td>
                 <div class="user-name-cell">
-                    <div class="user-avatar">${escHtml(initials)}</div>
+                    <div class="user-avatar" style="${avatarStyle}">${isEntreprise ? '🏢' : escHtml(initials)}</div>
                     <div>
-                        <div style="font-weight:500;color:var(--cream)">${escHtml(u.prenom || '')} ${escHtml(u.nom || '')}</div>
+                        <div style="font-weight:500;color:${isEntreprise ? '#e74c3c' : 'var(--cream)'}">
+                            ${escHtml(u.prenom || '')} ${escHtml(u.nom || '')}
+                            ${entrepriseBadge}
+                        </div>
                     </div>
                 </div>
             </td>
@@ -2789,6 +2934,149 @@ async function initDefaultIngredients() {
     } catch(e) {}
 }
 initDefaultIngredients();
+
+// ==========================================
+// GESTION DES SALONS
+// ==========================================
+let allSalons = [];
+
+async function loadSalons() {
+    try {
+        const res = await post({ action: 'get_salons' });
+        allSalons = res.data || [];
+        renderSalons();
+    } catch(e) { showToast('Erreur chargement salons', 'error'); }
+}
+
+function renderSalons() {
+    const wrap = document.getElementById('salon-list');
+    if (!allSalons.length) {
+        wrap.innerHTML = `<div style="text-align:center;color:var(--text-dim);padding:3rem;background:var(--surface2);border:1px solid var(--border);border-radius:14px">
+            <div style="font-size:2.5rem;margin-bottom:12px">🏪</div>
+            <div style="font-size:1rem;font-weight:600;color:var(--cream)">Aucun salon programmé</div>
+            <div style="font-size:.85rem;margin-top:6px">Cliquez sur "Ajouter un salon" pour commencer</div>
+        </div>`;
+        return;
+    }
+    const months = ['','Janv','Févr','Mars','Avr','Mai','Juin','Juil','Août','Sept','Oct','Nov','Déc'];
+    wrap.innerHTML = allSalons.map(s => {
+        const d = new Date(s.date_debut + 'T00:00:00');
+        const dFin = new Date(s.date_fin + 'T00:00:00');
+        const today = new Date(); today.setHours(0,0,0,0);
+        const isPast   = dFin < today;
+        const isToday  = d <= today && dFin >= today;
+        const isFuture = d > today;
+        const statusBadge = isPast
+            ? `<span style="font-size:.65rem;padding:3px 9px;border-radius:999px;background:rgba(192,57,43,.2);border:1px solid var(--red-border);color:#e74c3c">Terminé</span>`
+            : isToday
+            ? `<span style="font-size:.65rem;padding:3px 9px;border-radius:999px;background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.4);color:#27ae60">En cours</span>`
+            : `<span style="font-size:.65rem;padding:3px 9px;border-radius:999px;background:rgba(201,150,59,.15);border:1px solid rgba(201,150,59,.3);color:var(--gold)">À venir</span>`;
+        const activeBadge = s.actif == 0
+            ? `<span style="font-size:.65rem;padding:2px 8px;border-radius:999px;background:rgba(192,57,43,.15);color:#e74c3c;margin-left:6px">Masqué</span>` : '';
+        const sameDay = s.date_debut === s.date_fin;
+        return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:20px 24px;display:grid;grid-template-columns:70px 1fr auto;gap:18px;align-items:center;${isPast?'opacity:.55':''}">
+            <div style="background:rgba(201,150,59,.12);border:1px solid rgba(201,150,59,.25);border-radius:12px;padding:10px;text-align:center">
+                <div style="font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;color:var(--gold);line-height:1">${d.getDate()}</div>
+                <div style="font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-top:3px">${months[d.getMonth()+1]}</div>
+                <div style="font-size:.6rem;color:var(--text-dim)">${d.getFullYear()}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <span style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:var(--cream)">${escHtml(s.nom)}</span>
+                    ${statusBadge}${activeBadge}
+                </div>
+                <div style="font-size:.83rem;color:var(--text-dim)">📍 ${escHtml(s.lieu)}, ${escHtml(s.ville)}${s.adresse ? ' — '+escHtml(s.adresse) : ''}</div>
+                ${!sameDay ? `<div style="font-size:.78rem;color:var(--text-dim)">📅 Du ${s.date_debut} au ${s.date_fin}</div>` : ''}
+                ${s.heure_debut ? `<div style="font-size:.78rem;color:var(--text-dim)">🕙 ${escHtml(s.heure_debut)} – ${escHtml(s.heure_fin)}</div>` : ''}
+                ${s.stand ? `<div style="font-size:.75rem;padding:2px 10px;background:rgba(31,79,46,.3);border:1px solid rgba(45,122,68,.3);border-radius:999px;color:#6fd98a;width:fit-content">🏷 Stand : ${escHtml(s.stand)}</div>` : ''}
+                ${s.description ? `<div style="font-size:.8rem;color:var(--text-dim);font-style:italic">${escHtml(s.description)}</div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="action-btn" onclick="salonEdit(${s.id})" style="background:var(--surface);border:1px solid var(--border)">✏️ Modifier</button>
+                <button class="action-btn" onclick="salonDelete(${s.id},'${escHtml(s.nom)}')" style="background:var(--red-bg);border:1px solid var(--red-border);color:#e74c3c">🗑 Suppr.</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function salonOpenModal(data = null) {
+    document.getElementById('salon-modal-title').textContent = data ? 'Modifier le salon' : 'Nouveau salon';
+    document.getElementById('salon-id').value          = data?.id ?? '';
+    document.getElementById('salon-nom').value         = data?.nom ?? '';
+    document.getElementById('salon-lieu').value        = data?.lieu ?? '';
+    document.getElementById('salon-ville').value       = data?.ville ?? '';
+    document.getElementById('salon-adresse').value     = data?.adresse ?? '';
+    document.getElementById('salon-date-debut').value  = data?.date_debut ?? '';
+    document.getElementById('salon-date-fin').value    = data?.date_fin ?? '';
+    document.getElementById('salon-heure-debut').value = data?.heure_debut ?? '10:00';
+    document.getElementById('salon-heure-fin').value   = data?.heure_fin ?? '18:00';
+    document.getElementById('salon-stand').value       = data?.stand ?? '';
+    document.getElementById('salon-actif').value       = data ? String(data.actif) : '1';
+    document.getElementById('salon-desc').value        = data?.description ?? '';
+    const m = document.getElementById('salon-modal');
+    m.style.pointerEvents = 'all';
+    m.style.opacity = '1';
+    setTimeout(() => m.querySelector('.modal').style.transform = 'scale(1)', 10);
+}
+
+function salonCloseModal() {
+    const m = document.getElementById('salon-modal');
+    m.style.opacity = '0';
+    m.style.pointerEvents = 'none';
+    m.querySelector('.modal').style.transform = 'scale(.96)';
+}
+
+function salonEdit(id) {
+    const s = allSalons.find(x => x.id == id);
+    if (s) salonOpenModal(s);
+}
+
+async function salonDelete(id, nom) {
+    if (!confirm(`Supprimer le salon "${nom}" ?`)) return;
+    try {
+        await post({ action: 'delete_salon', id });
+        showToast('Salon supprimé', 'success');
+        loadSalons();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function salonSave() {
+    const id  = document.getElementById('salon-id').value;
+    const nom = document.getElementById('salon-nom').value.trim();
+    const lieu = document.getElementById('salon-lieu').value.trim();
+    const ville = document.getElementById('salon-ville').value.trim();
+    const dDebut = document.getElementById('salon-date-debut').value;
+    const dFin   = document.getElementById('salon-date-fin').value;
+    if (!nom || !lieu || !ville || !dDebut || !dFin) {
+        showToast('Remplissez tous les champs obligatoires (*)', 'error'); return;
+    }
+    const btn = document.getElementById('salon-save-btn');
+    btn.disabled = true; btn.textContent = '⏳ Enregistrement…';
+    try {
+        await post({
+            action: id ? 'update_salon' : 'add_salon',
+            id, nom, lieu, ville,
+            adresse:     document.getElementById('salon-adresse').value.trim(),
+            date_debut:  dDebut,
+            date_fin:    dFin,
+            heure_debut: document.getElementById('salon-heure-debut').value,
+            heure_fin:   document.getElementById('salon-heure-fin').value,
+            stand:       document.getElementById('salon-stand').value.trim(),
+            actif:       document.getElementById('salon-actif').value,
+            description: document.getElementById('salon-desc').value.trim(),
+        });
+        showToast(id ? 'Salon mis à jour ✓' : 'Salon ajouté ✓', 'success');
+        salonCloseModal();
+        loadSalons();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+    btn.disabled = false; btn.textContent = 'Enregistrer';
+}
+
+// Fermer modal en cliquant l'overlay
+document.getElementById('salon-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('salon-modal')) salonCloseModal();
+});
+
 </script>
 </body>
 </html>

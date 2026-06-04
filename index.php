@@ -368,7 +368,7 @@ try {
                 <a href="#" class="edito-card__link"> En savoir plus → </a>
             </div>
 
-            <div class="edito-card__deco" aria-hidden="true"> 🌍 </div>
+            <div class="edito-card__deco" aria-hidden="true"> <img src="icones/drap.png" alt=""> </div>
 
         </div>
 
@@ -386,7 +386,9 @@ try {
 
             </div>
 
-            <div class="edito-card__deco" aria-hidden="true"> 🫙 </div>
+            <div class="edito-card__deco edito-card__deco--img" aria-hidden="true">
+                <img src="images/cardamone.png" alt="">
+            </div>
 
         </div>
 
@@ -406,7 +408,7 @@ try {
                     Découvrez nos épices en boutique et laissez-vous guider par nos experts.
                 </p>
 
-                <a href="#salon" class="edito-card__link edito-card__link--green">
+                <a href="salon.php" class="edito-card__link edito-card__link--green">
                     Trouver un salon →
                 </a>
 
@@ -423,6 +425,9 @@ try {
 
 <!-- Toast de notification -->
 <div id="toast-index" class="toast-notif" aria-live="polite"></div>
+
+<!-- ══ Bannière Cookies ══ -->
+<?php require_once 'cookies.php'; ?>
 
 <!-- Footer -->
 <?php require_once 'footer.php'; ?>
