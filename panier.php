@@ -8,7 +8,7 @@ require_once 'function.php';
 // ──────────────────────────────────────────────────────────────
 
 // Helper : compte le total d'articles dans le panier (somme des quantités)
-function compterArticlesPanier($pdo, $id_user) {
+function compterArticlesPanier(PDO $pdo, int $id_user) {
     $stmt = $pdo->prepare("
         SELECT COALESCE(SUM(lp.quantite), 0) AS nb
         FROM paniers pan
@@ -291,12 +291,7 @@ foreach ($lignes as $l) {
                 <span>Sous-total</span>
                 <span id="recap-sous-total"><?= number_format($total, 2) ?> €</span>
             </div>
-            <div class="recap-ligne">
-                <span>Livraison</span>
-                <span class="recap-livraison">
-                    <?= $total >= 50 ? '<span class="gratuit">Gratuite 🎉</span>' : 'À calculer' ?>
-                </span>
-            </div>
+
             <?php if ($total < 50): ?>
             <p class="recap-info-livraison">
                 Encore <strong><?= number_format(50 - $total, 2) ?> €</strong> pour la livraison offerte
@@ -310,13 +305,12 @@ foreach ($lignes as $l) {
                 <span id="recap-total"><?= number_format($total, 2) ?> €</span>
             </div>
 
-            <a href="paiement.php" class="btn-paiement">
+            <a href="paiement/stripeCheckoutSession.php" class="btn-paiement">
                 Procéder au paiement
             </a>
 
             <div class="recap-securite">
                 <span>🔒 Paiement 100% sécurisé</span>
-                <span>↩ Retours gratuits sous 30 jours</span>
             </div>
         </aside>
 
