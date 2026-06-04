@@ -170,7 +170,13 @@ $req = $pdo->prepare("
     FROM paniers pan
     INNER JOIN lignes_panier lp ON lp.id_panier = pan.id_panier
     INNER JOIN produits p       ON p.id_produit  = lp.id_produit
-    LEFT  JOIN images i         ON i.id_produit  = p.id_produit
+    LEFT  JOIN images i         ON i.id_produit = p.id_produit
+                                   AND i.id_image = (
+                                       SELECT id_image FROM images
+                                       WHERE id_produit = p.id_produit
+                                       ORDER BY is_cover DESC, id_image ASC
+                                       LIMIT 1
+                                   )
     WHERE pan.id_user = :id
     ORDER BY lp.id_ligne_panier ASC
 ");
@@ -292,11 +298,6 @@ foreach ($lignes as $l) {
                 <span id="recap-sous-total"><?= number_format($total, 2) ?> €</span>
             </div>
 
-            <?php if ($total < 50): ?>
-            <p class="recap-info-livraison">
-                Encore <strong><?= number_format(50 - $total, 2) ?> €</strong> pour la livraison offerte
-            </p>
-            <?php endif; ?>
 
             <div class="recap-separateur"></div>
 
