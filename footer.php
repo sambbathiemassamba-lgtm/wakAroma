@@ -13,7 +13,7 @@
                 <ul>
                     <li><a href="index.php">Nos produits</a></li>
                     <li><a href="historique.php">Notre historique</a></li>
-                    <li><a href="#salon">Nos salons</a></li>
+                    <li><a href="salon.php">Nos salons</a></li>
                 </ul>
             </div>
 
