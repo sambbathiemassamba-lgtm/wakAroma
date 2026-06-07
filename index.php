@@ -355,67 +355,41 @@ try {
     <div class="edito-grid">
 
         <div class="edito-card edito-card--large">
-
+            <div class="edito-card__icon-badge">
+                <img src="icones/Logo_Afrique.png" alt="" onerror="this.style.display='none'">
+            </div>
             <div class="edito-card__content">
                 <p class="edito-card__eyebrow">Notre histoire</p>
-
-                <h3 class="edito-card__title"> L'Afrique au cœur de chaque épice </h3>
-
-                <p class="edito-card__text">
-                    Fondée avec passion, WakAroma sélectionne les meilleures épices directement auprès des producteurs africains pour vous offrir une expérience gustative unique.
-                </p>
-
-                <a href="#" class="edito-card__link"> En savoir plus → </a>
+                <h3 class="edito-card__title">L'Afrique au cœur de chaque épice</h3>
+                <p class="edito-card__text">Fondée avec passion, WakAroma sélectionne les meilleures épices directement auprès des producteurs africains pour vous offrir une expérience gustative unique.</p>
+                <a href="#" class="edito-card__link">En savoir plus →</a>
             </div>
-
-            <div class="edito-card__deco" aria-hidden="true"> <img src="icones/drap.png" alt=""> </div>
-
         </div>
 
         <div class="edito-card edito-card--gold">
-
+            <div class="edito-card__icon-badge">
+                <img src="icones/Epices_.png" alt="" onerror="this.style.display='none'">
+            </div>
             <div class="edito-card__content">
-
-                <p class="edito-card__eyebrow"> Savoir-faire </p>
-
-                <h3 class="edito-card__title"> Mélanges artisanaux </h3>
-
-                <p class="edito-card__text"> Chaque mélange est préparé à la main selon des recettes ancestrales. </p>
-
-                <a href="#" class="edito-card__link"> Découvrir → </a>
-
+                <p class="edito-card__eyebrow">Savoir-faire</p>
+                <h3 class="edito-card__title">Mélanges artisanaux</h3>
+                <p class="edito-card__text">Chaque mélange est préparé à la main selon des recettes ancestrales.</p>
+                <a href="#" class="edito-card__link">Découvrir →</a>
             </div>
-
-            <div class="edito-card__deco edito-card__deco--img" aria-hidden="true">
-                <img src="images/cardamone.png" alt="">
-            </div>
-
         </div>
 
         <div class="edito-card edito-card--beige">
-
-            <div class="edito-card__content">
-
-                <p class="edito-card__eyebrow">
-                    Nos salons
-                </p>
-
-                <h3 class="edito-card__title">
-                    Venez nous rencontrer
-                </h3>
-
-                <p class="edito-card__text">
-                    Découvrez nos épices en boutique et laissez-vous guider par nos experts.
-                </p>
-
-                <a href="salon.php" class="edito-card__link edito-card__link--green">
-                    Trouver un salon →
-                </a>
-
+            <div class="edito-card__icon-badge">
+                <img src="icones/cardamome.png" alt="" onerror="this.style.display='none'">
             </div>
-
-            <div class="edito-card__deco" aria-hidden="true"> 🌿 </div>
+            <div class="edito-card__content">
+                <p class="edito-card__eyebrow">Nos salons</p>
+                <h3 class="edito-card__title">Venez nous rencontrer</h3>
+                <p class="edito-card__text">Découvrez nos épices en boutique et laissez-vous guider par nos experts.</p>
+                <a href="salon.php" class="edito-card__link edito-card__link--green">Trouver un salon →</a>
+            </div>
         </div>
+
     </div>
 </section>
 

@@ -1970,24 +1970,70 @@ PAGE INDEX
 ════════════════════════════════════════ */
 
 .edito-section{
-    padding:80px 20px;
+    padding: 80px 20px;
+    max-width: 100%;
 }
 
 .edito-grid{
-    display:grid;
-    grid-template-columns:2fr 1fr 1fr;
-    gap:24px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .edito-card{
-    position:relative;
-    overflow:hidden;
-    border-radius:28px;
-    padding:40px;
-    min-height:320px;
-    display:flex;
-    align-items:flex-end;
-    color:#fff;
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 42px 38px;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+}
+
+/* Badge icône positionné en haut à droite de la carte */
+.edito-card__icon-badge {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 130px;
+    height: 130px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.4s ease,
+                background 0.3s ease;
+    z-index: 3;
+}
+
+.edito-card__icon-badge img {
+    width: 130px;
+    height: 130px;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.2));
+}
+
+.edito-card--large .edito-card__icon-badge img {
+    width: 150px;   /* ← change cette valeur */
+    height: 150px;
+}
+
+/* Survol : le badge ressort */
+.edito-card:hover .edito-card__icon-badge {
+    transform: scale(1.12) rotate(-6deg);
+    background: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.35);
 }
 
 .edito-card--large{
@@ -2015,52 +2061,70 @@ PAGE INDEX
 }
 
 .edito-card__content{
-    position:relative;
-    z-index:2;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .edito-card__eyebrow{
-    font-size:.85rem;
-    text-transform:uppercase;
-    letter-spacing:2px;
-    opacity:.8;
-    margin-bottom:12px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    opacity: .8;
+    margin-bottom: 18px;
+    font-weight: 600;
 }
 
 .edito-card__title{
-    font-size:2rem;
-    line-height:1.1;
-    margin-bottom:18px;
+    font-size: 2.6rem;
+    line-height: 1.1;
+    margin-bottom: 22px;
+    font-family: var(--font-display);
+    font-weight: 700;
 }
 
 .edito-card__text{
-    font-size:.96rem;
-    line-height:1.7;
-    opacity:.92;
-    margin-bottom:24px;
+    font-size: 1.25rem;
+    line-height: 1.8;
+    opacity: .92;
+    margin-bottom: 0;
+    flex: 1;
 }
 
 .edito-card__link{
-    color:#fff;
-    text-decoration:none;
-    font-weight:600;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1.5px solid rgba(255,255,255,0.4);
+    padding-bottom: 2px;
+    margin-top: 32px;
+    align-self: flex-start;
+    transition: border-color 0.2s, opacity 0.2s;
 }
 
 .edito-card__link:hover{
-    text-decoration:underline;
+    border-color: rgba(255,255,255,0.9);
+    opacity: 1;
 }
 
 .edito-card__link--green{
-    color:var(--color-green);
+    color: var(--color-green);
+    border-bottom-color: rgba(31,79,46,0.4);
+}
+
+.edito-card__link--green:hover{
+    border-color: var(--color-green);
 }
 
 .edito-card__deco{
-    position:absolute;
-    top:1.5rem;
-    right:2rem;
-    font-size:4rem;
-    opacity:.25;
-    pointer-events:none;
+    display: none;
 }
 
 @media(max-width:980px){
