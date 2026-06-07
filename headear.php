@@ -33,13 +33,13 @@ $nomUtilisateur = $_SESSION['auth']['prenom'] ?? $_SESSION['auth']['nom'] ?? '';
             z-index: 1001;
         }
         .burger-btn:hover {
-            background: rgba(200, 148, 58, 0.12);
+            background: rgba(31, 79, 46, 0.1);
         }
         .burger-btn__line {
             display: block;
             width: 100%;
             height: 2px;
-            background: #c8943a;
+            background: #1f4f2e;
             border-radius: 2px;
             transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
                         opacity 0.25s ease,
@@ -63,8 +63,8 @@ $nomUtilisateur = $_SESSION['auth']['prenom'] ?? $_SESSION['auth']['nom'] ?? '';
         .nav-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(5, 20, 7, 0.55);
-            backdrop-filter: blur(3px);
+            background: rgba(5, 20, 7, 0.6);
+            backdrop-filter: blur(4px);
             z-index: 999;
             opacity: 0;
             pointer-events: none;
@@ -81,18 +81,27 @@ $nomUtilisateur = $_SESSION['auth']['prenom'] ?? $_SESSION['auth']['nom'] ?? '';
             top: 0;
             left: 0;
             height: 100dvh;
-            width: min(320px, 85vw);
-            background: #105502;
+            width: min(340px, 88vw);
+            background: #1f4f2e;
             z-index: 1000;
             transform: translateX(-100%);
             transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
             display: flex;
             flex-direction: column;
-            box-shadow: 4px 0 30px rgba(0,0,0,0.18);
+            box-shadow: 8px 0 40px rgba(0,0,0,0.25);
             overflow-y: auto;
         }
         .nav-drawer.is-open {
             transform: translateX(0);
+        }
+
+        /* Bande dorée décorative en haut */
+        .nav-drawer::before {
+            content: '';
+            display: block;
+            height: 4px;
+            background: linear-gradient(90deg, #c8943a, #e8b860, #c8943a);
+            flex-shrink: 0;
         }
 
         /* En-tête du drawer */
@@ -100,155 +109,194 @@ $nomUtilisateur = $_SESSION['auth']['prenom'] ?? $_SESSION['auth']['nom'] ?? '';
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 20px 24px 16px;
-            border-bottom: 1px solid rgba(200, 148, 58, 0.18);
+            padding: 22px 24px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         .nav-drawer__brand {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 12px;
             text-decoration: none;
+        }
+        .nav-drawer__brand-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: rgba(200, 148, 58, 0.15);
+            border: 1px solid rgba(200, 148, 58, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+        .nav-drawer__brand-texts {
+            display: flex;
+            flex-direction: column;
             gap: 2px;
         }
         .nav-drawer__brand-name {
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: #c8943a;
-            letter-spacing: -0.3px;
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            font-family: 'Cormorant Garamond', serif;
         }
         .nav-drawer__brand-sub {
-            font-size: 0.72rem;
+            font-size: 0.62rem;
             color: #c8943a;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.3em;
             text-transform: uppercase;
             font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
         }
         .nav-drawer__close {
-            background: none;
-            border: none;
+            width: 34px;
+            height: 34px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 1.4rem;
-            color: #c8943a;
-            padding: 6px;
-            border-radius: 6px;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             line-height: 1;
-            transition: color 0.2s, background 0.2s;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
         .nav-drawer__close:hover {
-            color: #c8943a;
-            background: rgba(200, 148, 58, 0.1);
+            background: rgba(255,255,255,0.13);
+            color: #fff;
+            border-color: rgba(255,255,255,0.25);
         }
 
         /* Profil utilisateur connecté */
         .nav-drawer__user {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             padding: 16px 24px;
-            background: linear-gradient(135deg, rgba(200,148,58,0.1), rgba(200,148,58,0.04));
-            border-bottom: 1px solid rgba(200, 148, 58, 0.12);
+            margin: 12px 16px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(200, 148, 58, 0.2);
+            border-radius: 14px;
         }
         .nav-drawer__avatar {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: linear-gradient(135deg, #c8943a, #e8b860);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: 1.15rem;
+            font-weight: 800;
             color: white;
             flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(200,148,58,0.35);
         }
         .nav-drawer__user-info {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 3px;
         }
         .nav-drawer__user-name {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 700;
-             color: #c8943a;
+            color: #fff;
         }
         .nav-drawer__user-status {
             font-size: 0.72rem;
             color: #c8943a;
+            font-weight: 500;
         }
 
         /* Navigation principale */
         .nav-drawer__nav {
             flex: 1;
-            padding: 12px 0;
+            padding: 8px 0;
         }
         .nav-drawer__section-title {
-            padding: 10px 24px 4px;
-            font-size: 0.65rem;
+            padding: 16px 24px 6px;
+            font-size: 0.62rem;
             font-weight: 700;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.18em;
             text-transform: uppercase;
-            color: #c8943a;
+            color: rgba(200, 148, 58, 0.7);
         }
         .nav-drawer__link {
             display: flex;
             align-items: center;
             gap: 14px;
-            padding: 13px 24px;
+            padding: 13px 20px;
+            margin: 2px 12px;
             text-decoration: none;
-            color: #c8943a;
+            color: rgba(255,255,255,0.82);
             font-size: 0.95rem;
             font-weight: 500;
-            transition: background 0.18s, color 0.18s, padding-left 0.2s;
-            border-left: 3px solid transparent;
+            border-radius: 10px;
+            transition: background 0.18s, color 0.18s, transform 0.18s;
         }
         .nav-drawer__link:hover {
-            background: rgba(200, 148, 58, 0.08);
-            color: #c8943a;
-            padding-left: 28px;
-            border-left-color: #c8943a;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            transform: translateX(4px);
         }
         .nav-drawer__link--active {
-            background: rgba(200, 148, 58, 0.1);
+            background: rgba(200, 148, 58, 0.15);
             color: #c8943a;
-            border-left-color: #c8943a;
         }
         .nav-drawer__link-icon {
-            font-size: 1.2rem;
-            width: 24px;
-            text-align: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: rgba(255,255,255,0.07);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
             flex-shrink: 0;
+        }
+        .nav-drawer__link-icon img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
         }
 
         /* Séparateur */
         .nav-drawer__sep {
             height: 1px;
-            background: rgba(200, 148, 58, 0.12);
-            margin: 8px 24px;
+            background: rgba(255,255,255,0.07);
+            margin: 10px 24px;
         }
 
         /* Footer du drawer */
         .nav-drawer__foot {
-            padding: 16px 24px;
-            border-top: 1px solid rgba(200, 148, 58, 0.15);
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.07);
         }
         .nav-drawer__logout {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            padding: 11px 16px;
+            padding: 12px 16px;
             width: 100%;
-            background: none;
-            border: 1.5px solid rgba(200, 148, 58, 0.3);
-            border-radius: 8px;
-            color: #c8943a;
-            font-size: 0.88rem;
+            background: rgba(224, 92, 92, 0.08);
+            border: 1px solid rgba(224, 92, 92, 0.25);
+            border-radius: 10px;
+            color: rgba(255,120,120,0.9);
+            font-size: 0.9rem;
+            font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
         .nav-drawer__logout:hover {
-            border-color: #e05c5c;
-            color: #e05c5c;
-            background: rgba(224, 92, 92, 0.05);
+            background: rgba(224, 92, 92, 0.16);
+            color: #ff8080;
+            border-color: rgba(224, 92, 92, 0.45);
         }
     </style>
 </head>
@@ -263,8 +311,11 @@ $nomUtilisateur = $_SESSION['auth']['prenom'] ?? $_SESSION['auth']['nom'] ?? '';
     <!-- En-tête -->
     <div class="nav-drawer__head">
         <a href="index.php" class="nav-drawer__brand" onclick="fermerMenu()">
-            <span class="nav-drawer__brand-name">WakAroma</span>
-            <span class="nav-drawer__brand-sub">Épices d'Afrique</span>
+         
+            <div class="nav-drawer__brand-texts">
+                <span class="nav-drawer__brand-name">WakAroma</span>
+                <span class="nav-drawer__brand-sub">Épices d'Afrique</span>
+            </div>
         </a>
         <button class="nav-drawer__close" onclick="fermerMenu()" aria-label="Fermer le menu">✕</button>
     </div>

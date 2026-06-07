@@ -160,7 +160,7 @@ try {
                 Découvrir nos épices
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
-            <a href="#historique" class="hero__cta hero__cta--ghost">Notre histoire</a>
+            <a href="historique.php" class="hero__cta hero__cta--ghost">Notre histoire</a>
         </div>
 
         <!-- Stats -->
@@ -362,7 +362,7 @@ try {
                 <p class="edito-card__eyebrow">Notre histoire</p>
                 <h3 class="edito-card__title">L'Afrique au cœur de chaque épice</h3>
                 <p class="edito-card__text">Fondée avec passion, WakAroma sélectionne les meilleures épices directement auprès des producteurs africains pour vous offrir une expérience gustative unique.</p>
-                <a href="#" class="edito-card__link">En savoir plus →</a>
+                <a href="historique.php" class="edito-card__link">En savoir plus →</a>
             </div>
         </div>
 
