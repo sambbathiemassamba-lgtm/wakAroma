@@ -1,0 +1,7 @@
+# Fichiers sensibles — NE JAMAIS commit
+config.php
+
+# Dossiers inutiles
+node_modules/
+.DS_Store
+Thumbs.db

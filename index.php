@@ -256,7 +256,15 @@ try {
                 <?php endif; ?>
 
                 <!-- Wishlist -->
-                <button class="produit__wishlist" aria-label="Ajouter aux favoris" onclick="this.classList.toggle('actif')">♡</button>
+                <button
+                    class="produit__wishlist"
+                    aria-label="Ajouter aux favoris"
+                    data-id="<?= (int)$data->id_produit ?>"
+                    data-nom="<?= htmlspecialchars($data->nom) ?>"
+                    data-prix="<?= htmlspecialchars($data->prix) ?>"
+                    data-img="<?= htmlspecialchars($img_index) ?>"
+                    onclick="toggleFavoriIndex(this)"
+                >♡</button>
 
                 <!-- Overlay au hover -->
                 <div class="produit__overlay">
@@ -406,13 +414,6 @@ try {
 <!-- Footer -->
 <?php require_once 'footer.php'; ?>
 
-<!-- ══════════════════════════════════════════
-     CHATBOT WAKAROMA
-     ══════════════════════════════════════════ -->
-<?php require_once 'chatbox.php'?>
-
-
-<script src="script/index.js"></script>
 
 <script>
 // ── Badge panier ──────────────────────────────────────────────
@@ -511,6 +512,73 @@ function afficherToast(msg, type = 'success') {
     el._t = setTimeout(() => el.classList.remove('toast-notif--visible'), 3000);
 }
 
+</script>
+<script>
+// ══════════════════════════════════════════
+//  SYSTÈME FAVORIS — WakAroma (synchronisé BDD)
+// ══════════════════════════════════════════
+
+async function toggleFavoriIndex(btn) {
+    // Si non connecté → rediriger vers login
+    <?php if (empty($_SESSION['auth'])): ?>
+    window.location.href = 'login.php';
+    return;
+    <?php endif; ?>
+
+    const id = btn.dataset.id;
+
+    // Animation pop
+    btn.classList.add('pop');
+    btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
+
+    try {
+        const res  = await fetch('favoris.php', {
+            method: 'POST',
+            body: new URLSearchParams({ action: 'toggle', id_produit: id })
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            if (json.actif) {
+                btn.classList.add('actif');
+                btn.innerHTML = '♥';
+                btn.setAttribute('aria-label', 'Retirer des favoris');
+                afficherToast('❤️ Ajouté aux favoris !');
+            } else {
+                btn.classList.remove('actif');
+                btn.innerHTML = '♡';
+                btn.setAttribute('aria-label', 'Ajouter aux favoris');
+                afficherToast('Retiré des favoris');
+            }
+        } else {
+            afficherToast(json.message || 'Erreur', 'error');
+        }
+    } catch(e) {
+        afficherToast('Erreur de connexion', 'error');
+    }
+}
+
+// Au chargement : récupérer les IDs favoris depuis la BDD pour colorier les boutons
+document.addEventListener('DOMContentLoaded', async () => {
+    <?php if (!empty($_SESSION['auth'])): ?>
+    try {
+        const res  = await fetch('favoris.php', {
+            method: 'POST',
+            body: new URLSearchParams({ action: 'get_ids' })
+        });
+        const json = await res.json();
+        if (json.success && json.ids.length > 0) {
+            document.querySelectorAll('.produit__wishlist').forEach(btn => {
+                if (json.ids.includes(parseInt(btn.dataset.id))) {
+                    btn.classList.add('actif');
+                    btn.innerHTML = '♥';
+                    btn.setAttribute('aria-label', 'Retirer des favoris');
+                }
+            });
+        }
+    } catch(e) { /* silencieux */ }
+    <?php endif; ?>
+});
 </script>
 <script>
 // ══════════════════════════════════════════
