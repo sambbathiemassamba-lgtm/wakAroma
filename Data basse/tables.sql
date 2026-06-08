@@ -544,3 +544,7 @@ VALUES
     ('Sel rose de l\'Himalaya',0, 'g', 0, 10),
     ('Sésame doré',            0, 'g', 0, 10),
     ('Sumac',                  0, 'g', 0, 10);
+
+    ALTER TABLE users
+    ADD COLUMN reset_token VARCHAR(64) DEFAULT NULL,
+    ADD COLUMN reset_token_expires DATETIME DEFAULT NULL;
