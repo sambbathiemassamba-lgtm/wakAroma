@@ -166,12 +166,16 @@ $req = $pdo->prepare("
         p.nom,
         p.description,
         p.stock,
-        i.url_image
+        COALESCE(
+            MAX(CASE WHEN i.is_cover = 1 THEN i.url_image END),
+            MIN(i.url_image)
+        ) AS url_image
     FROM paniers pan
     INNER JOIN lignes_panier lp ON lp.id_panier = pan.id_panier
     INNER JOIN produits p       ON p.id_produit  = lp.id_produit
     LEFT  JOIN images i         ON i.id_produit  = p.id_produit
     WHERE pan.id_user = :id
+    GROUP BY lp.id_ligne_panier, lp.quantite, lp.prix_capture, p.id_produit, p.nom, p.description, p.stock
     ORDER BY lp.id_ligne_panier ASC
 ");
 $req->execute([':id' => $id_user]);

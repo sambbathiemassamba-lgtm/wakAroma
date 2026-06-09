@@ -1,7 +1,16 @@
 <?php
 session_start();
 require_once 'function.php';
-$datas = recuperation_produits_images();
+$datas_raw = recuperation_produits_images();
+
+// Dédoublonnage : on garde un seul enregistrement par produit
+// (la première image rencontrée est conservée)
+$datas = [];
+foreach ($datas_raw as $row) {
+    if (!isset($datas[$row->id_produit])) {
+        $datas[$row->id_produit] = $row;
+    }
+}
 ?>
 
 <?php require_once 'headear.php'; ?>
