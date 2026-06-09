@@ -342,7 +342,7 @@ foreach ($datas_raw as $row) {
 
         <div class="edito-card edito-card--beige">
             <div class="edito-card__icon-badge">
-                <img src="icones/cardamome.png" alt="" onerror="this.style.display='none'">
+                <img src="icones/cardamone.png" alt="" onerror="this.style.display='none'">
             </div>
             <div class="edito-card__content">
                 <p class="edito-card__eyebrow">Nos salons</p>
