@@ -1,0 +1,957 @@
+[33mcommit cba05105ab432919f5bd89d01576a409f3bc7c15[m
+Author: samzo <sambbathiemassamba@gmail.com>
+Date:   Thu Jun 4 09:54:24 2026 +0200
+
+    Add vendor and paiement directories
+
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mnew file mode 100644[m
+[1mindex 0000000..57ae216[m
+[1m--- /dev/null[m
+[1m+++ b/.gitignore[m
+[36m@@ -0,0 +1,23 @@[m
+[32m+[m[32m### AL ###[m[41m[m
+[32m+[m[32m#Template for AL projects for Dynamics 365 Business Central[m[41m[m
+[32m+[m[32m#launch.json folder[m[41m[m
+[32m+[m[32m.vscode/[m[41m[m
+[32m+[m[32m#Cache folder[m[41m[m
+[32m+[m[32m.alcache/[m[41m[m
+[32m+[m[32m#Symbols folder[m[41m[m
+[32m+[m[32m.alpackages/[m[41m[m
+[32m+[m[32m#Snapshots folder[m[41m[m
+[32m+[m[32m.snapshots/[m[41m[m
+[32m+[m[32m#Testing Output folder[m[41m[m
+[32m+[m[32m.output/[m[41m[m
+[32m+[m[32m#Extension App-file[m[41m[m
+[32m+[m[32m*.app[m[41m[m
+[32m+[m[32m#Rapid Application Development File[m[41m[m
+[32m+[m[32mrad.json[m[41m[m
+[32m+[m[32m#Translation Base-file[m[41m[m
+[32m+[m[32m*.g.xlf[m[41m[m
+[32m+[m[32m#License-files[m[41m[m
+[32m+[m[32m*.bclicense[m[41m[m
+[32m+[m[32m*.flf[m[41m[m
+[32m+[m[32m#Test results file[m[41m[m
+[32m+[m[32mTestResults.xml[m
+\ No newline at end of file[m
+[1mdiff --git a/Avis wakaroma b/Avis wakaroma[m
+[1mnew file mode 100644[m
+[1mindex 0000000..c2ad2d3[m
+[1m--- /dev/null[m
+[1m+++ b/Avis wakaroma[m	
+[36m@@ -0,0 +1,7 @@[m
+[32m+[m[32mLES AVIS WAKAROMA[m[41m [m
+[32m+[m[32m"T'as vu ça, tout a été mangé !!! Je fais revenir en amont un oignon jaune + tomates + courgette + carottes..[m[41m[m
+[32m+[m[32mépices au choix et après je dépose le tout sur la pâte." + image[m[41m[m
+[32m+[m[32m"On a mangé tout le Digaag et la moitié du Hilib, vraiement c'est très bon j'en mets dans tous les plats."[m[41m[m
+[32m+[m[32m"Hier je me suis fait un café avec tes épices c'était délicieux merci."[m[41m[m
+[32m+[m[32m"Hello Hodan, crevettes au mudafé." + image[m[41m[m
+[32m+[m[32m"Hello Hodan, je viens de me régaler. Super bon. Merci."[m[41m[m
+[1mdiff --git a/Data basse/MCD b/Data basse/MCD[m
+[1mnew file mode 100644[m
+[1mindex 0000000..777942f[m
+[1m--- /dev/null[m
+[1m+++ b/Data basse/MCD[m	
+[36m@@ -0,0 +1,47 @@[m
+[32m+[m
+[32m+[m[32m                        ┌──────────────────┐[m
+[32m+[m[32m                        │   UTILISATEURS   │[m
+[32m+[m[32m                        ├──────────────────┤[m
+[32m+[m[32m                        │ id_utilisateur   │[m
+[32m+[m[32m                        │ nom              │[m
+[32m+[m[32m                        │ email            │[m
+[32m+[m[32m                        │ mot_de_passe     │[m
+[32m+[m[32m                        └────────┬─────────┘[m
+[32m+[m[32m                                 │ (1,N)[m
+[32m+[m[32m        ┌────────────────────────┼───────────────────────────┐[m
+[32m+[m[32m        │                        │                           │[m
+[32m+[m[32m        v                        v                           v[m
+[32m+[m[32m┌──────────────────┐   ┌──────────────────┐     ┌──────────────────┐[m
+[32m+[m[32m│    ADRESSES      │   │     PANIERS      │     │     COMMANDES    │[m
+[32m+[m[32m├──────────────────┤   ├──────────────────┤     ├──────────────────┤[m
+[32m+[m[32m│ id_adresse       │   │ id_panier        │     │ id_commande      │[m
+[32m+[m[32m│ ville            │   │ date_creation    │     │ numero_commande  │[m
+[32m+[m[32m└──────────────────┘   └────────┬─────────┘     │ statut           │[m
+[32m+[m[32m                                │ (1,N)         │ total            │[m
+[32m+[m[32m                                v               └────────┬─────────┘[m
+[32m+[m[32m                      ┌──────────────────┐              (1,N)[m
+[32m+[m[32m                      │ LIGNES_PANIER    │               v[m
+[32m+[m[32m                      ├──────────────────┤     ┌──────────────────┐[m
+[32m+[m[32m                      │ quantite         │     │ LIGNES_COMMANDE  │[m
+[32m+[m[32m                      │ prix_capture     │     ├──────────────────┤[m
+[32m+[m[32m                      └────────┬─────────┘     │ quantite         │[m
+[32m+[m[32m                               │ (N,1)         │ prix             │[m
+[32m+[m[32m                               v               └────────┬─────────┘[m
+[32m+[m[32m                    ┌──────────────────────┐            │ (1,1)[m
+[32m+[m[32m                    │    PRODUITS          │            v[m
+[32m+[m[32m                    ├──────────────────────┤   ┌──────────────────────┐[m
+[32m+[m[32m                    │ id_variante          │   │PRODUITS_commande     │[m
+[32m+[m[32m                    │ reference            │   ├──────────────────────┤[m
+[32m+[m[32m                    │ prix                 │   │ id_produit           │[m
+[32m+[m[32m                    │ stock                │   │ nom                  │[m
+[32m+[m[32m                    │                      │   │ description          │[m
+[32m+[m[32m                    └────────┬─────────────┘   │ id_categorie         │[m
+[32m+[m[32m                             │ (N,1)           └────────┬─────────────┘[m
+[32m+[m[32m                             v                          │ (1,1)[m
+[32m+[m[32m                    ┌──────────────────┐                v[m
+[32m+[m[32m                    │ PRODUIT_IMAGES   │      ┌──────────────────┐[m
+[32m+[m[32m                    ├──────────────────┤      │   CATEGORIES     │[m
+[32m+[m[32m                    │ id_image         │      ├──────────────────┤[m
+[32m+[m[32m                    │ url_image        │      │ id_categorie     │[m
+[32m+[m[32m                    └──────────────────┘      │ nom              │[m
+[32m+[m[32m                                              └──────────────────┘[m
+\ No newline at end of file[m
+[1mdiff --git a/Data basse/tables.sql b/Data basse/tables.sql[m
+[1mnew file mode 100644[m
+[1mindex 0000000..0c21a86[m
+[1m--- /dev/null[m
+[1m+++ b/Data basse/tables.sql[m	
+[36m@@ -0,0 +1,546 @@[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE USERS[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE users ([m
+[32m+[m[32m--     id_user INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     nom VARCHAR(50),[m
+[32m+[m[32m--     prenom VARCHAR(50),[m
+[32m+[m[32m--     email VARCHAR(150) NOT NULL UNIQUE,[m
+[32m+[m[32m--     password_hash VARCHAR(255) NOT NULL,[m
+[32m+[m[32m--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m[32m--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP[m
+[32m+[m[32m-- );[m
+[32m+[m[32m--ALTER TABLE users ADD numero VARCHAR(20) NOT NULL;[m
+[32m+[m[32m--ALTER TABLE users ADD confirmation_token VARCHAR(225) NOT NULL;[m
+[32m+[m[32m--ALTER TABLE users ADD souvenir_token VARCHAR(225) NOT NULL;[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE ADRESSES[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE adresses ([m
+[32m+[m[32m--     id_adresse INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_user INT NOT NULL,[m
+[32m+[m[32m--     ville VARCHAR(50) NOT NULL,[m
+[32m+[m[32m--     code_postal VARCHAR(20),[m
+[32m+[m[32m--     adresse_complete VARCHAR(255),[m
+[32m+[m[32m--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_adresses_users[m
+[32m+[m[32m--         FOREIGN KEY (id_user)[m
+[32m+[m[32m--         REFERENCES users(id_user)[m
+[32m+[m[32m--         ON DELETE CASCADE[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE CATEGORIES[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE categories ([m
+[32m+[m[32m--     id_categorie INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     nom VARCHAR(100) NOT NULL[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE PRODUITS[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE produits ([m
+[32m+[m[32m--     id_produit INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_categorie INT NOT NULL,[m
+[32m+[m[32m--     nom VARCHAR(150) NOT NULL,[m
+[32m+[m[32m--     description TEXT,[m
+[32m+[m[32m--     reference VARCHAR(50) UNIQUE,[m
+[32m+[m[32m--     prix DECIMAL(10,2) NOT NULL DEFAULT 0,[m
+[32m+[m[32m--     stock INT NOT NULL DEFAULT 0,[m
+[32m+[m[32m--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_produits_categories[m
+[32m+[m[32m--         FOREIGN KEY (id_categorie)[m
+[32m+[m[32m--         REFERENCES categories(id_categorie)[m
+[32m+[m[32m--         ON DELETE RESTRICT[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m[32m-- ALTER TABLE produits ADD COLUMN seuil_alerte INT NOT NULL DEFAULT 10;[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE CARACTERISTIQUES[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE caracteristiques ([m
+[32m+[m[32m--     id_caracteristique INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_produit INT NOT NULL,[m
+[32m+[m[32m--     nom VARCHAR(100) NOT NULL,[m
+[32m+[m[32m--     valeur VARCHAR(255),[m
+[32m+[m[32m--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_caracteristiques_produits[m
+[32m+[m[32m--         FOREIGN KEY (id_produit)[m
+[32m+[m[32m--         REFERENCES produits(id_produit)[m
+[32m+[m[32m--         ON DELETE CASCADE[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE IMAGES[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE images ([m
+[32m+[m[32m--     id_image INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_produit INT NOT NULL,[m
+[32m+[m[32m--     url_image VARCHAR(255) NOT NULL,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_images_produits[m
+[32m+[m[32m--         FOREIGN KEY (id_produit)[m
+[32m+[m[32m--         REFERENCES produits(id_produit)[m
+[32m+[m[32m--         ON DELETE CASCADE[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE PANIERS[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE paniers ([m
+[32m+[m[32m--     id_panier INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_user INT NOT NULL,[m
+[32m+[m[32m--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT uq_panier_user UNIQUE (id_user),[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_paniers_users[m
+[32m+[m[32m--         FOREIGN KEY (id_user)[m
+[32m+[m[32m--         REFERENCES users(id_user)[m
+[32m+[m[32m--         ON DELETE CASCADE[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE LIGNES PANIER[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE lignes_panier ([m
+[32m+[m[32m--     id_ligne_panier INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_panier INT NOT NULL,[m
+[32m+[m[32m--     id_produit INT NOT NULL,[m
+[32m+[m[32m--     quantite INT NOT NULL DEFAULT 1,[m
+[32m+[m[32m--     prix_capture DECIMAL(10,2) NOT NULL,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_lignes_panier_panier[m
+[32m+[m[32m--         FOREIGN KEY (id_panier)[m
+[32m+[m[32m--         REFERENCES paniers(id_panier)[m
+[32m+[m[32m--         ON DELETE CASCADE[m
+[32m+[m[32m--         ON UPDATE CASCADE,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_lignes_panier_produits[m
+[32m+[m[32m--         FOREIGN KEY (id_produit)[m
+[32m+[m[32m--         REFERENCES produits(id_produit)[m
+[32m+[m[32m--         ON DELETE CASCADE[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE COMMANDES[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE commandes ([m
+[32m+[m[32m--     id_commande INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_user INT NOT NULL,[m
+[32m+[m[32m--     numero_commande VARCHAR(50) NOT NULL UNIQUE,[m
+[32m+[m[32m--     statut VARCHAR(50) DEFAULT 'en_attente',[m
+[32m+[m[32m--     total DECIMAL(10,2) NOT NULL,[m
+[32m+[m[32m--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_commandes_users[m
+[32m+[m[32m--         FOREIGN KEY (id_user)[m
+[32m+[m[32m--         REFERENCES users(id_user)[m
+[32m+[m[32m--         ON DELETE RESTRICT[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- -- TABLE LIGNES COMMANDES[m
+[32m+[m[32m-- -- =========================[m
+[32m+[m[32m-- CREATE TABLE lignes_commandes ([m
+[32m+[m[32m--     id_ligne_commande INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_commande INT NOT NULL,[m
+[32m+[m[32m--     id_produit INT NULL,[m
+[32m+[m
+[32m+[m[32m--     nom_produit VARCHAR(150) NOT NULL,[m
+[32m+[m[32m--     reference_produit VARCHAR(50),[m
+[32m+[m[32m--     quantite INT NOT NULL DEFAULT 1,[m
+[32m+[m[32m--     prix DECIMAL(10,2) NOT NULL,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_lignes_commandes_commande[m
+[32m+[m[32m--         FOREIGN KEY (id_commande)[m
+[32m+[m[32m--         REFERENCES commandes(id_commande)[m
+[32m+[m[32m--         ON DELETE CASCADE[m
+[32m+[m[32m--         ON UPDATE CASCADE,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_lignes_commandes_produits[m
+[32m+[m[32m--         FOREIGN KEY (id_produit)[m
+[32m+[m[32m--         REFERENCES produits(id_produit)[m
+[32m+[m[32m--         ON DELETE SET NULL[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m[32m-- INSERTION DES CATEGORIES[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m
+[32m+[m[32mINSERT INTO categories (nom)[m
+[32m+[m[32mVALUES[m
+[32m+[m[32m    ('Epices'),[m
+[32m+[m[32m    ('The'),[m
+[32m+[m[32m    ('Cafe');[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m[32m-- INSERTION DES PRODUITS[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m
+[32m+[m[32mINSERT INTO produits ([m
+[32m+[m[32m    id_categorie,[m
+[32m+[m[32m    nom,[m
+[32m+[m[32m    description,[m
+[32m+[m[32m    reference,[m
+[32m+[m[32m    prix,[m
+[32m+[m[32m    stock[m
+[32m+[m[32m)[m
+[32m+[m[32mVALUES[m
+[32m+[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m[32m-- EPICES  (id_categorie = 1)[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    1,[m
+[32m+[m[32m    'AYEEYO',[m
+[32m+[m[32m    'Mélange piquant aux saveurs généreuses, AYEYO rend hommage aux recettes transmises de génération en génération. Parfait pour assaisonner à table ou préparer des marinades savoureuses pour poulets, viandes et shawarmas.',[m
+[32m+[m[32m    'EPICE-001',[m
+[32m+[m[32m    12.00,[m
+[32m+[m[32m    200[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    1,[m
+[32m+[m[32m    'DIGAAG',[m
+[32m+[m[32m    'Mélange aromatique spécialement conçu pour sublimer vos plats de poulet. DIGAAG apporte profondeur et parfum à toutes vos préparations.',[m
+[32m+[m[32m    'EPICE-002',[m
+[32m+[m[32m    12.00,[m
+[32m+[m[32m    200[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    1,[m
+[32m+[m[32m    'HAWAASH',[m
+[32m+[m[32m    'Mélange d’épices aux notes délicates, parfait pour sublimer vos riz parfumés et vos sauces aux légumes.',[m
+[32m+[m[32m    'EPICE-003',[m
+[32m+[m[32m    12.00,[m
+[32m+[m[32m    150[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    1,[m
+[32m+[m[32m    'HILIB',[m
+[32m+[m[32m    'Mélange robuste spécialement élaboré pour sublimer toutes vos préparations à base de viande.',[m
+[32m+[m[32m    'EPICE-004',[m
+[32m+[m[32m    12.00,[m
+[32m+[m[32m    200[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    1,[m
+[32m+[m[32m    'LA BASE',[m
+[32m+[m[32m    'Le mélange essentiel et polyvalent qui sublime tous vos plats du quotidien.',[m
+[32m+[m[32m    'EPICE-005',[m
+[32m+[m[32m    12.00,[m
+[32m+[m[32m    344[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    1,[m
+[32m+[m[32m    'SUMAC',[m
+[32m+[m[32m    'Mélange inspiré du sumac, baie acidulée et fruitée emblématique du Moyen-Orient.',[m
+[32m+[m[32m    'EPICE-006',[m
+[32m+[m[32m    12.00,[m
+[32m+[m[32m    212[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    1,[m
+[32m+[m[32m    'WAKA',[m
+[32m+[m[32m    'Le mélange signature de WakAroma, polyvalent et audacieux.',[m
+[32m+[m[32m    'EPICE-007',[m
+[32m+[m[32m    12.00,[m
+[32m+[m[32m    43[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m[32m-- THE (id_categorie = 2)[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    2,[m
+[32m+[m[32m    'SHAAH',[m
+[32m+[m[32m    'Le joyau de notre collection, un mélange d’exception qui sublime thés, cafés et pâtisseries.',[m
+[32m+[m[32m    'THE-001',[m
+[32m+[m[32m    14.00,[m
+[32m+[m[32m    534[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    2,[m
+[32m+[m[32m    'NABAD',[m
+[32m+[m[32m    'Thé noir épicé qui incarne l’hospitalité est-africaine.',[m
+[32m+[m[32m    'THE-002',[m
+[32m+[m[32m    15.00,[m
+[32m+[m[32m    234[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m[32m-- CAFES (id_categorie = 3)[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m
+[32m+[m[32m([m
+[32m+[m[32m    3,[m
+[32m+[m[32m    'BOUNKA',[m
+[32m+[m[32m    'Mélange sophistiqué qui réinvente le rituel du café avec des épices africaines.',[m
+[32m+[m[32m    'CAFE-001',[m
+[32m+[m[32m    15.00,[m
+[32m+[m[32m    432[m
+[32m+[m[32m);[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m[32m-- INSERTION DES CARACTERISTIQUES[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m
+[32m+[m[32mINSERT INTO caracteristiques ([m
+[32m+[m[32m    id_produit,[m
+[32m+[m[32m    nom,[m
+[32m+[m[32m    valeur[m
+[32m+[m[32m)[m
+[32m+[m[32mVALUES[m
+[32m+[m[32m    (1, 'Poids', '80g'),[m
+[32m+[m[32m    (2, 'Poids', '130g'),[m
+[32m+[m[32m    (3, 'Poids', '130g'),[m
+[32m+[m[32m    (4, 'Poids', '80g'),[m
+[32m+[m[32m    (5, 'Poids', '80g'),[m
+[32m+[m[32m    (6, 'Poids', '80g'),[m
+[32m+[m[32m    (7, 'Poids', '80g'),[m
+[32m+[m[32m    (8, 'Poids', '130g'),[m
+[32m+[m[32m    (9, 'Poids', '130g'),[m
+[32m+[m[32m    (10, 'Poids', '130g');[m
+[32m+[m
+[32m+[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m[32m-- INSERTION DES IMAGES[m
+[32m+[m[32m-- ==============================================================[m
+[32m+[m
+[32m+[m[32mINSERT INTO images ([m
+[32m+[m[32m    id_produit,[m
+[32m+[m[32m    url_image[m
+[32m+[m[32m)[m
+[32m+[m[32mVALUES[m
+[32m+[m[32m    (1, 'images/ayeyo.png'),[m
+[32m+[m[32m    (2, 'images/digaag.png'),[m
+[32m+[m[32m    (3, 'images/hawaash.png'),[m
+[32m+[m[32m    (4, 'images/hilib.png'),[m
+[32m+[m[32m    (5, 'images/base.png'),[m
+[32m+[m[32m    (6, 'images/sumac.png'),[m
+[32m+[m[32m    (7, 'images/waka.png'),[m
+[32m+[m[32m    (8, 'images/shaah.png'),[m
+[32m+[m[32m    (9, 'images/nabad.png'),[m
+[32m+[m[32m    (10, 'images/bounka.png');[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m-- ══════════════════════════════════════════════════════════════[m
+[32m+[m[32m-- TABLE decouvrir_produit[m
+[32m+[m[32m-- Reliée à la table produits via id_produit (FK)[m
+[32m+[m[32m-- Contient : description longue + image dédiée page découvrir[m
+[32m+[m[32m-- ══════════════════════════════════════════════════════════════[m
+[32m+[m
+[32m+[m[32m-- CREATE TABLE decouvrir_produit ([m
+[32m+[m[32m--     id_decouvrir     INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m--     id_produit       INT NOT NULL UNIQUE,           -- 1 fiche par produit[m
+[32m+[m[32m--     description_long TEXT NOT NULL,                 -- texte long éditorial[m
+[32m+[m[32m--     image_url        VARCHAR(255) NOT NULL,          -- photo différente de images.url_image[m
+[32m+[m
+[32m+[m[32m--     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m[32m--     updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,[m
+[32m+[m
+[32m+[m[32m--     CONSTRAINT fk_decouvrir_produit[m
+[32m+[m[32m--         FOREIGN KEY (id_produit)[m
+[32m+[m[32m--         REFERENCES produits(id_produit)[m
+[32m+[m[32m--         ON DELETE CASCADE[m
+[32m+[m[32m--         ON UPDATE CASCADE[m
+[32m+[m[32m-- );[m
+[32m+[m
+[32m+[m
+[32m+[m[32m-- ══════════════════════════════════════════════════════════════[m
+[32m+[m[32m-- INSERTION DES FICHES DÉCOUVRIR[m
+[32m+[m[32m-- (id_produit correspond aux INSERT dans tables.sql)[m
+[32m+[m[32m--   1  → AYEEYO[m
+[32m+[m[32m--   2  → DIGAAG[m
+[32m+[m[32m--   3  → HAWAASH[m
+[32m+[m[32m--   4  → HILIB[m
+[32m+[m[32m--   5  → LA BASE[m
+[32m+[m[32m--   6  → SUMAC[m
+[32m+[m[32m--   7  → WAKA[m
+[32m+[m[32m--   8  → SHAAH[m
+[32m+[m[32m--   9  → NABAD[m
+[32m+[m[32m--  10  → BOUNKA[m
+[32m+[m[32m-- ══════════════════════════════════════════════════════════════[m
+[32m+[m
+[32m+[m[32mINSERT INTO decouvrir_produit (id_produit, description_long, image_url) VALUES[m
+[32m+[m
+[32m+[m[32m-- ─── 1 · AYEEYO ───────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    1,[m
+[32m+[m[32m    'Un hommage aux recettes transmises de génération en génération, AYEYO incarne la sagesse culinaire des grand-mères africaines. Ce mélange piquant et parfumé est le gardien des saveurs authentiques qui rehaussent chaque plat avec caractère.\n\nVéritable allié de votre cuisine quotidienne, AYEYO sublime vos marinades de poulet et viandes pour des shawarmas irrésistibles, tout en apportant cette touche d\'assaisonnement parfaite directement à table. Sa chaleur maîtrisée réveille les papilles sans les brusquer, offrant cet équilibre délicat entre piquant et profondeur aromatique.\n\nPosez AYEYO sur votre table : il deviendra vite le complice incontournable de vos repas, celui qui transforme l\'ordinaire en extraordinaire, comme le faisaient nos grand-mères avec amour et savoir-faire.',[m
+[32m+[m[32m    'images/decouvrir/ayeyo_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 2 · DIGAAG ───────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    2,[m
+[32m+[m[32m    'Laissez-vous transporter par les arômes envoûtants de DIGAAG, le compagnon idéal de tous vos plats de poulet. Ce mélange harmonieux d\'épices soigneusement sélectionnées a été créé pour révéler toute la tendreté et la saveur de vos volailles.\n\nQue vous prépariez un poulet en sauce onctueuse, un rôti du dimanche ou des brochettes grillées, DIGAAG apporte cette dimension parfumée qui fait toute la différence. Son bouquet aromatique enveloppe délicatement la chair du poulet, créant une symphonie de saveurs qui éveille les sens et réchauffe les cœurs.\n\nDIGAAG, c\'est l\'essence même de la cuisine généreuse, celle qui rassemble autour de la table et crée des souvenirs gourmands inoubliables.',[m
+[32m+[m[32m    'images/decouvrir/digaag_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 3 · HAWAASH ──────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    3,[m
+[32m+[m[32m    'Découvrez HAWAASH, le secret des plats réconfortants qui réchauffent le cœur et l\'âme. Ce mélange d\'épices aux notes délicates est né pour magnifier vos riz parfumés et vos sauces onctueuses aux légumes.\n\nImaginez un riz moelleux embaumé par les arômes subtils de HAWAASH, ou une sauce aux petits pois qui prend une dimension nouvelle, une sauce aux haricots verts qui éveille les papilles avec douceur. HAWAASH est cette touche magique qui transforme les légumes du quotidien en véritables célébrations gustatives.\n\nPolyvalent et généreux, HAWAASH s\'invite dans votre cuisine pour créer ces plats familiaux qui rassemblent, ces recettes transmises avec amour, ces saveurs qui font voyager sans quitter sa table.',[m
+[32m+[m[32m    'images/decouvrir/hawaash_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 4 · HILIB ────────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    4,[m
+[32m+[m[32m    'HILIB est le gardien des traditions culinaires où la viande est reine. Ce mélange robuste et généreux a été pensé pour magnifier toutes vos préparations carnées, de la plus simple à la plus élaborée.\n\nQu\'il s\'agisse d\'une sauce bolognaise mijotée avec amour, d\'un ragoût de bœuf fondant qui embaume toute la maison, ou de toute autre recette où la viande est à l\'honneur, HILIB apporte cette profondeur de saveurs incomparable. Ses épices soigneusement dosées caressent la viande, l\'enrobent et révèlent toute sa richesse.\n\nHILIB, c\'est l\'essence même des plats réconfortants qui se partagent en famille, ces recettes qui mijotent doucement et créent des souvenirs impérissables autour d\'une table généreuse.',[m
+[32m+[m[32m    'images/decouvrir/hilib_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 5 · LA BASE ──────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    5,[m
+[32m+[m[32m    'Comme son nom l\'indique, LA BASE est LE mélange indispensable, celui qui ne quitte jamais votre cuisine. C\'est la fondation de toutes vos créations culinaires, l\'essentiel qui transforme l\'ordinaire en extraordinaire.\n\nPolyvalent et équilibré, LA BASE s\'adapte à tous vos plats du quotidien avec une élégance naturelle. Un grain de riz à parfumer, une soupe à rehausser, des légumes à sublimer, une viande à assaisonner… LA BASE répond présent, toujours juste, jamais de trop.\n\nC\'est le compagnon fidèle des cuisiniers avisés, celui qui vous permet d\'improviser avec assurance, de créer sans limites. LA BASE, c\'est votre secret pour une cuisine savoureuse au quotidien, celle qui fait dire "mais qu\'est-ce que tu as mis dedans ?" à chaque bouchée.',[m
+[32m+[m[32m    'images/decouvrir/base_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 6 · SUMAC ────────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    6,[m
+[32m+[m[32m    'Laissez-vous séduire par SUMAC, ce mélange précieux qui tire son nom de l\'une des épices les plus emblématiques du Moyen-Orient. Le sumac, baie rouge pourpre au goût acidulé et fruité, est utilisé depuis des millénaires dans les cuisines levantine, turque et persane.\n\nNotre SUMAC marie harmonieusement cette épice ancestrale à d\'autres aromates soigneusement sélectionnés, créant un mélange aux notes citronnées et légèrement acidulées qui réveillent les papilles. Véritable trésor gustatif, il sublime les grillades, apporte fraîcheur aux salades, magnifie les mezze, et transforme vos poissons et légumes rôtis en véritables festins.\n\nSUMAC, c\'est l\'invitation au voyage, la promesse d\'une cuisine ensoleillée où chaque plat devient une célébration des saveurs méditerranéennes et orientales. Un essentiel pour ceux qui aiment explorer et créer.',[m
+[32m+[m[32m    'images/decouvrir/sumac_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 7 · WAKA ─────────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    7,[m
+[32m+[m[32m    'WAKA, c\'est l\'âme même de WakAroma concentrée dans un flacon. Ce mélange signature incarne notre philosophie : réveiller les saveurs, célébrer l\'authenticité, et transformer chaque instant culinaire en moment de bonheur partagé.\n\nPolyvalent et audacieux, WAKA est le compagnon idéal de vos grillades fumantes qui embaument l\'air d\'été, de vos sauces pour poissons délicats, et même de vos pizzas maison auxquelles il apporte ce petit quelque chose d\'inattendu. Sa palette aromatique équilibrée s\'adapte avec élégance à une multitude de préparations, prouvant qu\'un seul mélange peut être mille possibilités.\n\nWAKA, c\'est notre signature gustative, celle qui fait dire à vos convives : "Mais d\'où vient ce goût extraordinaire ?" La réponse ? De l\'Afrique qui parfume vos instants.',[m
+[32m+[m[32m    'images/decouvrir/waka_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 8 · SHAAH ────────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    8,[m
+[32m+[m[32m    'Voici le joyau de la collection WakAroma, la pépite rare qui transforme l\'ordinaire en extraordinaire. SHAAH, c\'est notre truffe, notre caviar, le trésor précieux que nous avons créé pour les palais exigeants et les âmes créatives.\n\nCe mélange d\'exception sublime vos thés et cafés d\'une dimension aromatique incomparable, comme une caresse parfumée qui réchauffe le cœur. Mais SHAAH ne s\'arrête pas là : il révèle des notes insoupçonnées dans vos pâtisseries, apporte sophistication à vos gâteaux, et crée des boissons épicées envoûtantes qui émerveillent à chaque gorgée.\n\nRare et précieux, SHAAH incarne l\'excellence et l\'art de l\'assemblage. C\'est le mélange des moments d\'exception, celui que l\'on réserve aux instants privilégiés, aux invités de marque, ou simplement à soi-même quand on veut se faire plaisir. SHAAH, c\'est l\'excellence africaine sublimée.',[m
+[32m+[m[32m    'images/decouvrir/shaah_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 9 · NABAD ────────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    9,[m
+[32m+[m[32m    'Nabad signifie "paix" et "bonjour" en somali. Ce thé noir épicé incarne l\'essence même de l\'hospitalité est-africaine, cette tradition sacrée où chaque invité est accueilli avec générosité et chaleur humaine.\n\nNABAD marie la profondeur du thé noir aux épices chaleureuses qui réchauffent le cœur et apaisent l\'âme. Chaque tasse est une invitation au partage, un moment suspendu où l\'on prend le temps de se retrouver, d\'échanger, de créer des liens. C\'est le thé des retrouvailles, des conversations qui s\'éternisent, des rires partagés autour d\'une table accueillante.\n\nOffrir NABAD, c\'est offrir la paix, c\'est dire "bienvenue", c\'est perpétuer cette belle tradition africaine où l\'hospitalité n\'est pas un geste mais une philosophie de vie.',[m
+[32m+[m[32m    'images/decouvrir/nabad_detail.png'[m
+[32m+[m[32m),[m
+[32m+[m
+[32m+[m[32m-- ─── 10 · BOUNKA ──────────────────────────────────────────────[m
+[32m+[m[32m([m
+[32m+[m[32m    10,[m
+[32m+[m[32m    'BOUNKA réinvente le rituel du café en y insufflant l\'âme épicée de l\'Afrique de l\'Est. Ce mélange sophistiqué transforme votre tasse matinale en une expérience sensorielle inoubliable, où chaque gorgée devient une célébration.\n\nAjoutez une pincée de BOUNKA à votre café et laissez-vous transporter par cette harmonie parfumée qui caresse le palais et éveille l\'esprit. Les épices soigneusement sélectionnées dialoguent avec l\'amertume du café, créant un équilibre délicat entre chaleur, profondeur et douceur aromatique.\n\nBOUNKA, c\'est bien plus qu\'un café : c\'est un voyage, un moment de contemplation, l\'éveil des sens au rythme des traditions ancestrales. Pour ceux qui refusent l\'ordinaire et choisissent de commencer chaque journée avec élégance et caractère.',[m
+[32m+[m[32m    'images/decouvrir/bounka_detail.png'[m
+[32m+[m[32m);[m
+[32m+[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS admins ([m
+[32m+[m[32m    id            INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m    nom           VARCHAR(100) NOT NULL,[m
+[32m+[m[32m    email         VARCHAR(150) NOT NULL UNIQUE,[m
+[32m+[m[32m    password_hash VARCHAR(255) NOT NULL,[m
+[32m+[m[32m    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP[m
+[32m+[m[32m);[m
+[32m+[m
+[32m+[m[32m-- 2. INSÉRER LE COMPTE ADMIN (avec hash temporaire)[m
+[32m+[m[32m--    ⚠ Ce hash correspond au mot de passe : ChangeMe2026![m
+[32m+[m[32m--    → Utilise generate_hash.php pour définir TON vrai mot de passe[m
+[32m+[m[32m--    → Puis exécute le UPDATE en dessous avec ton propre hash[m
+[32m+[m[32m-- --------------------------------------------------------------[m
+[32m+[m[32mINSERT INTO admins (nom, email, password_hash)[m
+[32m+[m[32mVALUES ([m
+[32m+[m[32m    'Administrateur',[m
+[32m+[m[32m    'admin@wakaroma.com',[m
+[32m+[m[32m    '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'[m
+[32m+[m[32m);[m
+[32m+[m
+[32m+[m[32m-- 3. CHANGER LE MOT DE PASSE (après avoir utilisé generate_hash.php)[m
+[32m+[m[32m--    Remplace LE_HASH_GENERE par le hash copié depuis generate_hash.php[m
+[32m+[m[32m-- --------------------------------------------------------------[m
+[32m+[m[32m-- UPDATE admins[m
+[32m+[m[32m-- SET password_hash = 'LE_HASH_GENERE'[m
+[32m+[m[32m-- WHERE email = 'admin@wakaroma.com';[m
+[32m+[m
+[32m+[m[32m-- ==========================================[m
+[32m+[m[32m-- 1. TABLE INGRÉDIENTS INTERNES[m
+[32m+[m[32m--    (créée automatiquement au chargement,[m
+[32m+[m[32m--     mais voici la version propre à exécuter)[m
+[32m+[m[32m-- ==========================================[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS ingredients_internes ([m
+[32m+[m[32m    id          INT AUTO_INCREMENT PRIMARY KEY,[m
+[32m+[m[32m    nom         VARCHAR(150) NOT NULL,[m
+[32m+[m[32m    quantite    DECIMAL(10,2) NOT NULL DEFAULT 0,[m
+[32m+[m[32m    unite       VARCHAR(30) DEFAULT 'g',[m
+[32m+[m[32m    prix_achat  DECIMAL(10,2) NOT NULL DEFAULT 0,[m
+[32m+[m[32m    seuil_alerte INT NOT NULL DEFAULT 10,[m
+[32m+[m[32m    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,[m
+[32m+[m[32m    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP[m
+[32m+[m[32m);[m
+[32m+[m
+[32m+[m[32m-- ==========================================[m
+[32m+[m[32m-- 2. INSERTION DES 24 INGRÉDIENTS PAR DÉFAUT[m
+[32m+[m[32m--    (ignore les doublons si déjà insérés)[m
+[32m+[m[32m-- ==========================================[m
+[32m+[m[32mINSERT IGNORE INTO ingredients_internes (nom, quantite, unite, prix_achat, seuil_alerte)[m
+[32m+[m[32mVALUES[m
+[32m+[m[32m    ('Ail en poudre',          0, 'g', 0, 10),[m
+[32m+[m[32m    ('Ail semoule',            0, 'g', 0, 10),[m
+[32m+[m[32m    ('Baies de genièvre',      0, 'g', 0, 10),[m
+[32m+[m[32m    ('Baies roses',            0, 'g', 0, 10),[m
+[32m+[m[32m    ('Cannelle bâton',         0, 'g', 0, 10),[m
+[32m+[m[32m    ('Coriandre',              0, 'g', 0, 10),[m
+[32m+[m[32m    ('Cumin',                  0, 'g', 0, 10),[m
+[32m+[m[32m    ('Curry de Madras',        0, 'g', 0, 10),[m
+[32m+[m[32m    ('Curry en poudre',        0, 'g', 0, 10),[m
+[32m+[m[32m    ('Curry rouge Thaï',       0, 'g', 0, 10),[m
+[32m+[m[32m    ('Fenugrec',               0, 'g', 0, 10),[m
+[32m+[m[32m    ('Fleurs d\'hibiscus',     0, 'g', 0, 10),[m
+[32m+[m[32m    ('Graine de moutarde',     0, 'g', 0, 10),[m
+[32m+[m[32m    ('Graines de lin',         0, 'g', 0, 10),[m
+[32m+[m[32m    ('Graines de nigelle',     0, 'g', 0, 10),[m
+[32m+[m[32m    ('Mélange 4 baies',        0, 'g', 0, 10),[m
+[32m+[m[32m    ('Muscade en poudre',      0, 'g', 0, 10),[m
+[32m+[m[32m    ('Oignon semoule',         0, 'g', 0, 10),[m
+[32m+[m[32m    ('Pétales de roses',       0, 'g', 0, 10),[m
+[32m+[m[32m    ('Poivre noir',            0, 'g', 0, 10),[m
+[32m+[m[32m    ('Romarin',                0, 'g', 0, 10),[m
+[32m+[m[32m    ('Sel rose de l\'Himalaya',0, 'g', 0, 10),[m
+[32m+[m[32m    ('Sésame doré',            0, 'g', 0, 10),[m
+[32m+[m[32m    ('Sumac',                  0, 'g', 0, 10);[m
+\ No newline at end of file[m
+[1mdiff --git a/Descriptifs des epices (version longue) b/Descriptifs des epices (version longue)[m
+[1mnew file mode 100644[m
+[1mindex 0000000..48d04bb[m
+[1m--- /dev/null[m
+[1m+++ b/Descriptifs des epices (version longue)[m	
+[36m@@ -0,0 +1,71 @@[m
+[32m+[m[32mDESCRIPTIFS DES EPICES (longue version)[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] AYEEYO[m[41m[m
+[32m+[m[32m-Un hommage aux recettes transmises de génération en génération, AYEYO incarne la sagesse culinaire des grand-mères africaines. Ce mélange piquant et parfumé est le gardien des saveurs authentiques qui rehaussent chaque plat avec caractère.[m[41m[m
+[32m+[m[32mVéritable allié de votre cuisine quotidienne, AYEYO sublime vos marinades de poulet et viandes pour des shawarmas irrésistibles, tout en apportant cette touche d’assaisonnement parfaite directement à table. Sa chaleur maîtrisée réveille les papilles sans les brusquer, offrant cet équilibre délicat entre piquant et profondeur aromatique.[m[41m[m
+[32m+[m[32mPosez AYEYO sur votre table : il deviendra vite le complice incontournable de vos repas, celui qui transforme l’ordinaire en extraordinaire, comme le faisaient nos grand-mères avec amour et savoir-faire.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Mélange piquant aux saveurs généreuses, AYEYO rend hommage aux recettes transmises de génération en génération. Parfait pour assaisonner à table ou préparer des marinades savoureuses pour poulets, viandes et shawarmas. Sa chaleur maîtrisée apporte caractère et authenticité à tous vos plats.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] DIGAAG[m[41m[m
+[32m+[m[32m-Laissez-vous transporter par les arômes envoûtants de DIGAAG, le compagnon idéal de tous vos plats de poulet. Ce mélange harmonieux d’épices soigneusement sélectionnées a été créé pour révéler toute la tendreté et la saveur de vos volailles.[m[41m[m
+[32m+[m[32mQue vous prépariez un poulet en sauce onctueuse, un rôti du dimanche ou des brochettes grillées, DIGAAG apporte cette dimension parfumée qui fait toute la différence. Son bouquet aromatique enveloppe délicatement la chair du poulet, créant une symphonie de saveurs qui éveille les sens et réchauffe les cœurs.[m[41m[m
+[32m+[m[32mDIGAAG, c’est l’essence même de la cuisine généreuse, celle qui rassemble autour de la table et crée des souvenirs gourmands inoubliables.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Mélange aromatique spécialement conçu pour sublimer vos plats de poulet. DIGAAG apporte profondeur et parfum à toutes vos préparations : poulets en sauce, rôtis, grillades ou brochettes. Son bouquet d’épices harmonieux révèle la tendreté de la volaille et transforme chaque recette en moment de partage savoureux.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] HAWAASH[m[41m[m
+[32m+[m[32m-Découvrez HAWAASH, le secret des plats réconfortants qui réchauffent le cœur et l’âme. Ce mélange d’épices aux notes délicates est né pour magnifier vos riz parfumés et vos sauces onctueuses aux légumes.[m[41m[m
+[32m+[m[32mImaginez un riz moelleux embaumé par les arômes subtils de HAWAASH, ou une sauce aux petits pois qui prend une dimension nouvelle, une sauce aux haricots verts qui éveille les papilles avec douceur. HAWAASH est cette touche magique qui transforme les légumes du quotidien en véritables célébrations gustatives.[m[41m[m
+[32m+[m[32mPolyvalent et généreux, HAWAASH s’invite dans votre cuisine pour créer ces plats familiaux qui rassemblent, ces recettes transmises avec amour, ces saveurs qui font voyager sans quitter sa table.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Mélange d’épices aux notes délicates, parfait pour sublimer vos riz parfumés et vos sauces aux légumes. HAWAASH apporte profondeur et harmonie à vos plats de petits pois, haricots verts et autres légumes. Polyvalent et savoureux, il transforme vos préparations quotidiennes en moments gourmands pleins de caractère.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] HILIB[m[41m[m
+[32m+[m[32m-HILIB est le gardien des traditions culinaires où la viande est reine. Ce mélange robuste et généreux a été pensé pour magnifier toutes vos préparations carnées, de la plus simple à la plus élaborée.[m[41m[m
+[32m+[m[32mQu’il s’agisse d’une sauce bolognaise mijotée avec amour, d’un ragoût de bœuf fondant qui embaume toute la maison, ou de toute autre recette où la viande est à l’honneur, HILIB apporte cette profondeur de saveurs incomparable. Ses épices soigneusement dosées caressent la viande, l’enrobent et révèlent toute sa richesse.[m[41m[m
+[32m+[m[32mHILIB, c’est l’essence même des plats réconfortants qui se partagent en famille, ces recettes qui mijotent doucement et créent des souvenirs impérissables autour d’une table généreuse.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Mélange robuste spécialement élaboré pour sublimer toutes vos préparations à base de viande. HILIB est l’allié parfait de vos sauces bolognaises, ragoûts de bœuf et plats mijotés. Ses épices généreuses apportent profondeur et caractère à la viande, transformant chaque recette en un moment de gourmandise authentique et réconfortant.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] LA BASE[m[41m[m
+[32m+[m[32m-Comme son nom l’indique, LA BASE est LE mélange indispensable, celui qui ne quitte jamais votre cuisine. C’est la fondation de toutes vos créations culinaires, l’essentiel qui transforme l’ordinaire en extraordinaire.[m[41m[m
+[32m+[m[32mPolyvalent et équilibré, LA BASE s’adapte à tous vos plats du quotidien avec une élégance naturelle. Un grain de riz à parfumer, une soupe à rehausser, des légumes à sublimer, une viande à assaisonner… LA BASE répond présent, toujours juste, jamais de trop.[m[41m[m
+[32m+[m[32mC’est le compagnon fidèle des cuisiniers avisés, celui qui vous permet d’improviser avec assurance, de créer sans limites. LA BASE, c’est votre secret pour une cuisine savoureuse au quotidien, celle qui fait dire “mais qu’est-ce que tu as mis dedans ?” à chaque bouchée.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Le mélange essentiel et polyvalent qui sublime tous vos plats du quotidien. Équilibré et harmonieux, LA BASE s’invite dans toutes vos préparations pour apporter cette touche de saveur qui fait la différence. L’indispensable de votre cuisine, celui qui transforme chaque recette simple en moment gourmand. Votre allié pour cuisiner avec créativité et assurance.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] SUMAC[m[41m[m
+[32m+[m[32m-Laissez-vous séduire par SUMAC, ce mélange précieux qui tire son nom de l’une des épices les plus emblématiques du Moyen-Orient. Le sumac, baie rouge pourpre au goût acidulé et fruité, est utilisé depuis des millénaires dans les cuisines levantine, turque et persane.[m[41m[m
+[32m+[m[32mNotre SUMAC marie harmonieusement cette épice ancestrale à d’autres aromates soigneusement sélectionnés, créant un mélange aux notes citronnées et légèrement acidulées qui réveillent les papilles. Véritable trésor gustatif, il sublime les grillades, apporte fraîcheur aux salades, magnifie les mezze, et transforme vos poissons et légumes rôtis en véritables festins.[m[41m[m
+[32m+[m[32mSUMAC, c’est l’invitation au voyage, la promesse d’une cuisine ensoleillée où chaque plat devient une célébration des saveurs méditerranéennes et orientales. Un essentiel pour ceux qui aiment explorer et créer.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Mélange inspiré du sumac, baie acidulée et fruitée emblématique du Moyen-Orient, utilisée depuis des millénaires. SUMAC associe cette épice ancestrale à d’autres aromates pour créer un profil citronné et rafraîchissant. Parfait pour les grillades, salades, mezze, poissons et légumes rôtis. Une touche ensoleillée qui apporte fraîcheur et caractère à vos créations culinaires.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] WAKA[m[41m[m
+[32m+[m[32m-WAKA, c’est l’âme même de WakAroma concentrée dans un flacon. Ce mélange signature incarne notre philosophie : réveiller les saveurs, célébrer l’authenticité, et transformer chaque instant culinaire en moment de bonheur partagé.[m[41m[m
+[32m+[m[32mPolyvalent et audacieux, WAKA est le compagnon idéal de vos grillades fumantes qui embaument l’air d’été, de vos sauces pour poissons délicats, et même de vos pizzas maison auxquelles il apporte ce petit quelque chose d’inattendu. Sa palette aromatique équilibrée s’adapte avec élégance à une multitude de préparations, prouvant qu’un seul mélange peut être mille possibilités.[m[41m[m
+[32m+[m[32mWAKA, c’est notre signature gustative, celle qui fait dire à vos convives : “Mais d’où vient ce goût extraordinaire ?” La réponse ? De l’Afrique qui parfume vos instants.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Le mélange signature de WakAroma, polyvalent et audacieux. WAKA sublime vos grillades, apporte profondeur à vos sauces pour poissons et transforme vos pizzas en créations originales. Son profil aromatique équilibré s’adapte à une multitude de préparations. La quintessence de notre savoir-faire : réveiller les saveurs et célébrer l’authenticité africaine dans chaque plat.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] SHAAH[m[41m[m
+[32m+[m[32m-Voici le joyau de la collection WakAroma, la pépite rare qui transforme l’ordinaire en extraordinaire. SHAAH, c’est notre truffe, notre caviar, le trésor précieux que nous avons créé pour les palais exigeants et les âmes créatives.[m[41m[m
+[32m+[m[32mCe mélange d’exception sublime vos thés et cafés d’une dimension aromatique incomparable, comme une caresse parfumée qui réchauffe le cœur. Mais SHAAH ne s’arrête pas là : il révèle des notes insoupçonnées dans vos pâtisseries, apporte sophistication à vos gâteaux, et crée des boissons épicées envoûtantes qui émerveillent à chaque gorgée.[m[41m[m
+[32m+[m[32mRare et précieux, SHAAH incarne l’excellence et l’art de l’assemblage. C’est le mélange des moments d’exception, celui que l’on réserve aux instants privilégiés, aux invités de marque, ou simplement à soi-même quand on veut se faire plaisir. SHAAH, c’est l’excellence africaine sublimée.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Le joyau de notre collection, notre mélange d’exception. SHAAH sublime vos thés et cafés d’une richesse aromatique incomparable, révèle des notes sophistiquées dans vos pâtisseries et gâteaux, et crée des boissons épicées envoûtantes. Rare et précieux comme la truffe ou le caviar, SHAAH est le mélange des moments privilégiés et des palais exigeants. L’excellence WakAroma dans toute sa splendeur.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] BOUNKA - Un café et l’éveil des sens[m[41m[m
+[32m+[m[32m-BOUNKA réinvente le rituel du café en y insufflant l’âme épicée de l’Afrique de l’Est. Ce mélange sophistiqué transforme votre tasse matinale en une expérience sensorielle inoubliable, où chaque gorgée devient une célébration.[m[41m[m
+[32m+[m[32mAjoutez une pincée de BOUNKA à votre café et laissez-vous transporter par cette harmonie parfumée qui caresse le palais et éveille l’esprit. Les épices soigneusement sélectionnées dialoguent avec l’amertume du café, créant un équilibre délicat entre chaleur, profondeur et douceur aromatique.[m[41m[m
+[32m+[m[32mBOUNKA, c’est bien plus qu’un café : c’est un voyage, un moment de contemplation, l’éveil des sens au rythme des traditions ancestrales. Pour ceux qui refusent l’ordinaire et choisissent de commencer chaque journée avec élégance et caractère.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Mélange sophistiqué qui réinvente le rituel du café en y ajoutant l’âme épicée de l’Afrique de l’Est. BOUNKA transforme votre tasse en expérience sensorielle, créant un équilibre délicat entre la richesse du café et la chaleur des épices. L’alliance parfaite pour éveiller vos matins avec élégance et caractère.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m- [ ] NABAD - Le goût de l’accueil, la chaleur du partage[m[41m[m
+[32m+[m[32m-Nabad signifie “paix” et “bonjour” en somali. Ce thé noir épicé incarne l’essence même de l’hospitalité est-africaine, cette tradition sacrée où chaque invité est accueilli avec générosité et chaleur humaine.[m[41m[m
+[32m+[m[32mNABAD marie la profondeur du thé noir aux épices chaleureuses qui réchauffent le cœur et apaisent l’âme. Chaque tasse est une invitation au partage, un moment suspendu où l’on prend le temps de se retrouver, d’échanger, de créer des liens. C’est le thé des retrouvailles, des conversations qui s’éternisent, des rires partagés autour d’une table accueillante.[m[41m[m
+[32m+[m[32mOffrir NABAD, c’est offrir la paix, c’est dire “bienvenue”, c’est perpétuer cette belle tradition africaine où l’hospitalité n’est pas un geste mais une philosophie de vie.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m-Thé noir épicé qui incarne l’hospitalité est-africaine. Nabad, qui signifie “paix” et “bonjour” en somali, marie la profondeur du thé noir aux épices chaleureuses de la tradition. Chaque tasse est une invitation au partage et à la convivialité. Le thé des moments précieux, des retrouvailles et de la générosité du cœur.[m[41m[m
+[1mdiff --git a/PHPMailer-master/COMMITMENT b/PHPMailer-master/COMMITMENT[m
+[1mnew file mode 100644[m
+[1mindex 0000000..a687e0d[m
+[1m--- /dev/null[m
+[1m+++ b/PHPMailer-master/COMMITMENT[m
+[36m@@ -0,0 +1,46 @@[m
+[32m+[m[32mGPL Cooperation Commitment[m
+[32m+[m[32mVersion 1.0[m
+[32m+[m
+[32m+[m[32mBefore filing or continuing to prosecute any legal proceeding or claim[m
+[32m+[m[32m(other than a Defensive Action) arising from termination of a Covered[m
+[32m+[m[32mLicense, we commit to extend to the person or entity ('you') accused[m
+[32m+[m[32mof violating the Covered License the following provisions regarding[m
+[32m+[m[32mcure and reinstatement, taken from GPL version 3. As used here, the[m
+[32m+[m[32mterm 'this License' refers to the specific Covered License being[m
+[32m+[m[32menforced.[m
+[32m+[m
+[32m+[m[32m    However, if you cease all violation of this License, then your[m
+[32m+[m[32m    license from a particular copyright holder is reinstated (a)[m
+[32m+[m[32m    provisionally, unless and until the copyright holder explicitly[m
+[32m+[m[32m    and finally terminates your license, and (b) permanently, if the[m
+[32m+[m[32m    copyright holder fails to notify you of the violation by some[m
+[32m+[m[32m    reasonable means prior to 60 days after the cessation.[m
+[32m+[m
+[32m+[m[32m    Moreover, your license from a particular copyright holder is[m
+[32m+[m[32m    reinstated permanently if the copyright holder notifies you of the[m
+[32m+[m[32m    violation by some reasonable means, this is the first time you[m
+[32m+[m[32m    have received notice of violation of this License (for any work)[m
+[32m+[m[32m    from that copyright holder, and you cure the violation prior to 30[m
+[32m+[m[32m    days after your receipt of the notice.[m
+[32m+[m
+[32m+[m[32mWe intend this Commitment to be irrevocable, and binding and[m
+[32m+[m[32menforceable against us and assignees of or successors to our[m
+[32m+[m[32mcopyrights.[m
+[32m+[m
+[32m+[m[32mDefinitions[m
+[32m+[m
+[32m+[m[32m'Covered License' means the GNU General Public License, version 2[m
+[32m+[m[32m(GPLv2), the GNU Lesser General Public License, version 2.1[m
+[32m+[m[32m(LGPLv2.1), or the GNU Library General Public License, version 2[m
+[32m+[m[32m(LGPLv2), all as published by the Free Software Foundation.[m
+[32m+[m
+[32m+[m[32m'Defensive Action' means a legal proceeding or claim that We bring[m
+[32m+[m[32magainst you in response to a prior proceeding or claim initiated by[m
+[32m+[m[32myou or your affiliate.[m
+[32m+[m
+[32m+[m[32m'We' means each contributor to this repository as of the date of[m
+[32m+[m[32minclusion of this file, including subsidiaries of a corporate[m
+[32m+[m[32mcontributor.[m
+[32m+[m
+[32m+[m[32mThis work is available under a Creative Commons Attribution-ShareAlike[m
+[32m+[m[32m4.0 International license (https://creativecommons.org/licenses/by-sa/4.0/).[m
+[1mdiff --git a/PHPMailer-master/LICENSE b/PHPMailer-master/LICENSE[m
+[1mnew file mode 100644[m
+[1mindex 0000000..f166cc5[m
+[1m--- /dev/null[m
+[1m+++ b/PHPMailer-master/LICENSE[m
+[36m@@ -0,0 +1,502 @@[m
+[32m+[m[32m                  GNU LESSER GENERAL PUBLIC LICENSE[m
+[32m+[m[32m                       Version 2.1, February 1999[m
+[32m+[m
+[32m+[m[32m Copyright (C) 1991, 1999 Free Software Foundation, Inc.[m
+[32m+[m[32m 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA[m
+[32m+[m[32m Everyone is permitted to copy and distribute verbatim copies[m
+[32m+[m[32m of this license document, but changing it is not allowed.[m
+[32m+[m
+[32m+[m[32m[This is the first released version of the Lesser GPL.  It also counts[m
+[32m+[m[32m as the successor of the GNU Library Public License, version 2, hence[m
+[32m+[m[32m the version number 2.1.][m
+[32m+[m
+[32m+[m[32m                            Preamble[m
+[32m+[m
+[32m+[m[32m  The licenses for most software are designed to take away your[m
+[32m+[m[32mfreedom to share and change it.  By contrast, the GNU General Public[m
+[32m+[m[32mLicenses are intended to guarantee your freedom to share and change[m
+[32m+[m[32mfree software--to make sure the software is free for all its users.[m
+[32m+[m
+[32m+[m[32m  This license, the Lesser General Public License, applies to some[m
+[32m+[m[32mspecially designated software packages--typically libraries--of the[m
+[32m+[m[32mFree Software Foundation and other authors who decide to use it.  You[m
+[32m+[m[32mcan use it too, but we suggest you first think carefully about whether[m
+[32m+[m[32mthis license or the ordinary General Public License is the better[m
+[32m+[m[32mstrategy to use in any particular case, based on the explanations below.[m
+[32m+[m
+[32m+[m[32m  When we speak of free software, we are referring to freedom of use,[m
+[32m+[m[32mnot price.  Our General Public Licenses are designed to make sure that[m
+[32m+[m[32myou have the freedom to distribute copies of free software (and charge[m
+[32m+[m[32mfor this service if you wish); that you receive source code or can get[m
+[32m+[m[32mit if you want it; that you can change the software and use pieces of[m
+[32m+[m[32mit in new free programs; and that you are informed that you can do[m
+[32m+[m[32mthese things.[m
+[32m+[m
+[32m+[m[32m  To protect your rights, we need to make restrictions that forbid[m
+[32m+[m[32mdistributors to deny you these rights or to ask you to surrender these[m
+[32m+[m[32mrights.  These restrictions translate to certain responsibilities for[m
+[32m+[m[32myou if you distribute copies of the library or if you modify it.[m
+[32m+[m
+[32m+[m[32m  For example, if you distribute copies of the library, whether gratis[m
+[32m+[m[32mor for a fee, you must give the recipients all the rights that we gave[m
+[32m+[m[32myou.  You must make sure that they, too, receive or can get the source[m
+[32m+[m[32mcode.  If you link other code with the library, you must provide[m
+[32m+[m[32mcomplete object files to the recipients, so that they can relink them[m
+[32m+[m[32mwith the library after making changes to the library and recompiling[m
+[32m+[m[32mit.  And you must show them these terms so they know their rights.[m
+[32m+[m
+[32m+[m[32m  We protect your rights with a two-step method: (1) we copyright the[m
+[32m+[m[32mlibrary, and (2) we offer you this license, which gives you legal[m
+[32m+[m[32mpermission to copy, distribute and/or modify the library.[m
+[32m+[m
+[32m+[m[32m  To protect each distributor, we want to make it very clear that[m
+[32m+[m[32mthere is no warranty for the free library.  Also, if the library is[m
+[32m+[m[32mmodified by someone else and passed on, the recipients should know[m
+[32m+[m[32mthat what they have is not the original version, so that the original[m
+[32m+[m[32mauthor's reputation will not be affected by problems that might be[m
+[32m+[m[32mintroduced by others.[m
+[32m+[m[32m[m
+[32m+[m[32m  Finally, software patents pose a constant threat to the existence of[m
+[32m+[m[32many free program.  We wish to make sure that a company cannot[m
+[32m+[m[32meffectively restrict the users of a free program by obtaining a[m
+[32m+[m[32mrestrictive license from a patent holder.  Therefore, we insist that[m
+[32m+[m[32many patent license obtained for a version of the library must be[m
+[32m+[m[32mconsistent with the full freedom of use specified in this license.[m
+[32m+[m
+[32m+[m[32m  Most GNU software, including some libraries, is covered by the[m
+[32m+[m[32mordinary GNU General Public License.  This license, the GNU Lesser[m
+[32m+[m[32mGeneral Public License, applies to certain designated libraries, and[m
+[32m+[m[32mis quite different from the ordinary General Public License.  We use[m
+[32m+[m[32mthis license for certain libraries in order to permit linking those[m
+[32m+[m[32mlibraries into non-free programs.[m
+[32m+[m
+[32m+[m[32m  When a program is linked with a library, whether statically or using[m
+[32m+[m[32ma shared library, the combination of the two is legally speaking a[m
+[32m+[m[32mcombined work, a derivative of the original library.  The ordinary[m
+[32m+[m[32mGeneral Public License therefore permits such linking only if the[m
+[32m+[m[32mentire combination fits its criteria of freedom.  The Lesser General[m
+[32m+[m[32mPublic License permits more lax criteria for linking other code with[m
+[32m+[m[32mthe library.[m
+[32m+[m
+[32m+[m[32m  We call this license the "Lesser" General Public License because it[m
+[32m+[m[32mdoes Less to protect the user's freedom than the ordinary General[m
+[32m+[m[32mPublic License.  It also provides other free software developers Less[m
+[32m+[m[32mof an advantage over competing non-free programs.  These disadvantages[m
+[32m+[m[32mare the reason we use the ordinary General Public License for many[m
+[32m+[m[32mlibraries.  However, the Lesser license provides advantages in certain[m
+[32m+[m[32mspecial circumstances.[m
+[32m+[m
+[32m+[m[32m  For example, on rare occasions, there may be a special need to[m
+[32m+[m[32mencourage the widest possible use of a certain library, so that it becomes[m
+[32m+[m[32ma de-facto standard.  To achieve this, non-free programs must be[m
+[32m+[m[32mallowed to use the library.  A more frequent case is that a free[m
+[32m+[m[32mlibrary does the same job as widely used non-free libraries.  In this[m
+[32m+[m[32mcase, there is little to gain by limiting the free library to free[m
+[32m+[m[32msoftware only, so we use the Lesser General Public License.[m
+[32m+[m
+[32m+[m[32m  In other cases, permission to use a particular library in non-free[m
+[32m+[m[32mprograms enables a greater number of people to use a large body of[m
+[32m+[m[32mfree software.  For example, permission to use the GNU C Library in[m
+[32m+[m[32mnon-free programs enables many more people to use the whole GNU[m
+[32m+[m[32moperating system, as well as its variant, the GNU/Linux operating[m
+[32m+[m[32msystem.[m
+[32m+[m
+[32m+[m[32m  Although the Lesser General Public License is Less protective of the[m
+[32m+[m[32musers' freedom, it does ensure that the user of a program that is[m
+[32m+[m[32mlinked with the Library has the freedom and the wherewithal to run[m
+[32m+[m[32mthat program using a modified version of the Library.[m
+[32m+[m
+[32m+[m[32m  The precise terms and conditions for copying, distribution and[m
+[32m+[m[32mmodification follow.  Pay close attention to the difference between a[m
+[32m+[m[32m"work based on the library" and a "work that uses the library".  The[m
+[32m+[m[32mformer contains code derived from the library, whereas the latter must[m
+[32m+[m[32mbe combined with the library in order to run.[m
+[32m+[m[32m[m
+[32m+[m[32m                  GNU LESSER GENERAL PUBLIC LICENSE[m
+[32m+[m[32m   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION[m
+[32m+[m
+[32m+[m[32m  0. This License Agreement applies to any software library or other[m
+[32m+[m[32mprogram which contains a notice placed by the copyright holder or[m
+[32m+[m[32mother authorized party saying it may be distributed under the terms of[m
+[32m+[m[32mthis Lesser General Public License (also called "this License").[m
+[32m+[m[32mEach licensee is addressed as "you".[m
+[32m+[m
+[32m+[m[32m  A "library" means a collection of software functions and/or data[m
+[32m+[m[32mprepared so as to be conveniently linked with application programs[m
+[32m+[m[32m(which use some of those functions and data) to form executables.[m
+[32m+[m
+[32m+[m[32m  The "Library", below, refers to any such software library or work[m
+[32m+[m[32mwhich has been distributed under these terms.  A "work based on the[m
+[32m+[m[32mLibrary" means either the Library or any derivative work under[m
+[32m+[m[32mcopyright law: that is to say, a work containing the Library or a[m
+[32m+[m[32mportion of it, either verbatim or with modifications and/or translated[m
+[32m+[m[32mstraightforwardly into another language.  (Hereinafter, translation is[m
+[32m+[m[32mincluded without limitation in the term "modification".)[m
+[32m+[m
+[32m+[m[32m  "Source code" for a work means the preferred form of the work for[m
+[32m+[m[32mmaking modifications to it.  For a library, complete source code means[m
+[32m+[m[32mall the source code for all modules it contains, plus any associated[m
+[32m+[m[32minterface definition files, plus the scripts used to control compilation[m
+[32m+[m[32mand installation of the library.[m
+[32m+[m
+[32m+[m[32m  Activities other than copying, distribution and modification are not[m
+[32m+[m[32mcovered by this License; they are outside its scope.  The act of[m
+[32m+[m[32mrunning a program using the Library is not restricted, and output from[m
+[32m+[m[32msuch a program is covered only if its contents constitute a work based[m
+[32m+[m[32mon the Library (independent of the use of the Library in a tool for[m
+[32m+[m[32mwriting it).  Whether that is true depends on what the Library does[m
+[32m+[m[32mand what the program that uses the Library does.[m
+[32m+[m
+[32m+[m[32m  1. You may copy and distribute verbatim copies of the Library's[m
+[32m+[m[32mcomplete source code as you receive it, in any medium, provided that[m
+[32m+[m[32myou conspicuously and appropriately publish on each copy an[m
+[32m+[m[32mappropriate copyright notice and disclaimer of warranty; keep intact[m
+[32m+[m[32mall the notices that refer to this License and to the absence of any[m
+[32m+[m[32mwarranty; and distribute a copy of this License along with the[m
+[32m+[m[32mLibrary.[m
+[32m+[m
+[32m+[m[32m  You may charge a fee for the physical act of transferring a copy,[m
+[32m+[m[32mand you may at your option offer warranty protection in exchange for a[m
+[32m+[m[32mfee.[m
+[32m+[m[32m[m
+[32m+[m[32m  2. You may modify your copy or copies of the Library or any portion[m
+[32m+[m[32mof it, thus forming a work based on the Library, and copy and[m
+[32m+[m[32mdistribute such modifications or work under the terms of Section 1[m
+[32m+[m[32mabove, provided that you also meet all of these conditions:[m
+[

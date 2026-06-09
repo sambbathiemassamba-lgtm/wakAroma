@@ -1,36 +1,7 @@
 <?php
 session_start();
 require_once 'function.php';
-// APRÈS
-$query = trim($_GET['q'] ?? '');
-$datas = $query !== ''
-    ? recherche_produits($query)
-    : recuperation_produits_images();
-
-// ── Récupération de la photo de couverture par produit ──
-// is_cover = 1 → photo index  |  fallback : première image de la table
-try {
-    $pdo_idx = new PDO(
-        "mysql:host=localhost;dbname=wakaroma;charset=utf8",
-        "root", "",
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-    $stmt_covers = $pdo_idx->query("
-        SELECT id_produit,
-               COALESCE(
-                   MAX(CASE WHEN is_cover = 1 THEN url_image END),
-                   MIN(url_image)
-               ) AS cover_url
-        FROM images
-        GROUP BY id_produit
-    ");
-    $covers = [];
-    foreach ($stmt_covers->fetchAll(PDO::FETCH_OBJ) as $row) {
-        $covers[(int)$row->id_produit] = $row->cover_url;
-    }
-} catch (Exception $e) {
-    $covers = [];
-}
+$datas = recuperation_produits_images();
 ?>
 
 <?php require_once 'headear.php'; ?>
@@ -195,31 +166,9 @@ try {
      ══════════════════════════════════════════ -->
 <div class="section-header" id="produits">
     <div class="section-header__eyebrow">Notre sélection</div>
-
-    <?php if (!empty($query)): ?>
-        <h2 class="section-header__title">
-            Résultats pour « <?= htmlspecialchars($query) ?> »
-        </h2>
-        <p class="section-header__sub">
-            <?= count($datas) ?> produit<?= count($datas) > 1 ? 's' : '' ?> trouvé<?= count($datas) > 1 ? 's' : '' ?>.
-            <a href="index.php" style="color:#c8943a; text-decoration:underline;">← Voir tout</a>
-        </p>
-    <?php else: ?>
-        <h2 class="section-header__title">Les Épices du Moment</h2>
-        <p class="section-header__sub">Chaque produit est soigneusement sélectionné pour vous offrir le meilleur de l'Afrique.</p>
-    <?php endif; ?>
+    <h2 class="section-header__title">Les Épices du Moment</h2>
+    <p class="section-header__sub">Chaque produit est soigneusement sélectionné pour vous offrir le meilleur de l'Afrique.</p>
 </div>
-
-<?php if (empty($datas)): ?>
-    <p style="text-align:center; padding: 40px; color:#b0a898; font-size:1.1rem;">
-        Aucun produit ne correspond à « <?= htmlspecialchars($query) ?> ».<br>
-        <a href="index.php" style="color:#c8943a;">← Retour à tous les produits</a>
-    </p>
-<?php else: ?>
-    <?php foreach($datas as $data): ?>
-        <!-- ... ton code existant ... -->
-    <?php endforeach; ?>
-<?php endif; ?>
 
 <!-- Filtres -->
 <div class="filters-bar">
@@ -237,12 +186,8 @@ try {
         <article class="produit" data-category="epices">
 
             <div class="produit__img-wrap">
-                <?php
-                    $img_index = $covers[(int)$data->id_produit]
-                        ?? ($data->url_image ?? 'images/placeholder.png');
-                ?>
                 <img
-                    src="<?= htmlspecialchars($img_index) ?>"
+                    src="<?= htmlspecialchars($data->url_image ?? 'images/placeholder.png'); ?>"
                     alt="<?= htmlspecialchars($data->nom); ?>"
                     loading="lazy"
                 >
@@ -419,7 +364,7 @@ try {
 // ── Badge panier ──────────────────────────────────────────────
 function wrapCartIcon() {
   // Cherche le lien vers panier.php dans le header
-  const cartLink = document.getElementById('header-cart-link');
+  const cartLink = document.querySelector('a[href*="panier"]');
   if (!cartLink) return;
   // Évite de wrapper deux fois
   if (cartLink.querySelector('#cart-badge-count')) return;

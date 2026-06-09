@@ -40,7 +40,7 @@ function EnvoieMail(PHPMailer $mail, string $mailToSend, string $tokend): bool
     $mail->Port       = 465;
 
     // Recipients
-    $mail->setFrom('samzosamb123@gmail.com', 'WakAroma');
+    $mail->setFrom('mail@gmail.com', 'WakAroma');
 
     $mail->addAddress($mailToSend, 'User');
 
