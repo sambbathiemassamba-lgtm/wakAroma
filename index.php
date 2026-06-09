@@ -1,6 +1,12 @@
 <?php
 session_start();
 require_once 'function.php';
+
+// ── Redirection automatique entreprises ─────────────────────────────────────
+if (!empty($_SESSION['auth']['is_entreprise'])) {
+    header('Location: index_entreprise.php');
+    exit;
+}
 $datas_raw = recuperation_produits_images();
 
 // Dédoublonnage : on garde un seul enregistrement par produit
@@ -116,6 +122,19 @@ foreach ($datas_raw as $row) {
     70%  { transform: scale(0.9); }
     100% { transform: scale(1.1); }
 }
+.produit__unite {
+    font-size: 0.78rem;
+    color: #b0a898;
+    background: rgba(200,148,58,0.10);
+    border: 1px solid rgba(200,148,58,0.25);
+    border-radius: 20px;
+    padding: 2px 9px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    align-self: center;
+}
+
 .star-btn.pop {
     animation: starPop 0.35s ease forwards;
 }
@@ -216,7 +235,7 @@ foreach ($datas_raw as $row) {
                     data-id="<?= (int)$data->id_produit ?>"
                     data-nom="<?= htmlspecialchars($data->nom) ?>"
                     data-prix="<?= htmlspecialchars($data->prix) ?>"
-                    data-img="<?= htmlspecialchars($img_index) ?>"
+                    data-img="<?= htmlspecialchars($data->url_image ?? '') ?>"
                     onclick="toggleFavoriIndex(this)"
                 >♡</button>
 
@@ -264,6 +283,9 @@ foreach ($datas_raw as $row) {
             <div class="produit__footer">
                 <div class="produit__prix-row">
                     <span class="produit__prix"><?= number_format($data->prix, 2); ?> €</span>
+                    <?php if (!empty($data->unite)): ?>
+                        <span class="produit__unite"><?= htmlspecialchars($data->unite) ?></span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="produit__stock <?= (int)$data->stock > 0 ? 'produit__stock--ok' : '' ?>">

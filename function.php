@@ -19,6 +19,8 @@ function recuperation_produits_images()
 {
     global $pdo;
     try {
+        // On récupère l'image de couverture (is_cover=1) en priorité,
+        // sinon la première image disponible, sinon NULL.
         $req = "
         SELECT 
             produits.id_produit,
@@ -26,10 +28,18 @@ function recuperation_produits_images()
             produits.description,
             produits.prix,
             produits.stock,
-            images.url_image
+            COALESCE(
+                (SELECT url_image FROM images
+                 WHERE images.id_produit = produits.id_produit AND images.is_cover = 1
+                 LIMIT 1),
+                (SELECT url_image FROM images
+                 WHERE images.id_produit = produits.id_produit
+                 ORDER BY id_image ASC LIMIT 1)
+            ) AS url_image,
+            (SELECT valeur FROM caracteristiques
+             WHERE caracteristiques.id_produit = produits.id_produit AND caracteristiques.nom = 'Poids'
+             LIMIT 1) AS unite
         FROM produits
-        LEFT JOIN images
-            ON produits.id_produit = images.id_produit
         ORDER BY produits.id_produit ASC";
 
         return $pdo->query($req)->fetchAll(PDO::FETCH_OBJ);
@@ -337,7 +347,7 @@ function recuperation_produit_by_id(int $id_produit): ?object
 {
     global $pdo;
  
-    // ── Produit + fiche découvrir + première image catalogue + catégorie ──
+    // ── Produit + fiche découvrir + image de couverture + catégorie ──
     $sql = "
         SELECT
             p.id_produit,
@@ -348,12 +358,18 @@ function recuperation_produit_by_id(int $id_produit): ?object
             p.stock,
             p.seuil_alerte,
             c.nom                    AS nom_categorie,
-            i.url_image,             -- image catalogue (table images)
+            COALESCE(
+                (SELECT url_image FROM images
+                 WHERE images.id_produit = p.id_produit AND images.is_cover = 1
+                 LIMIT 1),
+                (SELECT url_image FROM images
+                 WHERE images.id_produit = p.id_produit
+                 ORDER BY id_image ASC LIMIT 1)
+            )                        AS url_image,
             dp.description_long,     -- description longue (table decouvrir_produit)
             dp.image_url             -- image dédiée page découvrir
         FROM produits p
         LEFT JOIN categories       c  ON c.id_categorie = p.id_categorie
-        LEFT JOIN images           i  ON i.id_produit   = p.id_produit
         LEFT JOIN decouvrir_produit dp ON dp.id_produit  = p.id_produit
         WHERE p.id_produit = :id
         LIMIT 1

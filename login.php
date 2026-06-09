@@ -19,7 +19,11 @@ if(isset($_SESSION['admin_auth']))
 // Si déjà connecté en user
 if(isset($_SESSION['auth']))
 {
-    header("Location: boutique.php");
+    if (!empty($_SESSION['auth']['is_entreprise'])) {
+        header("Location: index_entreprise.php");
+    } else {
+        header("Location: compte.php");
+    }
     exit();
 }
 
@@ -113,11 +117,18 @@ if ($_SERVER['REQUEST_METHOD'] === "POST")
                     }
 
                     $_SESSION['auth'] = [
-                        'id_user' => $user->id_user,
-                        'prenom'  => $user->prenom
+                        'id_user'       => $user->id_user,
+                        'prenom'        => $user->prenom,
+                        'is_entreprise' => (int)($user->is_entreprise ?? 0),
+                        'nom_entreprise'=> $user->nom_entreprise ?? '',
                     ];
 
-                    header("Location: compte.php");
+                    // Redirection selon le type de compte
+                    if (!empty($user->is_entreprise)) {
+                        header("Location: index_entreprise.php");
+                    } else {
+                        header("Location: compte.php");
+                    }
                     exit();
 
                 } else {
