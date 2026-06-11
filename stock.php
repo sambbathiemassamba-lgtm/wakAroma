@@ -1,7 +1,6 @@
 <?php
 session_start();
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+
 // PHPMailer pour envoi newsletter
 require_once __DIR__ . '/PHPMailer-master/src/PHPMailer.php';
 require_once __DIR__ . '/PHPMailer-master/src/SMTP.php';
@@ -22,8 +21,8 @@ $admin = $_SESSION['admin_auth'];
 // CONFIGURATION BASE DE DONNÉES
 // ==========================================
 define('DB_HOST', 'localhost');
-define('DB_USER', 'samzo');
-define('DB_PASS', 'Touba:55');
+define('DB_USER', 'root');
+define('DB_PASS', '');
 define('DB_NAME', 'wakaroma');
 define('SEUIL_ALERTE_DEFAULT', 10);
 
@@ -40,23 +39,18 @@ function getDB() {
                 DB_PASS,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
             );
-        } catch (PDOException $e) {
-            // Retourner une réponse JSON même en cas d'erreur DB
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'DB: ' . $e->getMessage()]);
-            exit();
-        }
-
-        $queries = [
-            "newsletter_subscribers" => "CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS seuil_alerte INT NOT NULL DEFAULT " . SEUIL_ALERTE_DEFAULT);
+            $pdo->exec("ALTER TABLE images ADD COLUMN IF NOT EXISTS is_cover TINYINT(1) NOT NULL DEFAULT 0");
+            // Table ingrédients internes
+            $pdo->exec("CREATE TABLE IF NOT EXISTS newsletter_subscribers (
                 id            INT AUTO_INCREMENT PRIMARY KEY,
                 email         VARCHAR(255) NOT NULL UNIQUE,
                 nom           VARCHAR(150) DEFAULT '',
                 source        ENUM('newsletter','compte','manuel') NOT NULL DEFAULT 'newsletter',
                 actif         TINYINT(1) NOT NULL DEFAULT 1,
                 subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )",
-            "newsletter_campaigns" => "CREATE TABLE IF NOT EXISTS newsletter_campaigns (
+            )");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS newsletter_campaigns (
                 id            INT AUTO_INCREMENT PRIMARY KEY,
                 sujet         VARCHAR(255) NOT NULL,
                 contenu_html  LONGTEXT NOT NULL,
@@ -65,8 +59,13 @@ function getDB() {
                 statut        ENUM('brouillon','envoye') DEFAULT 'brouillon',
                 created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 sent_at       TIMESTAMP NULL
-            )",
-            "salons" => "CREATE TABLE IF NOT EXISTS salons (
+            )");
+            $pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_entreprise TINYINT(1) DEFAULT 0");
+            $pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS nom_entreprise VARCHAR(255) DEFAULT ''");
+            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS prix_entreprise DECIMAL(10,2) DEFAULT NULL");
+            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS qte_pro DECIMAL(10,3) DEFAULT NULL");
+            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS unite_pro VARCHAR(30) DEFAULT NULL");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS salons (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nom VARCHAR(255) NOT NULL,
                 lieu VARCHAR(255) NOT NULL,
@@ -80,8 +79,8 @@ function getDB() {
                 stand VARCHAR(255) DEFAULT '',
                 actif TINYINT(1) NOT NULL DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )",
-            "ingredients_internes" => "CREATE TABLE IF NOT EXISTS ingredients_internes (
+            )");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS ingredients_internes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nom VARCHAR(150) NOT NULL,
                 quantite DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -90,34 +89,9 @@ function getDB() {
                 seuil_alerte INT NOT NULL DEFAULT 10,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )"
-        ];
-
-        foreach ($queries as $table => $sql) {
-            try {
-                $pdo->exec($sql);
-            } catch (PDOException $e) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'error' => "Création table $table : " . $e->getMessage()]);
-                exit();
-            }
-        }
-
-        // Ajout colonnes manquantes dans produits
-        $alterQueries = [
-            "ALTER TABLE produits ADD COLUMN IF NOT EXISTS seuil_alerte INT NOT NULL DEFAULT 10",
-            "ALTER TABLE produits ADD COLUMN IF NOT EXISTS prix_entreprise DECIMAL(10,2) DEFAULT NULL",
-            "ALTER TABLE produits ADD COLUMN IF NOT EXISTS qte_pro DECIMAL(10,2) DEFAULT NULL",
-            "ALTER TABLE produits ADD COLUMN IF NOT EXISTS unite_pro VARCHAR(50) DEFAULT NULL",
-            "ALTER TABLE images ADD COLUMN IF NOT EXISTS is_cover TINYINT(1) NOT NULL DEFAULT 0",
-        ];
-
-        foreach ($alterQueries as $sql) {
-            try {
-                $pdo->exec($sql);
-            } catch (PDOException $e) {
-                // On ignore — la colonne existe peut-être déjà sur MySQL < 8
-            }
+            )");
+        } catch (PDOException $e) {
+            die(json_encode(['error' => 'Connexion impossible : ' . $e->getMessage()]));
         }
     }
     return $pdo;
