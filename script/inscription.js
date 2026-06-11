@@ -1,9 +1,3 @@
-/**
- * =========================================================
- * PAGE IINSCRIPTION
- * ==============================================================
- */
-
 const countries = [
   ["Afghanistan","AF","+93"],["Afrique du Sud","ZA","+27"],["Albanie","AL","+355"],
   ["Algérie","DZ","+213"],["Allemagne","DE","+49"],["Andorre","AD","+376"],
@@ -55,16 +49,25 @@ const countries = [
   ["Zimbabwe","ZW","+263"]
 ];
 
-const flag = code => `<img src="https://flagcdn.com/24x18/${code.toLowerCase()}.png" style="width:24px;height:18px;border-radius:2px;object-fit:cover;" />`;
+const flagImg = code =>
+  `<img src="https://flagcdn.com/24x18/${code.toLowerCase()}.png"
+        style="width:24px;height:18px;border-radius:2px;object-fit:cover;display:block;" />`;
 
-const trigger = document.getElementById('trigger');
-const panel   = document.getElementById('panel');
-const search  = document.getElementById('search');
-const list    = document.getElementById('list');
+const trigger     = document.getElementById('trigger');
+const panel       = document.getElementById('panel');
+const search      = document.getElementById('search');
+const list        = document.getElementById('list');
 const flagDisplay = document.getElementById('flag-display');
 const dialDisplay = document.getElementById('dial-display');
+const hiddenInput = document.querySelector('input[name="indicatif"]');
 
 let selected = countries.find(c => c[1] === 'FR');
+
+function updateTrigger() {
+  flagDisplay.innerHTML = flagImg(selected[1]);
+  dialDisplay.textContent = selected[2];
+  if (hiddenInput) hiddenInput.value = selected[2];
+}
 
 function render(query) {
   const q = query.toLowerCase();
@@ -77,25 +80,22 @@ function render(query) {
   }
   list.innerHTML = filtered.map(([name, code, dial]) =>
     `<div class="dd-item${selected[1] === code ? ' selected' : ''}" data-code="${code}">
-      <span>${flag(code)}</span>
-      <span>${name}</span>
+      ${flagImg(code)}
+      <span style="flex:1;font-size:13px;">${name}</span>
       <span class="dd-dial">${dial}</span>
     </div>`
   ).join('');
   list.querySelectorAll('.dd-item').forEach(item => {
     item.addEventListener('click', () => {
       selected = countries.find(c => c[1] === item.dataset.code);
-      flagDisplay.innerHTML = flag(selected[1]);
-      dialDisplay.textContent = selected[2];
+      updateTrigger();
       closePanel();
-      render(search.value);
     });
   });
 }
 
 function openPanel() {
   panel.classList.add('open');
-  trigger.classList.add('open');
   search.value = '';
   render('');
   setTimeout(() => {
@@ -107,13 +107,17 @@ function openPanel() {
 
 function closePanel() {
   panel.classList.remove('open');
-  trigger.classList.remove('open');
 }
 
-trigger.addEventListener('click', () =>
-  panel.classList.contains('open') ? closePanel() : openPanel()
-);
+updateTrigger();
+
+trigger.addEventListener('click', e => {
+  e.stopPropagation();
+  panel.classList.contains('open') ? closePanel() : openPanel();
+});
+
 search.addEventListener('input', () => render(search.value));
+
 document.addEventListener('click', e => {
   if (!document.querySelector('.dd-wrap').contains(e.target)) closePanel();
 });
