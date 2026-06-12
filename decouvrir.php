@@ -26,12 +26,9 @@ if (!$produit) {
 // ── Récupération de TOUTES les images depuis la table `images` ──
 // (indépendamment de ce que retourne recuperation_produit_by_id)
 try {
-    $pdo_dec = new PDO(
-        "mysql:host=localhost;dbname=wakaroma;charset=utf8",
-        "root", "",
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-    $stmt_imgs = $pdo_dec->prepare("SELECT id_image, url_image FROM images WHERE id_produit = ? ORDER BY id_image");
+    // Réutilise la connexion centrale (pdo.php contient les bons identifiants local OU en ligne)
+    require_once 'pdo.php';
+    $stmt_imgs = $pdo->prepare("SELECT id_image, url_image FROM images WHERE id_produit = ? ORDER BY id_image");
     $stmt_imgs->execute([$id_produit]);
     $images_bdd = $stmt_imgs->fetchAll(PDO::FETCH_OBJ);
     if (!empty($images_bdd)) {
