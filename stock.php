@@ -1,10 +1,12 @@
 <?php
 session_start();
 
-// PHPMailer pour envoi newsletter
-require_once __DIR__ . '/PHPMailer-master/src/PHPMailer.php';
-require_once __DIR__ . '/PHPMailer-master/src/SMTP.php';
-require_once __DIR__ . '/PHPMailer-master/src/Exception.php';
+// PHPMailer pour envoi newsletter (chargé seulement s'il est présent sur le serveur)
+if (file_exists(__DIR__ . '/PHPMailer-master/src/PHPMailer.php')) {
+    require_once __DIR__ . '/PHPMailer-master/src/PHPMailer.php';
+    require_once __DIR__ . '/PHPMailer-master/src/SMTP.php';
+    require_once __DIR__ . '/PHPMailer-master/src/Exception.php';
+}
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -20,15 +22,34 @@ $admin = $_SESSION['admin_auth'];
 // ==========================================
 // CONFIGURATION BASE DE DONNÉES
 // ==========================================
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'wakaroma');
+// Détection automatique : local (WAMP/XAMPP) ou serveur en ligne (OVH)
+$IS_LOCAL = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true);
+
+if ($IS_LOCAL) {
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'root');
+    define('DB_PASS', '');
+    define('DB_NAME', 'wakaroma');
+} else {
+    define('DB_HOST', 'kgaftzfwakaroma.mysql.db');
+    define('DB_USER', 'kgaftzfwakaroma');
+    define('DB_PASS', 'Wakaroma1');
+    define('DB_NAME', 'kgaftzfwakaroma');
+}
 define('SEUIL_ALERTE_DEFAULT', 10);
 
 // ==========================================
 // CONNEXION PDO
 // ==========================================
+function addColumnIfMissing($pdo, $table, $column, $definition) {
+    try {
+        $chk = $pdo->query("SHOW COLUMNS FROM `$table` LIKE " . $pdo->quote($column));
+        if ($chk !== false && $chk->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
+        }
+    } catch (PDOException $e) { /* table absente ou droits insuffisants : on ignore */ }
+}
+
 function getDB() {
     static $pdo = null;
     if ($pdo === null) {
@@ -39,8 +60,8 @@ function getDB() {
                 DB_PASS,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
             );
-            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS seuil_alerte INT NOT NULL DEFAULT " . SEUIL_ALERTE_DEFAULT);
-            $pdo->exec("ALTER TABLE images ADD COLUMN IF NOT EXISTS is_cover TINYINT(1) NOT NULL DEFAULT 0");
+            addColumnIfMissing($pdo, 'produits', 'seuil_alerte', "INT NOT NULL DEFAULT " . SEUIL_ALERTE_DEFAULT);
+            addColumnIfMissing($pdo, 'images', 'is_cover', 'TINYINT(1) NOT NULL DEFAULT 0');
             // Table ingrédients internes
             $pdo->exec("CREATE TABLE IF NOT EXISTS newsletter_subscribers (
                 id            INT AUTO_INCREMENT PRIMARY KEY,
@@ -60,11 +81,11 @@ function getDB() {
                 created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 sent_at       TIMESTAMP NULL
             )");
-            $pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_entreprise TINYINT(1) DEFAULT 0");
-            $pdo->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS nom_entreprise VARCHAR(255) DEFAULT ''");
-            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS prix_entreprise DECIMAL(10,2) DEFAULT NULL");
-            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS qte_pro DECIMAL(10,3) DEFAULT NULL");
-            $pdo->exec("ALTER TABLE produits ADD COLUMN IF NOT EXISTS unite_pro VARCHAR(30) DEFAULT NULL");
+            addColumnIfMissing($pdo, 'users', 'is_entreprise', 'TINYINT(1) DEFAULT 0');
+            addColumnIfMissing($pdo, 'users', 'nom_entreprise', "VARCHAR(255) DEFAULT ''");
+            addColumnIfMissing($pdo, 'produits', 'prix_entreprise', 'DECIMAL(10,2) DEFAULT NULL');
+            addColumnIfMissing($pdo, 'produits', 'qte_pro', 'DECIMAL(10,3) DEFAULT NULL');
+            addColumnIfMissing($pdo, 'produits', 'unite_pro', 'VARCHAR(30) DEFAULT NULL');
             $pdo->exec("CREATE TABLE IF NOT EXISTS salons (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nom VARCHAR(255) NOT NULL,
@@ -102,6 +123,19 @@ function getDB() {
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
+
+    // Empêcher PHP d'afficher des erreurs/avertissements HTML au milieu du JSON
+    ini_set('display_errors', '0');
+    ob_start();
+    register_shutdown_function(function () {
+        $err = error_get_last();
+        if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+            while (ob_get_level()) ob_end_clean();
+            echo json_encode(['success' => false, 'error' => 'Erreur PHP : ' . $err['message']]);
+        }
+    });
+
+    try {
     $pdo = getDB();
     $action = $_POST['action'];
 
@@ -552,6 +586,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         default:
             echo json_encode(['success' => false, 'error' => 'Action inconnue']);
+    }
+    } catch (Throwable $e) {
+        while (ob_get_level()) ob_end_clean();
+        echo json_encode(['success' => false, 'error' => 'Erreur serveur : ' . $e->getMessage()]);
     }
     exit;
 }
