@@ -1,3 +1,14 @@
+<?php
+global $pdo;
+
+$nb_commandes = 0;
+if (!empty($_SESSION['auth'])) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM commandes WHERE id_user = :u");
+    $stmt->execute([':u' => (int) $_SESSION['auth']['id_user']]);
+    $nb_commandes = (int) $stmt->fetchColumn();
+}
+?>
+
 <style>
     /* ══════════════════════════════════════════
    BARRE DE NAVIGATION MOBILE (EN HAUT)
@@ -61,7 +72,6 @@
   color: var(--color-gold) !important;
 }
 
-/* Indicateur : barre en BAS de l'onglet (visible sur fond vert) */
 .mobile-tab--active::after {
   content: '';
   position: absolute;
@@ -100,80 +110,29 @@
   line-height: 1;
 }
 
-/* ── Responsive desktop intermédiaire ──────── */
 @media (max-width: 860px) and (min-width: 641px) {
-  .boutique-layout {
-    grid-template-columns: 220px 1fr;
-  }
-  .boutique-main {
-    padding: 2rem 1.5rem;
-  }
-  .sidebar-avatar__ring {
-    width: 56px;
-    height: 56px;
-    font-size: 1.5rem;
-  }
+  .boutique-layout { grid-template-columns: 220px 1fr; }
+  .boutique-main { padding: 2rem 1.5rem; }
+  .sidebar-avatar__ring { width: 56px; height: 56px; font-size: 1.5rem; }
 }
 
-/* ── Responsive mobile ──────────────────────── */
 @media (max-width: 640px) {
-
-  /* Cache la sidebar, affiche la navbar en haut */
   .boutique-sidebar  { display: none !important; }
   .mobile-top-nav    { display: block; }
-
-  /* Layout pleine largeur — pas de padding-bottom pour une navbar fixe */
   .boutique-layout   { grid-template-columns: 1fr; }
   .boutique-main     { padding: 1.25rem 1rem 2rem; gap: 1.5rem; }
-
-  /* Topbar */
   .boutique-topbar__greeting { font-size: 1.6rem; }
-
-  /* Tableau responsive : sans en-têtes, cellules en bloc avec libellé */
   .orders-table thead { display: none; }
-
-  .orders-table tbody tr {
-    display: block;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--color-border);
-  }
+  .orders-table tbody tr { display: block; padding: 0.85rem 1rem; border-bottom: 1px solid var(--color-border); }
   .orders-table tbody tr:last-child { border-bottom: none; }
-  .orders-table tbody tr:hover      { background: var(--color-cream); }
-
-  .orders-table td {
-    display: block;
-    padding: 0.22rem 0;
-    font-size: 0.83rem;
-  }
-
-  /* Libellés automatiques via data-label */
-  .orders-table td[data-label]::before {
-    content: attr(data-label);
-    display: block;
-    font-size: 0.62rem;
-    color: var(--color-muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 600;
-    margin-bottom: 2px;
-    margin-top: 6px;
-  }
-
-  /* Pas de libellé pour la colonne Réf. (première) */
+  .orders-table tbody tr:hover { background: var(--color-cream); }
+  .orders-table td { display: block; padding: 0.22rem 0; font-size: 0.83rem; }
+  .orders-table td[data-label]::before { content: attr(data-label); display: block; font-size: 0.62rem; color: var(--color-muted); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; margin-top: 6px; }
   .orders-table td:first-child::before { display: none; }
 }
 
-/* ── Animation entrée ─────────────────── */
-.fade-up {
-  opacity: 0;
-  transform: translateY(18px);
-  animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
-}
-
-@keyframes fadeUp {
-  to { opacity: 1; transform: none; }
-}
-
+.fade-up { opacity: 0; transform: translateY(18px); animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+@keyframes fadeUp { to { opacity: 1; transform: none; } }
 .fade-up:nth-child(1) { animation-delay: 0.05s; }
 .fade-up:nth-child(2) { animation-delay: 0.10s; }
 .fade-up:nth-child(3) { animation-delay: 0.15s; }
@@ -181,8 +140,6 @@
 .fade-up:nth-child(5) { animation-delay: 0.25s; }
 .fade-up:nth-child(6) { animation-delay: 0.30s; }
 </style>
-
-
 
 <!-- ══════════ BARRE DE NAVIGATION MOBILE (EN HAUT) ══════════ -->
 <nav class="mobile-top-nav" aria-label="Navigation principale">
@@ -196,15 +153,15 @@
       Accueil
     </a>
 
-    <a href="commandes.php" class="mobile-tab mobile-tab--active" aria-label="Mes commandes">
+    <a href="commandes.php" class="mobile-tab" aria-label="Mes commandes">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
         <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
         <line x1="12" y1="22.08" x2="12" y2="12"/>
       </svg>
       Commandes
-      <?php if($total_commandes_global > 0): ?>
-        <span class="mobile-tab__badge"><?= $total_commandes_global ?></span>
+      <?php if ($nb_commandes > 0): ?>
+        <span class="mobile-tab__badge"><?= $nb_commandes ?></span>
       <?php endif; ?>
     </a>
 
