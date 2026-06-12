@@ -28,12 +28,12 @@
             <div class="footer__col footer__social">
                 <h4>Nous suivre</h4>
                 <div class="footer__social-list">
-                    <!-- lien du whatsapp -->
-                    <a href="#whatsapp" class="social-link" aria-label="WhatsApp">
-                        <img src="icones/whatssapp.png" alt="WhatsApp">
+                    <!-- lien du tiktok -->
+                    <a href="https://www.tiktok.com/@wakaroma0" class="social-link" aria-label="TikTok">
+                        <img src="icones/tiktok.png" alt="TikTok">
                     </a>
                     <!-- lien du facebook -->
-                    <a href="#facebook" class="social-link" aria-label="Facebook">
+                    <a href="https://www.facebook.com/share/1BT1JzrWpX/?mibextid=wwXIfr" class="social-link" aria-label="Facebook">
                         <img src="icones/facebook.png" alt="Facebook">
                     </a>
                     <!-- lien du instagram -->

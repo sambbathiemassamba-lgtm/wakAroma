@@ -15,7 +15,9 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 
 // fonction pour recuperation produits + images
-function recuperation_produits_images()
+// $recherche (facultatif) : filtre sur le nom du produit, la description
+// OU le nom de la catégorie (ex: "café", "épices", "thé")
+function recuperation_produits_images(?string $recherche = null)
 {
     global $pdo;
     try {
@@ -28,6 +30,7 @@ function recuperation_produits_images()
             produits.description,
             produits.prix,
             produits.stock,
+            categories.nom AS nom_categorie,
             COALESCE(
                 (SELECT url_image FROM images
                  WHERE images.id_produit = produits.id_produit AND images.is_cover = 1
@@ -40,9 +43,31 @@ function recuperation_produits_images()
              WHERE caracteristiques.id_produit = produits.id_produit AND caracteristiques.nom = 'Poids'
              LIMIT 1) AS unite
         FROM produits
+        LEFT JOIN categories ON categories.id_categorie = produits.id_categorie";
+
+        $params = [];
+
+        // Si un terme de recherche est fourni, on filtre
+        // uniquement sur le nom du produit OU le nom de la catégorie
+        if ($recherche !== null && trim($recherche) !== '') {
+            $req .= "
+        WHERE produits.nom LIKE :q_nom
+           OR categories.nom LIKE :q_cat";
+
+            $like = '%' . trim($recherche) . '%';
+            $params = [
+                ':q_nom'  => $like,
+                ':q_cat'  => $like
+            ];
+        }
+
+        $req .= "
         ORDER BY produits.id_produit ASC";
 
-        return $pdo->query($req)->fetchAll(PDO::FETCH_OBJ);
+        $stmt = $pdo->prepare($req);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
 
     } catch (Exception $e) {
         die($e->getMessage());

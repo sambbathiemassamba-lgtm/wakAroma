@@ -324,6 +324,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_COLUMN)]);
             break;
 
+        // ---- GESTION DES CATÉGORIES ----
+        case 'get_categories_full':
+            $stmt = $pdo->query("
+                SELECT c.id_categorie, c.nom,
+                    (SELECT COUNT(*) FROM produits p WHERE p.id_categorie = c.id_categorie) AS nb_produits
+                FROM categories c
+                ORDER BY c.nom
+            ");
+            echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            break;
+
+        case 'add_categorie':
+            $nom = trim($_POST['nom'] ?? '');
+            if ($nom === '') { echo json_encode(['success' => false, 'error' => 'Le nom de la catégorie est obligatoire']); break; }
+            $chk = $pdo->prepare("SELECT id_categorie FROM categories WHERE nom = ?");
+            $chk->execute([$nom]);
+            if ($chk->fetch()) { echo json_encode(['success' => false, 'error' => "La catégorie \"$nom\" existe déjà"]); break; }
+            $pdo->prepare("INSERT INTO categories (nom) VALUES (?)")->execute([$nom]);
+            echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId(), 'nom' => $nom]);
+            break;
+
+        case 'rename_categorie':
+            $id  = (int)($_POST['id'] ?? 0);
+            $nom = trim($_POST['nom'] ?? '');
+            if ($id <= 0 || $nom === '') { echo json_encode(['success' => false, 'error' => 'Données invalides']); break; }
+            $chk = $pdo->prepare("SELECT id_categorie FROM categories WHERE nom = ? AND id_categorie != ?");
+            $chk->execute([$nom, $id]);
+            if ($chk->fetch()) { echo json_encode(['success' => false, 'error' => "Une catégorie \"$nom\" existe déjà"]); break; }
+            $pdo->prepare("UPDATE categories SET nom = ? WHERE id_categorie = ?")->execute([$nom, $id]);
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'delete_categorie':
+            $id = (int)($_POST['id'] ?? 0);
+            $chk = $pdo->prepare("SELECT COUNT(*) FROM produits WHERE id_categorie = ?");
+            $chk->execute([$id]);
+            $nb = (int)$chk->fetchColumn();
+            if ($nb > 0) {
+                echo json_encode(['success' => false, 'error' => "Impossible : $nb produit(s) utilisent encore cette catégorie. Changez d'abord leur catégorie."]);
+                break;
+            }
+            $pdo->prepare("DELETE FROM categories WHERE id_categorie = ?")->execute([$id]);
+            echo json_encode(['success' => true]);
+            break;
+
         // ---- INGRÉDIENTS INTERNES ----
         case 'get_ingredients':
             $stmt = $pdo->query("SELECT * FROM ingredients_internes ORDER BY nom");
@@ -1064,83 +1109,82 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 /* --- Mobile (< 640px) --- */
 @media (max-width: 640px) {
 
-    /* HEADER : logo + titre à gauche, déconnexion en icône */
-    .header {
-        padding: 12px 16px;
-        flex-wrap: nowrap;
-        gap: 10px;
-    }
-    .header-icon { width: 40px; height: 40px; }
-    .header-title { font-size: 1.1rem; }
+    /* ── HEADER ── */
+    .header { padding: 10px 14px; gap: 10px; }
+    .header-icon { width: 38px; height: 38px; }
+    .header-title { font-size: 1.05rem; }
     .header-sub { display: none; }
-    .header-stats { display: none; } /* stats masquées, visibles sous forme de badges dans la page */
+    /* On masque seulement les badges de stats, pour garder le bouton Déconnexion visible */
+    .header-stats { gap: 0; }
+    .header-stats .stat-badge { display: none; }
     .btn-logout span { display: none; } /* juste l'icône 🚪 */
-    .btn-logout { padding: 8px 10px; font-size: 1rem; }
+    .btn-logout { padding: 8px 11px; font-size: 1rem; }
 
-    /* ONGLETS : barre fixe en bas type app mobile */
+    /* ── ONGLETS : barre fixe en bas type app mobile ── */
     .nav-tabs {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        top: auto;
-        padding: 0;
-        justify-content: stretch;
+        bottom: 0; left: 0; right: 0; top: auto;
+        padding: 0; gap: 0;
+        background: var(--surface);
         border-top: 1px solid var(--border2);
         border-bottom: none;
         z-index: 150;
         box-shadow: 0 -4px 20px rgba(0,0,0,.5);
     }
     .nav-tab {
-        flex: 1;
+        flex: 1; min-width: 0;
         flex-direction: column;
-        padding: 10px 4px 12px;
-        font-size: .62rem;
-        gap: 4px;
+        align-items: center; justify-content: center;
+        padding: 8px 2px calc(10px + env(safe-area-inset-bottom));
+        font-size: .58rem; gap: 3px;
         border-bottom: none;
         border-top: 3px solid transparent;
         margin-bottom: 0;
-        justify-content: center;
         text-align: center;
+        position: relative;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .nav-tab .tab-icon { font-size: 1.3rem; display: block; }
+    .nav-tab .tab-icon { font-size: 1.25rem; line-height: 1; display: block; }
     .nav-tab.active { border-top-color: var(--gold); border-bottom-color: transparent; }
-    .nav-tab .tab-badge { position: absolute; top: 6px; right: calc(50% - 22px); font-size: .6rem; padding: 1px 5px; }
-    /* PADDING BOTTOM pour ne pas être masqué par la barre d'onglets */
-    body { padding-bottom: 70px; }
+    .nav-tab .tab-badge {
+        position: absolute; top: 4px; right: calc(50% - 24px);
+        font-size: .58rem; padding: 1px 5px;
+    }
+    /* Espace en bas pour ne rien masquer derrière la barre d'onglets */
+    body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 
-    /* TOOLBAR : colonne */
+    /* ── TOOLBAR : en colonne, tout pleine largeur ── */
     .toolbar {
         padding: 12px 14px;
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
     }
-    .search-wrap { min-width: unset; }
-    .seuil-global { flex-wrap: wrap; }
-    .seuil-global label { font-size: .78rem; }
-    .btn { width: 100%; justify-content: center; }
+    .search-wrap { min-width: unset; width: 100%; }
     select.filter-select { width: 100%; }
+    .btn { width: 100%; justify-content: center; }
+    .seuil-global { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .seuil-global label { font-size: .76rem; }
+    .seuil-global .btn { width: auto; flex: 1; }
 
-    /* MAIN */
+    /* ── MAIN ── */
     .main { padding: 12px 14px; }
+    .table-card { background: transparent; border: none; box-shadow: none; border-radius: 0; }
 
-    /* TABLE → CARTES MOBILES */
-    /* On cache le thead et on transforme chaque ligne en carte */
+    /* ══ TABLES → CARTES ══ */
     .table-wrap { overflow-x: unset; }
-    table { display: block; }
+    table, tbody { display: block; width: 100%; }
     thead { display: none; }
     tbody { display: flex; flex-direction: column; gap: 12px; }
     tbody tr {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 10px 14px;
+        gap: 12px 14px;
+        align-items: start;
         background: var(--surface2);
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 14px;
-        border-bottom: 1px solid var(--border);
-        border-left: none;
     }
     tbody tr.row-alert {
         border-color: var(--red-border);
@@ -1148,15 +1192,15 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
         background: rgba(192,57,43,.06);
     }
     tbody tr:hover { background: var(--surface2); }
+    td { padding: 0; font-size: .88rem; min-width: 0; }
+    /* Cellule vide / chargement : pleine largeur */
+    td[colspan] { grid-column: 1 / -1; }
 
-    /* Chaque td prend toute la largeur ou la moitié selon son contenu */
-    td { padding: 0; font-size: .88rem; }
-
-    /* Ajout d'un label data-label visible sur mobile */
-    td::before {
+    /* Étiquette au-dessus de chaque valeur — uniquement si data-label existe */
+    td[data-label]::before {
         content: attr(data-label);
         display: block;
-        font-size: .68rem;
+        font-size: .66rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: .06em;
@@ -1164,83 +1208,126 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
         margin-bottom: 4px;
     }
 
-    /* Nom produit : pleine largeur */
-    td:nth-child(1) { grid-column: 1 / -1; }
-    /* Catégorie + statut côte à côte */
-    td:nth-child(2), td:nth-child(8) { }
-    /* Stock : pleine largeur */
-    td:nth-child(3) { grid-column: 1 / -1; }
-    /* Niveau (barre) : pleine largeur */
-    td:nth-child(4) { grid-column: 1 / -1; }
-    /* Actions : pleine largeur */
-    td:last-child { grid-column: 1 / -1; }
+    /* ── CARTES STOCKS (12 colonnes) ──
+       Rangée 1 : Produit
+       Rangée 2 : Catégorie | Statut
+       Rangée 3 : Stock + bouton sauver
+       Rangée 4 : Barre de niveau
+       Rangée 5 : Seuil | Unité
+       Rangée 6 : Prix public | Prix pro
+       Rangée 7 : Qté pro | Unité pro
+       Rangée 8 : Actions                                   */
+    #stockTable tbody tr[data-id] { grid-template-columns: 1fr 1fr; }
+    #stockTable tr[data-id] td:nth-child(1)  { grid-area: 1 / 1 / 2 / -1; font-size: 1rem; }
+    #stockTable tr[data-id] td:nth-child(2)  { grid-area: 2 / 1; }
+    #stockTable tr[data-id] td:nth-child(11) { grid-area: 2 / 2; justify-self: end; }
+    #stockTable tr[data-id] td:nth-child(11)::before { display: none; } /* le badge se suffit */
+    #stockTable tr[data-id] td:nth-child(3)  { grid-area: 3 / 1 / 4 / -1; }
+    #stockTable tr[data-id] td:nth-child(4)  { grid-area: 4 / 1 / 5 / -1; }
+    #stockTable tr[data-id] td:nth-child(5)  { grid-area: 5 / 1; }
+    #stockTable tr[data-id] td:nth-child(6)  { grid-area: 5 / 2; }
+    #stockTable tr[data-id] td:nth-child(7)  { grid-area: 6 / 1; }
+    #stockTable tr[data-id] td:nth-child(8)  { grid-area: 6 / 2; }
+    #stockTable tr[data-id] td:nth-child(9)  { grid-area: 7 / 1; }
+    #stockTable tr[data-id] td:nth-child(10) { grid-area: 7 / 2; }
+    #stockTable tr[data-id] td:nth-child(12) { grid-area: 8 / 1 / 9 / -1; }
 
-    /* Stock cell sur mobile */
-    .stock-cell { flex-wrap: wrap; gap: 8px; }
-    .stock-input { width: 90px; }
-    .save-btn { flex: 1; justify-content: center; text-align: center; }
+    /* Champs et boutons des cartes */
+    .stock-cell { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .stock-input { flex: 1; min-width: 80px; max-width: 120px; }
+    .save-btn { flex: 1; text-align: center; padding: 9px 12px; font-size: .82rem; }
+    .seuil-input, .unite-input { width: 100%; max-width: 110px; }
 
-    /* Actions sur mobile */
-    td[style*="display:flex"] { display: flex !important; gap: 8px; }
-    .action-btn, .save-btn { padding: 8px 12px; font-size: .82rem; flex: 1; text-align: center; justify-content: center; }
+    /* Ligne Actions (le td a un style inline display:flex) */
+    #stockTable td[data-label="Actions"],
+    #ingrTable  td[data-label="Actions"] {
+        display: flex !important;
+        gap: 8px;
+        align-items: stretch;
+    }
+    #stockTable td[data-label="Actions"]::before,
+    #ingrTable  td[data-label="Actions"]::before { display: none; }
+    #stockTable td[data-label="Actions"] .save-btn,
+    #stockTable td[data-label="Actions"] .action-btn,
+    #ingrTable  td[data-label="Actions"] .save-btn,
+    #ingrTable  td[data-label="Actions"] .action-btn {
+        flex: 1;
+        display: flex; align-items: center; justify-content: center;
+        padding: 9px 12px; font-size: .82rem;
+    }
 
-    /* MODAL : plein écran sur mobile */
+    /* ── CARTES INGRÉDIENTS (7 colonnes) ── */
+    #ingrTable tr[data-id] td:nth-child(1) { grid-column: 1 / -1; font-size: 1rem; }
+    #ingrTable tr[data-id] td:nth-child(2) { grid-column: 1 / -1; }
+    #ingrTable tr[data-id] td:nth-child(6) { justify-self: end; }
+    #ingrTable tr[data-id] td:nth-child(6)::before { display: none; }
+    #ingrTable tr[data-id] td:last-child   { grid-column: 1 / -1; }
+
+    /* ── UTILISATEURS : carte compacte avatar / infos / action ── */
+    #usersTable tbody tr {
+        grid-template-columns: auto 1fr;
+        gap: 6px 12px;
+        align-items: center;
+    }
+    #usersTable td:nth-child(1) { grid-column: 1 / -1; }
+    #usersTable td:nth-child(2) { grid-column: 1 / -1; word-break: break-all; }
+    #usersTable td:nth-child(3) { grid-column: 1; }
+    #usersTable td:nth-child(4) { grid-column: 2; justify-self: end; }
+    #usersTable td:nth-child(5) { grid-column: 1 / -1; margin-top: 4px; }
+
+    /* ── NEWSLETTER : tableau abonnés en défilement horizontal ──
+       (trop de colonnes interactives pour des cartes lisibles) */
+    #nlSubTable { display: table; min-width: 700px; }
+    #nlSubTable thead { display: table-header-group; }
+    #nlSubTable tbody { display: table-row-group; }
+    #nlSubTable tbody tr {
+        display: table-row;
+        background: transparent;
+        border: none; border-radius: 0; padding: 0;
+    }
+    #nlSubTable td { display: table-cell; padding: 12px 14px; }
+    .page#page-newsletter .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .nl-stats { gap: 8px; }
+    .nl-stat { min-width: calc(50% - 8px); padding: 10px 12px; }
+    .nl-tabs { flex-wrap: wrap; }
+
+    /* ── SALONS : cartes empilées ── */
+    #salon-list > div[style*="grid-template-columns"] {
+        grid-template-columns: 56px 1fr !important;
+        gap: 12px !important;
+        padding: 16px !important;
+    }
+    #salon-list > div[style*="grid-template-columns"] > div:last-child {
+        grid-column: 1 / -1;
+        flex-direction: row !important;
+    }
+    #salon-list > div[style*="grid-template-columns"] > div:last-child .action-btn { flex: 1; }
+
+    /* ── MODALS : plein écran depuis le bas ── */
     .modal-overlay { align-items: flex-end; }
     .modal {
         border-radius: 20px 20px 0 0;
         max-width: 100%;
         max-height: 92vh;
         overflow-y: auto;
-        padding: 24px 20px 32px;
+        padding: 24px 18px calc(28px + env(safe-area-inset-bottom));
         animation: modalUp .3s ease;
     }
     @keyframes modalUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     .form-grid { grid-template-columns: 1fr; }
     .form-group.full { grid-column: 1; }
+    /* Sous-grilles "tarification entreprise" en colonne */
+    .form-group.full > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+    .nl-modal { max-height: 92vh; }
+    .nl-mfooter .btn { flex: 1; }
+    .modal-footer { flex-wrap: wrap; }
+    .modal-footer .btn { flex: 1; }
 
-    /* TOASTS en bas à gauche sur mobile */
-    .toast-container { bottom: 80px; right: 14px; left: 14px; }
+    /* ── TOASTS au-dessus de la barre d'onglets ── */
+    .toast-container { bottom: calc(84px + env(safe-area-inset-bottom)); right: 14px; left: 14px; }
     .toast { font-size: .82rem; }
 
-    /* UTILISATEURS : cartes */
-    #usersTable thead { display: none; }
-    #usersTable tbody { display: flex; flex-direction: column; gap: 12px; }
-    #usersTable tbody tr {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        align-items: center;
-        gap: 10px;
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 14px;
-    }
-    #usersTable td { padding: 0; }
-    #usersTable td:nth-child(1) { grid-column: 1; grid-row: 1 / 3; }
-    #usersTable td:nth-child(2) { grid-column: 2; grid-row: 1; font-size: .82rem; }
-    #usersTable td:nth-child(3) { grid-column: 2; grid-row: 2; }
-    #usersTable td:nth-child(4) { display: none; } /* date masquée */
-    #usersTable td:nth-child(5) { grid-column: 3; grid-row: 1 / 3; }
-
-    /* INGRÉDIENTS : cartes */
-    #ingrTable thead { display: none; }
-    #ingrTable tbody { display: flex; flex-direction: column; gap: 12px; }
-    #ingrTable tbody tr {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px 14px;
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 14px;
-    }
-    #ingrTable tbody tr.row-alert { border-color: var(--red-border); border-left: 3px solid var(--red); }
-    #ingrTable td { padding: 0; }
-    #ingrTable td:nth-child(1) { grid-column: 1 / -1; }
-    #ingrTable td:nth-child(2) { grid-column: 1 / -1; }
-    #ingrTable td:last-child   { grid-column: 1 / -1; display: flex; gap: 8px; }
-
-    /* Stats mini en haut de page stocks */
+    /* ── Stats mini en haut de page stocks ── */
     .mobile-stats {
         display: flex !important;
         gap: 10px;
@@ -1425,6 +1512,9 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
             <input type="number" id="seuil-global-input" value="<?= SEUIL_ALERTE_DEFAULT ?>" min="0">
             <button class="btn btn-ghost" style="padding:6px 12px;font-size:.82rem;" onclick="applySeuilGlobal()">Appliquer</button>
         </div>
+        <button class="btn btn-ghost" onclick="openCatManager()">
+            🏷 Catégories
+        </button>
         <button class="btn btn-primary" onclick="openModal('produit')">
             <span>＋</span> Ajouter un produit
         </button>
@@ -1814,8 +1904,10 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
             </div>
             <div class="form-group">
                 <label>Catégorie</label>
-                <input type="text" id="ep-cat" list="ep-cat-list" placeholder="Catégorie">
-                <datalist id="ep-cat-list"></datalist>
+                <select id="ep-cat">
+                    <option value="">— Choisir une catégorie —</option>
+                </select>
+                <button type="button" onclick="openCatManager()" style="background:none;border:none;color:var(--gold);font-size:.76rem;cursor:pointer;text-align:left;padding:2px 0 0;font-family:'DM Sans',sans-serif;">＋ Créer / gérer les catégories</button>
             </div>
             <div class="form-group">
                 <label>Unité</label>
@@ -1895,8 +1987,10 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
             </div>
             <div class="form-group">
                 <label>Catégorie</label>
-                <input type="text" id="f-cat" list="cat-list" placeholder="Ex: Épices douces">
-                <datalist id="cat-list"></datalist>
+                <select id="f-cat">
+                    <option value="">— Choisir une catégorie —</option>
+                </select>
+                <button type="button" onclick="openCatManager()" style="background:none;border:none;color:var(--gold);font-size:.76rem;cursor:pointer;text-align:left;padding:2px 0 0;font-family:'DM Sans',sans-serif;">＋ Créer / gérer les catégories</button>
             </div>
             <div class="form-group">
                 <label>Unité</label>
@@ -1980,6 +2074,30 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
     </div>
 </div>
 
+<!-- MODAL GESTION CATÉGORIES -->
+<div class="modal-overlay" id="modal-categories">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">🏷 Gérer les catégories</div>
+            <button class="modal-close" onclick="closeModal('categories')">✕</button>
+        </div>
+        <!-- Ajout d'une catégorie -->
+        <div style="display:flex;gap:8px;margin-bottom:18px;">
+            <input type="text" id="cat-new-nom" placeholder="Nouvelle catégorie (ex: Café, Thé, Épices…)"
+                onkeydown="if(event.key==='Enter')addCategorie()"
+                style="flex:1;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;">
+            <button class="btn btn-primary" style="width:auto;flex-shrink:0;" onclick="addCategorie()">＋ Ajouter</button>
+        </div>
+        <!-- Liste des catégories -->
+        <div id="cat-list-wrap" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;">
+            <span style="color:var(--text-dim);font-size:.85rem;">Chargement…</span>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('categories')">Fermer</button>
+        </div>
+    </div>
+</div>
+
 <!-- TOASTS -->
 <div class="toast-container" id="toasts"></div>
 
@@ -2024,18 +2142,114 @@ async function loadStocks() {
     } catch (e) { showToast('Erreur de chargement : ' + e.message, 'error'); }
 }
 
+let allCategoriesNames = [];
+
 async function loadCategories() {
     try {
         const res = await post({ action: 'get_categories' });
-        const sel = document.getElementById('filter-cat');
-        const dl  = document.getElementById('cat-list');
-        (res.data || []).forEach(cat => {
-            const opt = document.createElement('option');
-            opt.value = cat; opt.textContent = cat;
-            sel.appendChild(opt.cloneNode(true));
-            dl.appendChild(opt);
-        });
+        allCategoriesNames = res.data || [];
+        refreshCategorySelects();
     } catch(e) {}
+}
+
+// Reconstruit les 3 menus déroulants (filtre + ajout + édition)
+// en conservant la valeur sélectionnée
+function refreshCategorySelects() {
+    const filterSel = document.getElementById('filter-cat');
+    const fSel      = document.getElementById('f-cat');
+    const epSel     = document.getElementById('ep-cat');
+
+    const filterVal = filterSel.value;
+    const fVal      = fSel.value;
+    const epVal     = epSel.value;
+
+    filterSel.innerHTML = '<option value="">Toutes les catégories</option>';
+    fSel.innerHTML      = '<option value="">— Choisir une catégorie —</option>';
+    epSel.innerHTML     = '<option value="">— Choisir une catégorie —</option>';
+
+    allCategoriesNames.forEach(cat => {
+        [filterSel, fSel, epSel].forEach(sel => {
+            const o = document.createElement('option');
+            o.value = cat; o.textContent = cat;
+            sel.appendChild(o);
+        });
+    });
+
+    filterSel.value = filterVal;
+    fSel.value      = fVal;
+    epSel.value     = epVal;
+}
+
+// ==========================================
+// GESTIONNAIRE DE CATÉGORIES
+// ==========================================
+function openCatManager() {
+    openModal('categories');
+    loadCatManager();
+}
+
+async function loadCatManager() {
+    const wrap = document.getElementById('cat-list-wrap');
+    wrap.innerHTML = '<span style="color:var(--text-dim);font-size:.85rem;">Chargement…</span>';
+    try {
+        const res  = await post({ action: 'get_categories_full' });
+        const cats = res.data || [];
+        if (!cats.length) {
+            wrap.innerHTML = '<span style="color:var(--text-dim);font-size:.85rem;font-style:italic;">Aucune catégorie. Ajoutez-en une ci-dessus (ex: Café, Thé, Épices…).</span>';
+            return;
+        }
+        wrap.innerHTML = cats.map(c => `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;">
+                <span style="flex:1;font-weight:500;color:var(--cream);">🏷 ${escHtml(c.nom)}</span>
+                <span style="font-size:.72rem;color:var(--text-dim);white-space:nowrap;">${c.nb_produits} produit${c.nb_produits > 1 ? 's' : ''}</span>
+                <button class="save-btn" style="background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue);padding:5px 10px;"
+                    onclick="renameCategorie(${c.id_categorie}, '${escHtml(c.nom)}')" title="Renommer">✏</button>
+                <button class="action-btn" style="padding:5px 10px;"
+                    onclick="deleteCategorie(${c.id_categorie}, '${escHtml(c.nom)}', ${c.nb_produits})" title="Supprimer">🗑</button>
+            </div>`).join('');
+    } catch(e) {
+        wrap.innerHTML = '<span style="color:#e74c3c;font-size:.85rem;">Erreur de chargement</span>';
+    }
+}
+
+async function addCategorie() {
+    const input = document.getElementById('cat-new-nom');
+    const nom   = input.value.trim();
+    if (!nom) { showToast('Saisissez un nom de catégorie', 'error'); return; }
+    try {
+        await post({ action: 'add_categorie', nom });
+        showToast(`Catégorie "${nom}" créée ✓`, 'success');
+        input.value = '';
+        loadCatManager();
+        await loadCategories();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function renameCategorie(id, nomActuel) {
+    const nom = prompt('Nouveau nom de la catégorie :', nomActuel);
+    if (nom === null) return;
+    if (!nom.trim()) { showToast('Le nom ne peut pas être vide', 'error'); return; }
+    try {
+        await post({ action: 'rename_categorie', id, nom: nom.trim() });
+        showToast('Catégorie renommée ✓', 'success');
+        loadCatManager();
+        await loadCategories();
+        loadStocks(); // met à jour les noms affichés dans le tableau
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function deleteCategorie(id, nom, nbProduits) {
+    if (nbProduits > 0) {
+        showToast(`Impossible : ${nbProduits} produit(s) utilisent "${nom}". Changez d'abord leur catégorie.`, 'error');
+        return;
+    }
+    if (!confirm(`Supprimer la catégorie "${nom}" ?`)) return;
+    try {
+        await post({ action: 'delete_categorie', id });
+        showToast(`Catégorie "${nom}" supprimée`, 'success');
+        loadCatManager();
+        await loadCategories();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
 }
 
 function renderTable(products) {
@@ -2170,14 +2384,8 @@ async function addProduit() {
 }
 
 async function loadCategoriesRefresh() {
-    try {
-        const res = await post({ action: 'get_categories' });
-        const dl = document.getElementById('cat-list');
-        dl.innerHTML = '';
-        (res.data || []).forEach(cat => {
-            const opt = document.createElement('option'); opt.value = cat; dl.appendChild(opt);
-        });
-    } catch(e) {}
+    // Recharge les catégories dans tous les menus déroulants
+    await loadCategories();
 }
 
 async function deleteProduit(id, nom) {
@@ -2194,7 +2402,6 @@ function openEditProduit(id) {
     if (!p) return;
     document.getElementById('ep-id').value    = p.id;
     document.getElementById('ep-nom').value   = p.nom;
-    document.getElementById('ep-cat').value   = p.categorie || '';
     document.getElementById('ep-stock').value = p.stock;
     document.getElementById('ep-seuil').value = p.seuil_alerte;
     document.getElementById('ep-prix').value      = parseFloat(p.prix || 0).toFixed(2);
@@ -2211,12 +2418,14 @@ function openEditProduit(id) {
         const o = document.createElement('option'); o.value = val; o.textContent = val; o.selected = true;
         sel.appendChild(o);
     }
-    // Datalist catégories
-    const dl = document.getElementById('ep-cat-list');
-    dl.innerHTML = '';
-    [...new Set(allProducts.map(x => x.categorie).filter(Boolean))].forEach(cat => {
-        const o = document.createElement('option'); o.value = cat; dl.appendChild(o);
-    });
+    // Catégorie : sélectionner celle du produit (l'ajouter si absente de la liste)
+    const epSel = document.getElementById('ep-cat');
+    if (p.categorie && ![...epSel.options].some(o => o.value === p.categorie)) {
+        const o = document.createElement('option');
+        o.value = p.categorie; o.textContent = p.categorie;
+        epSel.appendChild(o);
+    }
+    epSel.value = p.categorie || '';
     // Reset zone upload
     document.getElementById('ep-img-preview').innerHTML = '';
     document.getElementById('ep-img-status').textContent = '';
@@ -2574,6 +2783,7 @@ function closeModal(type) {
 document.getElementById('modal-edit-produit').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('edit-produit'); });
 document.getElementById('modal-produit').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('produit'); });
 document.getElementById('modal-ingredient').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('ingredient'); });
+document.getElementById('modal-categories').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('categories'); });
 
 // ==========================================
 // UTILITAIRES

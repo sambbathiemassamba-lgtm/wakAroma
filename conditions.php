@@ -411,16 +411,16 @@ session_start();
         <h2 class="cgv-section__title">Identification du vendeur</h2>
         <p>Le site <strong>WakAroma</strong> (ci-après « le Vendeur ») est exploité par :</p>
         <ul class="cgv-list">
-            <li><strong>Raison sociale :</strong> WakAroma</li>
-            <li><strong>Forme juridique :</strong> [Forme juridique — ex. SAS, SASU, auto-entrepreneur…]</li>
-            <li><strong>Siège social :</strong> [Adresse complète]</li>
-            <li><strong>SIRET :</strong> [Numéro SIRET]</li>
+            <li><strong>Raison sociale :</strong> MEGAGUE MIAD HODAN</li>
+            <li><strong>Forme juridique :</strong> Entrepreneur individuel</li>
+            <li><strong>Siège social :</strong> 30 rue chanzy 59140 Dunkerque/li>
+            <li><strong>SIRET :</strong> 988213559100015</li>
             <li><strong>TVA intracommunautaire :</strong> [Numéro TVA — si applicable]</li>
             <li><strong>Email :</strong> <a href="mailto:contact@wakaroma.fr">contact@wakaroma.fr</a></li>
-            <li><strong>Téléphone :</strong> [Numéro de téléphone]</li>
+            <li><strong>Téléphone :</strong> +330668136485</li>
             <li><strong>Hébergeur :</strong> [Nom et adresse de l'hébergeur du site]</li>
         </ul>
-        <p>Le directeur de publication est [Nom du responsable]. Toute communication écrite adressée au Vendeur peut être effectuée par email ou courrier postal aux coordonnées ci-dessus.</p>
+        <p>Le directeur de publication est Hodan. Toute communication écrite adressée au Vendeur peut être effectuée par email ou courrier postal aux coordonnées ci-dessus.</p>
     </section>
 
     <!-- ART 2 -->

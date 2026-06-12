@@ -7,7 +7,11 @@ if (!empty($_SESSION['auth']['is_entreprise'])) {
     header('Location: index_entreprise.php');
     exit;
 }
-$datas_raw = recuperation_produits_images();
+// ── Recherche (barre du header : index.php?q=...) ────────────────────────────
+// Filtre sur le nom du produit, la description OU la catégorie (Café, Épices, Thé…)
+$recherche = trim($_GET['q'] ?? '');
+
+$datas_raw = recuperation_produits_images($recherche !== '' ? $recherche : null);
 
 // Dédoublonnage : on garde un seul enregistrement par produit
 // (la première image rencontrée est conservée)
@@ -193,9 +197,18 @@ foreach ($datas_raw as $row) {
      SECTION PRODUITS
      ══════════════════════════════════════════ -->
 <div class="section-header" id="produits">
-    <div class="section-header__eyebrow">Notre sélection</div>
-    <h2 class="section-header__title">Les Épices du Moment</h2>
-    <p class="section-header__sub">Chaque produit est soigneusement sélectionné pour vous offrir le meilleur de l'Afrique.</p>
+    <?php if ($recherche !== ''): ?>
+        <div class="section-header__eyebrow">Résultats de recherche</div>
+        <h2 class="section-header__title">« <?= htmlspecialchars($recherche) ?> »</h2>
+        <p class="section-header__sub">
+            <?= count($datas) ?> produit<?= count($datas) > 1 ? 's' : '' ?> trouvé<?= count($datas) > 1 ? 's' : '' ?>
+            — <a href="index.php#produits" style="color:#c8943a;font-weight:600;">Voir tous les produits</a>
+        </p>
+    <?php else: ?>
+        <div class="section-header__eyebrow">Notre sélection</div>
+        <h2 class="section-header__title">Les Épices du Moment</h2>
+        <p class="section-header__sub">Chaque produit est soigneusement sélectionné pour vous offrir le meilleur de l'Afrique.</p>
+    <?php endif; ?>
 </div>
 
 <!-- Filtres -->
@@ -208,6 +221,16 @@ foreach ($datas_raw as $row) {
 </div>
 
 <section class="produits" id="produit">
+
+    <?php if ($recherche !== '' && empty($datas)): ?>
+        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#6b6b6b;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">🔍</div>
+            <p style="font-size:1.05rem;font-weight:600;color:#1f4f2e;margin-bottom:6px;">
+                Aucun produit trouvé pour « <?= htmlspecialchars($recherche) ?> »
+            </p>
+            <p style="font-size:.9rem;">Essayez avec un autre mot, ou une catégorie comme « café », « épices » ou « thé ».</p>
+        </div>
+    <?php endif; ?>
 
     <?php foreach($datas as $data): ?>
 
@@ -246,7 +269,7 @@ foreach ($datas_raw as $row) {
             </div>
 
             <div class="produit__contenu">
-                <p class="produit__categorie">Épice · WakAroma</p>
+                <p class="produit__categorie"><?= htmlspecialchars($data->nom_categorie ?? 'Épice') ?> · WakAroma</p>
 
                 <h2 class="produit__titre">
                     <?= htmlspecialchars($data->nom); ?>
@@ -331,6 +354,16 @@ foreach ($datas_raw as $row) {
     <?php endforeach; ?>
 
 </section>
+
+<?php if ($recherche !== ''): ?>
+<!-- Après une recherche, on amène directement le visiteur sur les résultats -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('produits');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+</script>
+<?php endif; ?>
 
 <!-- ══════════════════════════════════════════
      SECTION UNIVERS / EDITO
