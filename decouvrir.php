@@ -63,6 +63,12 @@ try {
     padding: 60px 24px 80px;
 }
 
+@media (max-width: 768px) {
+    .decouvrir {
+        padding: 24px 16px 60px;
+    }
+}
+
 /* Fil d'Ariane */
 .breadcrumb {
     display: flex;
@@ -72,6 +78,13 @@ try {
     color: #111;
     margin-bottom: 40px;
     flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .breadcrumb {
+        margin-bottom: 24px;
+        font-size: 0.78rem;
+    }
 }
 .breadcrumb a {
     color: #111;
@@ -91,13 +104,23 @@ try {
     margin-bottom: 80px;
 }
 @media (max-width: 768px) {
-    .produit-hero { grid-template-columns: 1fr; gap: 32px; }
+    .produit-hero {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        margin-bottom: 48px;
+    }
 }
 
 /* ─── CAROUSEL ─── */
 .produit-hero__galerie {
     position: sticky;
     top: 100px;
+}
+
+@media (max-width: 768px) {
+    .produit-hero__galerie {
+        position: static;
+    }
 }
 
 /* Conteneur principal du carousel */
@@ -284,7 +307,7 @@ try {
 }
 
 .produit-hero__nom {
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: clamp(1.6rem, 6vw, 3rem);
     font-weight: 800;
     color: var(--brun);
     line-height: 1.1;
@@ -319,8 +342,8 @@ try {
 .produit-hero__desc {
     font-size: 1rem;
     line-height: 1.75;
-    color: #ffffff;
-    font-weight: border;
+    color: var(--texte);
+    font-weight: 400;
 }
 
 /* Caractéristiques */
@@ -328,6 +351,16 @@ try {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .produit-hero__carac {
+        gap: 8px;
+    }
+    .produit-hero__carac-item {
+        font-size: 0.78rem;
+        padding: 7px 12px;
+    }
 }
 .produit-hero__carac-item {
     display: flex;
@@ -357,13 +390,20 @@ try {
     gap: 16px;
 }
 
+@media (max-width: 768px) {
+    .produit-hero__acheter {
+        padding: 18px;
+        border-radius: 14px;
+    }
+}
+
 .produit-hero__prix-bloc {
     display: flex;
     align-items: baseline;
     gap: 10px;
 }
 .produit-hero__prix {
-    font-size: 2.2rem;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
     font-weight: 800;
     color: var(--brun);
     letter-spacing: -0.03em;
@@ -394,6 +434,23 @@ try {
     border-radius: 10px;
     overflow: hidden;
     width: fit-content;
+}
+
+@media (max-width: 768px) {
+    .produit-hero__quantite {
+        width: 100%;
+        max-width: 200px;
+    }
+    .qty-btn {
+        width: 48px;
+        height: 46px;
+        font-size: 1.5rem;
+    }
+    .qty-input {
+        flex: 1;
+        height: 46px;
+        font-size: 1.1rem;
+    }
 }
 .qty-btn {
     background: #fff;
@@ -444,6 +501,14 @@ try {
     transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
     box-shadow: 0 4px 20px rgba(61,43,26,0.25);
 }
+
+@media (max-width: 768px) {
+    .decouvrir__panier-btn {
+        padding: 18px 24px;
+        font-size: 1.05rem;
+        border-radius: 14px;
+    }
+}
 .decouvrir__panier-btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 8px 28px rgba(61,43,26,0.35);
@@ -478,6 +543,15 @@ try {
     padding-top: 60px;
     border-top: 1px solid #e8dfd0;
 }
+
+@media (max-width: 768px) {
+    .similaires {
+        padding-top: 40px;
+    }
+    .similaires__titre {
+        font-size: 1.4rem;
+    }
+}
 .similaires__header {
     margin-bottom: 36px;
 }
@@ -501,6 +575,19 @@ try {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 24px;
+}
+
+@media (max-width: 600px) {
+    .similaires__grille {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .similaires__grille {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Carte similaire */
@@ -580,6 +667,26 @@ try {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 400px) {
+    .sim-card__footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .sim-card__actions {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+    }
+    .sim-card__btn-voir,
+    .sim-card__btn-panier {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 8px;
+    }
 }
 .sim-card__prix {
     font-size: 1.1rem;
