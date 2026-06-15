@@ -2460,7 +2460,7 @@ async function loadProduitImages(id_produit) {
             const isCover = parseInt(img.is_cover) === 1;
             return `
             <div class="img-thumb ${isCover ? 'is-cover' : ''}" id="imgthumb-${img.id_image}">
-                <img src="${escHtml(img.url_image)}" alt="Image produit" onerror="this.src='images/placeholder.png'">
+                <img src="${escHtml(img.url_image)}" alt="Image produit" onerror="this.onerror=null;this.src='images/placeholder.png'">
                 <button class="img-thumb__cover-btn"
                     onclick="setCover(${img.id_image}, ${id_produit})"
                     title="${isCover ? 'Photo de couverture (index)' : 'Définir comme couverture index'}">★</button>
