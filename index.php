@@ -242,26 +242,15 @@ function slugify($str) {
     return trim($str, '-');
 }
 
-// Récupérer TOUTES les catégories depuis la BDD (même celles sans produit encore)
+// Récupérer uniquement les catégories qui ont au moins un produit affiché
 $categories_filtre = [];
-try {
-    $IS_LOCAL_IDX = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true);
-    if ($IS_LOCAL_IDX) {
-        $pdo_idx = new PDO("mysql:host=localhost;dbname=wakaroma;charset=utf8", 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    } else {
-        $pdo_idx = new PDO("mysql:host=kgaftzfwakaroma.mysql.db;dbname=kgaftzfwakaroma;charset=utf8", 'kgaftzfwakaroma', 'Wakaroma1', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+foreach ($datas as $d) {
+    $cat = $d->nom_categorie ?? '';
+    if ($cat !== '' && !in_array($cat, $categories_filtre, true)) {
+        $categories_filtre[] = $cat;
     }
-    $categories_filtre = $pdo_idx->query("SELECT nom FROM categories ORDER BY nom")->fetchAll(PDO::FETCH_COLUMN);
-} catch (Exception $e) {
-    // Repli : extraire depuis les produits déjà chargés si la connexion échoue
-    foreach ($datas as $d) {
-        $cat = $d->nom_categorie ?? '';
-        if ($cat !== '' && !in_array($cat, $categories_filtre, true)) {
-            $categories_filtre[] = $cat;
-        }
-    }
-    sort($categories_filtre);
 }
+sort($categories_filtre);
 ?>
 <div class="filters-bar">
     <button class="filter-btn filter-btn--active" data-filter="all">Tous</button>
