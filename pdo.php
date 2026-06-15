@@ -1,9 +1,9 @@
 <?php 
 
 try{
-    $host = "mysql:host=kgaftzfwakaroma.mysql.db;dbname=kgaftzfwakaroma;charset=utf8";
-    $user = 'kgaftzfwakaroma';
-    $password = 'Wakaroma1';
+    $host = "mysql:host=localhost;dbname=wakaroma;charset=utf8";
+    $user = 'root';
+    $password = '';
 
     $pdo = new PDO($host, $user, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

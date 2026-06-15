@@ -1,15 +1,21 @@
 <?php
+// $_SESSION['eamil']  session pour recuperer l'email besion dans la page rendNewCode
+// $_SESSION['auth'] = $nom; // authentification de l'utilisateur
+
 session_start();
-require_once 'sendEmail.php';
-require_once 'function.php';
+require_once 'sendEmail.php'; // PHHMailer
+require_once 'function.php'; // founction 
 
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
     $nom = htmlspecialchars(trim($_POST['nom'] ?? ''));
     $prenom = htmlspecialchars(trim($_POST['prenom'] ?? ''));
+    // Indicatif vient du champ hidden mis a jour par le JS du dropdown
     $indicatif = trim($_POST['indicatif'] ?? '+33');
     $tel        = trim($_POST['numero']    ?? '');
+    // Nettoyer les espaces/tirets et recoller indicatif + numero
     $tel_clean  = preg_replace('/[\s\-\.]/', '', $tel);
+    // Eviter la double presence de l'indicatif si le user tape +33...
     if (str_starts_with($tel_clean, $indicatif)) {
         $numero = $tel_clean;
     } else {
@@ -20,22 +26,31 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $password =   htmlspecialchars($_POST['password'] ?? '');
     $password_conf = htmlspecialchars($_POST['password_conf'] ?? '');
 
+    // checkbox conditions
     $accept_cgv    = $_POST['accept_cgv']    ?? null;
     $is_entreprise  = !empty($_POST['is_entreprise']) ? 1 : 0;
     $nom_entreprise = htmlspecialchars(trim($_POST['nom_entreprise'] ?? ''));
 
-    $errors = message_errors($nom, $prenom, $numero, $email, $email_conf, $password, $password_conf);
+    // message d'erreur
+    $errors = message_errors($nom, $prenom, $numero, $email, $email_conf,$password,$password_conf);
 
+    // verification CGV
     if (!$accept_cgv) {
         $errors[] = "Vous devez accepter les conditions générales.";
     }
 
-    if (empty($errors)) {
+    // INSERT USER
+    if (empty($errors)) 
+    {
+        // mot de passe hache
         $password_hash = password_hash($password, PASSWORD_BCRYPT);
-        $tokend = str_random(6);
+        $tokend = str_random(6); // founction pour recupere le code de validation
+        
+        // on cree l'utilisateur
         $inserted = insertion_users($nom, $prenom, $email, $numero, $password_hash, $tokend);
 
         if ($inserted === true) {
+            // Mise à jour des champs entreprise si nécessaire
             if ($is_entreprise) {
                 try {
                     $pdo_ent = new PDO("mysql:host=localhost;dbname=wakaroma;charset=utf8", "root", "",
@@ -51,71 +66,58 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         }
 
         if ($inserted === 'mail_failed') {
+            // Compte cree mais mail non envoye -> on redirige quand meme
             $_SESSION['warning'] = "Compte créé ! L'email de confirmation n'a pas pu être envoyé. Vérifiez vos spams ou demandez un renvoi.";
             $_SESSION['email']   = $email;
             header("Location: confirmation.php");
             exit();
         }
 
+        // false -> doublon ou erreur SQL
         $_SESSION['error'] = "Cette adresse email ou ce numéro est déjà utilisé.";
     }
+
 }
 ?>
 
 <?php require_once 'header_login.php' ?>
 
 <style>
-* {
-    box-sizing: border-box;
-}
 
-/* ─── ENTREPRISE ──────────────────────────────────────────── */
+
+/* ENTREPRISE */
 .entreprise-toggle {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
     gap: 10px;
     margin-top: 8px;
     cursor: pointer;
     font-size: 14px;
     color: #444;
     font-weight: 600;
-    width: 100%;
 }
-
-.entreprise-toggle input[type="checkbox"] {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    margin: 0;
-    transform: none;
+.entreprise-toggle input {
+    transform: scale(1.2);
     accent-color: #c97b2b;
-    cursor: pointer;
 }
-
 .entreprise-field {
     display: none;
     margin-top: 10px;
 }
-
 .entreprise-field.visible {
     display: block;
 }
 
-/* ─── MOT DE PASSE ────────────────────────────────────────── */
+/* MOT DE PASSE — TOGGLE VISIBILITÉ */
 .pw-wrap {
     position: relative;
     display: flex;
     align-items: center;
-    width: 100%;
 }
-
 .pw-wrap .pw-input {
     width: 100%;
     padding-right: 2.8rem;
-    font-size: 16px;
 }
-
 .pw-toggle {
     position: absolute;
     right: 0.75rem;
@@ -130,249 +132,66 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     border-radius: 6px;
     transition: color 0.2s;
 }
-
 .pw-toggle:hover {
     color: #c8943a;
 }
 
-/* ─── CONDITIONS ──────────────────────────────────────────── */
-.terms-group {
-    margin-top: 20px;
+/* CONDITIONS */
+
+.terms-group{
+    margin-top:20px;
 }
 
-.terms-check {
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 10px;
-    font-size: 14px;
-    line-height: 1.6;
-    color: #444;
-    width: 100%;
+.terms-check{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    font-size:14px;
+    line-height:1.5;
+    color:#444;
 }
 
-.terms-check input[type="checkbox"] {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    margin-top: 3px;
-    transform: none;
-    accent-color: #c97b2b;
-    cursor: pointer;
+.terms-check input{
+    margin-top:4px;
+    transform:scale(1.1);
 }
 
-.terms-check a {
-    color: #c97b2b;
-    text-decoration: none;
-    font-weight: 600;
+.terms-check a{
+    color:#c97b2b;
+    text-decoration:none;
+    font-weight:600;
 }
 
-.terms-check a:hover {
-    text-decoration: underline;
+.terms-check a:hover{
+    text-decoration:underline;
 }
 
-.terms-preview {
-    margin-top: 12px;
-    padding: 12px;
-    background: #faf7f2;
-    border: 1px solid #eee;
-    border-radius: 10px;
-    font-size: 13px;
-    color: #666;
+.terms-preview{
+    margin-top:12px;
+    padding:12px;
+    background:#faf7f2;
+    border:1px solid #eee;
+    border-radius:10px;
+    font-size:13px;
+    color:#666;
 }
 
-.read-more {
-    display: inline-block;
-    margin-top: 8px;
-    color: #000;
-    font-weight: 600;
-    text-decoration: none;
+.read-more{
+    display:inline-block;
+    margin-top:8px;
+    color:#000;
+    font-weight:600;
+    text-decoration:none;
 }
 
-.read-more:hover {
-    text-decoration: underline;
-}
-/* ─── CHAMP TÉLÉPHONE ─────────────────────────────────────── */
-.phone-wrap {
-    display: flex;
-    align-items: stretch;
-    width: 100%;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    /* overflow: hidden; supprimé — bloquait le dropdown */
-    background: #fff;
-    min-height: 46px;
+.read-more:hover{
+    text-decoration:underline;
 }
 
-.phone-wrap:focus-within {
-    border-color: #ddd;
-    box-shadow: none;
-    outline: none;
-}
-
-.dd-wrap {
-    flex-shrink: 0;
-    position: relative;
-    overflow: visible; /* ← ajouté */
-}
-
-.dd-trigger {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 11px 12px;
-    background: #f5f5f5;
-    border: none;
-    border-right: 1px solid #ddd;
-    border-radius: 8px 0 0 8px; /* ← arrondi gauche maintenu sans overflow:hidden */
-    cursor: pointer;
-    white-space: nowrap;
-    height: 100%;
-    min-width: 90px;
-    outline: none;
-    box-shadow: none;
-}
-
-.dd-trigger:focus,
-.dd-trigger:active {
-    outline: none;
-    box-shadow: none;
-}
-
-#flag-display {
-    display: flex;
-    align-items: center;
-    line-height: 1;
-}
-
-#flag-display img {
-    width: 24px;
-    height: 18px;
-    border-radius: 2px;
-    object-fit: cover;
-    display: block;
-}
-
-#dial-display {
-    font-size: 13px;
-    color: #444;
-    font-weight: 600;
-}
-
-.dd-trigger .ti-chevron-down {
-    font-size: 12px;
-    color: #888;
-    margin-left: 2px;
-}
-
-.phone-input {
-    flex: 1;
-    min-width: 0;
-    font-size: 16px;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    padding: 11px 12px;
-    background: transparent;
-    border-radius: 0 8px 8px 0 !important; /* ← arrondi droit */
-}
-
-.phone-input:focus {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-
-
-/* ─── RESPONSIVE ──────────────────────────────────────────── */
-.login-form {
-    width: 100%;
-    padding: 0 16px;
-}
-
-.form-group {
-    width: 100%;
-    margin-bottom: 16px;
-}
-
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="password"],
-.form-group input[type="tel"] {
-    width: 100%;
-    font-size: 16px;
-    padding: 11px 12px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-}
-
-.login-container,
-.login-box,
-.login-card {
-    width: 100%;
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 24px 16px;
-}
-
-.btn-login {
-    width: 100%;
-    padding: 14px;
-    font-size: 15px;
-    border-radius: 10px;
-    cursor: pointer;
-}
-
-.alert {
-    width: 100%;
-    font-size: 14px;
-    padding: 10px 14px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    word-break: break-word;
-}
-
-@media (min-width: 600px) {
-    .login-container,
-    .login-box,
-    .login-card {
-        padding: 32px;
-    }
-
-    .form-group input[type="text"],
-    .form-group input[type="email"],
-    .form-group input[type="password"],
-    .form-group input[type="tel"],
-    .pw-wrap .pw-input {
-        font-size: 15px;
-        padding: 11px 14px;
-    }
-}
-
-@media (min-width: 1024px) {
-    .login-container,
-    .login-box,
-    .login-card {
-        max-width: 520px;
-        padding: 40px;
-    }
-
-    .login-title {
-        font-size: 28px;
-    }
-}
-
-@media (max-width: 359px) {
-    .login-title { font-size: 20px; }
-    .login-subtitle { font-size: 13px; }
-    .dd-panel { width: 240px; }
-    .btn-login { font-size: 14px; padding: 12px; }
-}
 </style>
 
         <h1 class="login-title">Bienvenue</h1>
-        <p class="login-subtitle">Rejoignez WakAroma et découvrez nos saveurs d'Afrique.</p><br>
+        <p class="login-subtitle">Rejoignez WakAroma et découvrez nos saveurs d’Afrique.</p><br>
 
         <!-- ALERTES -->
         <?php if (!empty($errors)): ?>
@@ -381,67 +200,73 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
             <?php endforeach; ?>
         <?php endif; ?><br>
 
-        <?php if (!empty($_SESSION['error'])): ?>
+        <?php if(!empty($_SESSION['error'])):?>
             <div class="alert alert--error"><?= $_SESSION['error'] ?></div>
             <?php unset($_SESSION['error']); ?>
-        <?php endif; ?>
+        <?php endif;?>
 
-        <?php if (!empty($_SESSION['warning'])): ?>
-            <div class="alert alert--warning" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;padding:10px 14px;border-radius:8px;margin-bottom:10px;">
-                <?= $_SESSION['warning'] ?>
-            </div>
+        <?php if(!empty($_SESSION['warning'])):?>
+            <div class="alert alert--warning" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;padding:10px 14px;border-radius:8px;margin-bottom:10px;"><?= $_SESSION['warning'] ?></div>
             <?php unset($_SESSION['warning']); ?>
-        <?php endif; ?>
+        <?php endif;?>
 
         <!-- FORMULAIRE -->
         <form method="POST" class="login-form">
 
+            <!-- champ cache -->
             <input type="hidden" name="indicatif" value="+33" />
-
+           
+            <!-- nom -->
             <div class="form-group">
                 <label>Nom</label>
-                <input type="text" name="nom" placeholder="nom de famille"
-                    value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>">
+                <input type="text" name="nom"  placeholder="nom de famille">
             </div>
 
+            <!-- prenom -->
             <div class="form-group">
                 <label>Prénom</label>
-                <input type="text" name="prenom" placeholder="prenom"
-                    value="<?= htmlspecialchars($_POST['prenom'] ?? '') ?>">
+                <input type="text" name="prenom"  placeholder="prenom">
             </div>
 
+            <!-- numero -->
             <div class="form-group">
                 <label>Numéro</label>
+            
                 <div class="phone-wrap">
+                    
                     <div class="dd-wrap">
                         <div class="dd-trigger" id="trigger">
                             <span id="flag-display">🇫🇷</span>
                             <span id="dial-display">+33</span>
                             <i class="ti ti-chevron-down"></i>
                         </div>
+            
                         <div class="dd-panel" id="panel">
                             <div class="dd-search-wrap">
-                                <input type="text" id="search" placeholder="Rechercher..." autocomplete="off" />
+                            <input type="text" id="search" placeholder="Rechercher..." autocomplete="off" />
                             </div>
-                            <div class="dd-list" id="list"></div>
+                                <div class="dd-list" id="list"></div>
+                            </div>
                         </div>
-                    </div>
+            
                     <input class="phone-input" type="tel" name="numero" placeholder="06 12 34 56 78" id="phone"/>
+            
                 </div>
             </div>
 
+            <!-- email -->
             <div class="form-group">
                 <label>E-mail</label>
-                <input type="email" name="email" placeholder="nom@exemple.com"
-                    value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                <input type="email" name="email"  placeholder="nom@exemple.com">
             </div>
 
+            <!-- confirmation de l'email -->
             <div class="form-group">
-                <label>Confirmation E-mail</label>
-                <input type="email" name="email_conf" placeholder="Confirmer email"
-                    value="<?= htmlspecialchars($_POST['email_conf'] ?? '') ?>">
+                <label>Confiamtion E-mail</label>
+                <input type="email" name="email_conf" placeholder="Confirmer email">
             </div>
 
+            <!-- mot de passe -->
             <div class="form-group">
                 <label>Mot de passe</label>
                 <div class="pw-wrap">
@@ -453,6 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                 </div>
             </div>
 
+            <!-- confirmation du mot de passe  -->
             <div class="form-group">
                 <label>Confirmation mot de passe</label>
                 <div class="pw-wrap">
@@ -464,7 +290,8 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
                 </div>
             </div>
 
-            <!-- ENTREPRISE -->
+
+            <!-- entreprise -->
             <div class="form-group">
                 <label class="entreprise-toggle">
                     <input type="checkbox" name="is_entreprise" id="isEntreprise" value="1"
@@ -479,19 +306,39 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
             <!-- CONDITIONS -->
             <div class="form-group terms-group">
+
                 <label class="terms-check">
+
                     <input type="checkbox" name="accept_cgv" value="1" required>
+
                     <span>
-                        J'accepte les
-                        <a href="conditions.php" target="_blank">Conditions Générales de Vente</a>,
-                        la <a href="confidentialite.php" target="_blank">Politique de confidentialité</a>
-                        et l'utilisation des cookies.
+                        J’accepte les
+                        <a href="conditions.php" target="_blank">
+                            Conditions Générales de Vente
+                        </a>,
+                        la
+                        <a href="confidentialite.php" target="_blank">
+                            Politique de confidentialité
+                        </a>
+                        et l’utilisation des cookies.
                     </span>
+
                 </label>
+
                 <div class="terms-preview">
-                    <p>Wakaroma protège vos données conformément au RGPD. Vos informations sont utilisées uniquement pour la gestion de votre compte et de vos commandes.</p>
-                    <a href="mentionsLegale.php" target="_blank" class="read-more">Lire la suite</a>
+
+                    <p>
+                        Wakaroma protège vos données conformément au RGPD.
+                        Vos informations sont utilisées uniquement pour la gestion
+                        de votre compte et de vos commandes.
+                    </p>
+
+                    <a href="mentionsLegale.php" target="_blank" class="read-more">
+                        Lire la suite
+                    </a>
+
                 </div>
+
             </div>
 
             <button type="submit" class="btn-login">S'INSCRIRE</button>
@@ -509,14 +356,16 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
 </div>
 
+<!-- FOOTER -->
 <?php require_once "footer.php"; ?>
+
 
 <script>
 document.getElementById('isEntreprise').addEventListener('change', function() {
     const field = document.getElementById('entrepriseField');
     field.classList.toggle('visible', this.checked);
 });
-
+// Au rechargement si erreur, garder le champ visible si coché
 if (document.getElementById('isEntreprise').checked) {
     document.getElementById('entrepriseField').classList.add('visible');
 }
@@ -526,7 +375,7 @@ function togglePw(btn) {
     const eyeShow = btn.querySelector('.pw-eye--show');
     const eyeHide = btn.querySelector('.pw-eye--hide');
     const visible = input.type === 'text';
-    input.type            = visible ? 'password' : 'text';
+    input.type          = visible ? 'password' : 'text';
     eyeShow.style.display = visible ? '' : 'none';
     eyeHide.style.display = visible ? 'none' : '';
     btn.setAttribute('aria-label', visible ? 'Afficher le mot de passe' : 'Masquer le mot de passe');

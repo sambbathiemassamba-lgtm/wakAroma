@@ -237,7 +237,33 @@ $produits_favoris = $req->fetchAll(PDO::FETCH_OBJ);
 </style>
 
 <div class="boutique-layout">
-  <?php require_once 'nav.php';?>
+  <aside class="boutique-sidebar">
+    <div class="sidebar-avatar">
+      <div class="sidebar-avatar__ring"><?= strtoupper(mb_substr($_SESSION['auth']['prenom'], 0, 1)) ?></div>
+      <div class="sidebar-avatar__name"><?= htmlspecialchars($_SESSION['auth']['prenom']) ?></div>
+      <span class="sidebar-avatar__badge">✦ Membre Gold</span>
+    </div>
+    <span class="sidebar-nav__label">Mon espace</span>
+    <a href="compte.php"    class="sidebar-nav__item"><span class="sidebar-nav__icon">🏠</span>Tableau de bord</a>
+    <a href="commandes.php" class="sidebar-nav__item"><span class="sidebar-nav__icon">📦</span>Mes commandes<span class="sidebar-nav__pill">3</span></a>
+    <a href="favoris.php"   class="sidebar-nav__item sidebar-nav__item--active">
+      <span class="sidebar-nav__icon">❤️</span>Mes favoris
+      <span class="sidebar-nav__pill"><?= count($produits_favoris) ?></span>
+    </a>
+    <span class="sidebar-nav__label">Mon compte</span>
+    <a href="profil.php"   class="sidebar-nav__item"><span class="sidebar-nav__icon">👤</span>Mon profil</a>
+    <a href="adresses.php" class="sidebar-nav__item"><span class="sidebar-nav__icon">📍</span>Mes adresses</a>
+    <div class="sidebar-bottom">
+      <a href="logout.php" class="sidebar-nav__item" style="color:rgba(255,120,100,0.85);"
+         onmouseover="this.style.background='rgba(231,76,60,0.15)';this.style.color='#ff6b5b'"
+         onmouseout="this.style.background='transparent';this.style.color='rgba(255,120,100,0.85)'">
+        <span class="sidebar-nav__icon" style="background:rgba(231,76,60,0.15);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </span>Se déconnecter
+      </a>
+    </div>
+  </aside>
+
   <main class="boutique-main">
     <div class="boutique-topbar fade-up">
       <div>
@@ -246,7 +272,7 @@ $produits_favoris = $req->fetchAll(PDO::FETCH_OBJ);
       </div>
       <a href="index.php#produits" class="btn-outline">← Continuer mes achats</a>
     </div>
-    
+
     <div class="fade-up">
       <div class="section-title">
         <div>
