@@ -319,16 +319,18 @@ function souvenirMoi()
                 // Vérification token
                 if($token === $user->souvenir_token)
                 {
-                    // Recréation hash
-                    $expectedHash = hash( 'sha256', $user->id . $token);
+                    // Recréation hash (colonne réelle : id_user)
+                    $expectedHash = hash( 'sha256', $user->id_user . $token);
 
                     // Vérification hash sécurisé
                     if(hash_equals($expectedHash, $hash))
                     {
-                        // Connexion session
+                        // Connexion session (mêmes champs que login.php)
                         $_SESSION['auth'] = [
-                            'id_user' => $user->id,
-                            'prenom'  => $user->prenom
+                            'id_user'        => $user->id_user,
+                            'prenom'         => $user->prenom,
+                            'is_entreprise'  => (int)($user->is_entreprise ?? 0),
+                            'nom_entreprise' => $user->nom_entreprise ?? '',
                         ];
 
                         // Renouvellement cookie
