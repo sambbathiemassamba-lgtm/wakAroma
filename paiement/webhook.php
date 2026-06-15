@@ -6,9 +6,9 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../pdo.php';   // ← ton fichier de connexion PDO ($pdo)
 
-\Stripe\Stripe::setApiKey('');   // ← remplacer
+\Stripe\Stripe::setApiKey('sk_test_51TeEC78DOOsdMMdlQrw705YiE2fc81JWm7Gvp3itV4wTguDkoTCrNto3A6jWp0zhTvkwSiUMeKQ9KVLK2E6b9diH00oLODFkUe');   // ← remplacer
 
-$webhookSecret = '';             // ← remplacer (Stripe Dashboard → Webhooks)
+$webhookSecret = 'whsec_cbd5ac14bd90821faea6478655a7b33ac5cfb7a1b5df4985e37b53d70daf89bf';             // ← remplacer (Stripe Dashboard → Webhooks)
 
 // ─── Vérification de la signature Stripe ─────────────────────────────────
 $payload   = file_get_contents('php://input');
@@ -104,7 +104,7 @@ function enregistrerCommande(PDO $pdo, $session): void
             $stmtPrix = $pdo->prepare("
                 SELECT prix, nom, reference FROM produits WHERE id_produit = :id
             ");
-            $stmtPrix->execute([':id' => $ligne['id_produit']]);
+            $stmtPrix->execute([':id' => $ligne['i']]);
             $produit = $stmtPrix->fetch(PDO::FETCH_ASSOC);
 
             if (!$produit) {
@@ -121,17 +121,17 @@ function enregistrerCommande(PDO $pdo, $session): void
             // Insertion ligne commande
             $stmtLigne->execute([
                 ':id_commande'      => $idCommande,
-                ':id_produit'       => $ligne['id_produit'],
+                ':id_produit'       => $ligne['i'],
                 ':nom_produit'      => $nomReel,
                 ':reference_produit'=> $refReel,
-                ':quantite'         => (int) $ligne['quantite'],
+                ':quantite'         => (int) $ligne['q'],
                 ':prix'             => $prixReel,
             ]);
 
             // Décrémentation du stock
             $stmtStock->execute([
-                ':quantite'   => (int) $ligne['quantite'],
-                ':id_produit' => $ligne['id_produit'],
+                ':quantite'   => (int) $ligne['q'],
+                ':id_produit' => $ligne['i'],
             ]);
         }
 

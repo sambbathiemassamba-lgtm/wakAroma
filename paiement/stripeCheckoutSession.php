@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../pdo.php';
 
-\Stripe\Stripe::setApiKey('');// ─── Utilisateur connecté obligatoire ─────────────────────────────────────
+\Stripe\Stripe::setApiKey('sk_test_51TeEC78DOOsdMMdlQrw705YiE2fc81JWm7Gvp3itV4wTguDkoTCrNto3A6jWp0zhTvkwSiUMeKQ9KVLK2E6b9diH00oLODFkUe');// ─── Utilisateur connecté obligatoire ─────────────────────────────────────
 if (empty($_SESSION['auth'])) {
     header('Location: login.php');
     exit;
@@ -20,12 +20,16 @@ $req = $pdo->prepare("
         p.nom,
         p.reference,
         p.stock,
-        i.url_image
+        COALESCE(
+            MAX(CASE WHEN i.is_cover = 1 THEN i.url_image END),
+            MIN(i.url_image)
+        ) AS url_image
     FROM paniers pan
     INNER JOIN lignes_panier lp ON lp.id_panier = pan.id_panier
     INNER JOIN produits p       ON p.id_produit  = lp.id_produit
     LEFT  JOIN images i         ON i.id_produit  = p.id_produit
     WHERE pan.id_user = :id
+    GROUP BY lp.id_ligne_panier, lp.quantite, lp.prix_capture, p.id_produit, p.nom, p.reference, p.stock
 ");
 $req->execute([':id' => $id_user]);
 $lignes = $req->fetchAll(PDO::FETCH_OBJ);
@@ -40,13 +44,11 @@ $lineItems  = [];
 $lignesMeta = [];
 
 foreach ($lignes as $l) {
-    // Vérification stock au moment du checkout
     if ($l->stock <= 0) {
         header('Location: panier.php?erreur=stock');
         exit;
     }
 
-    // URL absolue de l'image (Stripe exige une URL publique)
     $imageUrl = !empty($l->url_image)
         ? 'http://localhost/wakaroma/' . $l->url_image
         : null;
@@ -54,7 +56,7 @@ foreach ($lignes as $l) {
     $lineItems[] = [
         'price_data' => [
             'currency'     => 'eur',
-            'unit_amount'  => (int) round($l->prix_capture * 100),  // € → centimes
+            'unit_amount'  => (int) round($l->prix_capture * 100),
             'product_data' => [
                 'name'   => $l->nom,
                 'images' => $imageUrl ? [$imageUrl] : [],
@@ -63,15 +65,14 @@ foreach ($lignes as $l) {
         'quantity' => (int) $l->quantite,
     ];
 
-    // Données transmises au webhook pour enregistrement en BDD
     $lignesMeta[] = [
-        'id_produit' => $l->id_produit,
-        'nom'        => $l->nom,
-        'reference'  => $l->reference ?? null,
-        'prix'       => (float) $l->prix_capture,   // en euros pour lignes_commandes
-        'quantite'   => (int) $l->quantite,
+        'i' => $l->id_produit,
+        'p' => (float) $l->prix_capture,
+        'q' => (int) $l->quantite,
     ];
 }
+
+$lignesMetaJson = json_encode($lignesMeta);
 
 // ─── Création de la session Stripe Checkout ────────────────────────────────
 try {
@@ -89,7 +90,7 @@ try {
         // Métadonnées transmises au webhook pour enregistrement BDD
         'metadata' => [
             'id_user'       => $id_user,
-            'lignes_panier' => json_encode($lignesMeta),
+            'lignes_panier' => $lignesMetaJson,
         ],
     ]);
 
@@ -101,6 +102,5 @@ try {
 
 } catch (\Stripe\Exception\ApiErrorException $e) {
     error_log('Stripe error: ' . $e->getMessage());
-    header('Location: panier.php?erreur=paiement');
-    exit;
+    die('Erreur Stripe : ' . $e->getMessage());
 }
