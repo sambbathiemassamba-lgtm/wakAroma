@@ -211,13 +211,36 @@ foreach ($datas_raw as $row) {
     <?php endif; ?>
 </div>
 
-<!-- Filtres -->
+<!-- Filtres dynamiques depuis les produits chargés -->
+<?php
+// Fonction pour créer un slug depuis le nom de catégorie
+function slugify($str) {
+    $str = mb_strtolower(trim($str), 'UTF-8');
+    $str = str_replace(['é','è','ê','ë'], 'e', $str);
+    $str = str_replace(['à','â','ä'], 'a', $str);
+    $str = str_replace(['ô','ö'], 'o', $str);
+    $str = str_replace(['î','ï'], 'i', $str);
+    $str = str_replace(['ù','û','ü'], 'u', $str);
+    $str = str_replace(['ç'], 'c', $str);
+    $str = preg_replace('/[^a-z0-9]+/', '-', $str);
+    return trim($str, '-');
+}
+
+// Extraire les catégories uniques depuis les produits déjà chargés (pas de requête supplémentaire)
+$categories_filtre = [];
+foreach ($datas as $d) {
+    $cat = $d->nom_categorie ?? '';
+    if ($cat !== '' && !in_array($cat, $categories_filtre, true)) {
+        $categories_filtre[] = $cat;
+    }
+}
+sort($categories_filtre);
+?>
 <div class="filters-bar">
     <button class="filter-btn filter-btn--active" data-filter="all">Tous</button>
-    <button class="filter-btn" data-filter="epices">Épices</button>
-    <button class="filter-btn" data-filter="melanges">Mélanges</button>
-    <button class="filter-btn" data-filter="huiles">Huiles</button>
-    <button class="filter-btn" data-filter="bio">Bio</button>
+    <?php foreach($categories_filtre as $cat_nom): ?>
+    <button class="filter-btn" data-filter="<?= htmlspecialchars(slugify($cat_nom)) ?>"><?= htmlspecialchars($cat_nom) ?></button>
+    <?php endforeach; ?>
 </div>
 
 <section class="produits" id="produit">
@@ -234,7 +257,7 @@ foreach ($datas_raw as $row) {
 
     <?php foreach($datas as $data): ?>
 
-        <article class="produit" data-category="epices">
+        <article class="produit" data-category="<?= htmlspecialchars(slugify($data->nom_categorie ?? '')) ?>">
 
             <div class="produit__img-wrap">
                 <img
@@ -711,4 +734,31 @@ async function voter(widget, note) {
     }
 }
 </script>
+</script>
+<script>
+// ══════════════════════════════════════════
+//  FILTRAGE PAR CATÉGORIE — WakAroma
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const produits   = document.querySelectorAll('.produits .produit');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Activer le bouton cliqué
+            filterBtns.forEach(b => b.classList.remove('filter-btn--active'));
+            btn.classList.add('filter-btn--active');
+
+            const filtre = btn.dataset.filter;
+
+            produits.forEach(article => {
+                if (filtre === 'all' || article.dataset.category === filtre) {
+                    article.style.display = '';
+                } else {
+                    article.style.display = 'none';
+                }
+            });
+        });
+    });
+});
 </script>
