@@ -2102,7 +2102,15 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 <div class="toast-container" id="toasts"></div>
 
 <script>
-const SCRIPT_URL = window.location.href.split('?')[0];
+// Toujours cibler stock.php directement (même si l'URL affichée est "/stock" sans extension)
+const SCRIPT_URL = (function () {
+    let base = window.location.href.split('?')[0].split('#')[0];
+    // Si l'URL se termine par "/stock" (URL propre), on ajoute ".php"
+    if (/\/stock$/.test(base)) base += '.php';
+    // Si elle ne finit ni par .php ni par /stock (ex: dossier), on pointe vers stock.php du dossier courant
+    else if (!/\.php$/.test(base)) base = base.replace(/\/?$/, '/') + 'stock.php';
+    return base;
+})();
 let allProducts    = [];
 let allIngredients = [];
 let allUsers       = [];
