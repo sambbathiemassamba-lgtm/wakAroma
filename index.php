@@ -126,6 +126,22 @@ foreach ($datas_raw as $row) {
     70%  { transform: scale(0.9); }
     100% { transform: scale(1.1); }
 }
+/* Lien sur l'image produit */
+.produit__img-link {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+}
+.produit__img-link img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .produit__unite {
     font-size: 0.78rem;
     color: #b0a898;
@@ -271,21 +287,27 @@ try {
         <article class="produit" data-category="<?= htmlspecialchars(slugify($data->nom_categorie ?? '')) ?>">
 
             <div class="produit__img-wrap">
-                <img
-                    src="<?= htmlspecialchars($data->url_image ?? 'images/placeholder.png'); ?>"
-                    alt="<?= htmlspecialchars($data->nom); ?>"
-                    loading="lazy"
-                >
-                <!-- Badge -->
-                <?php if((int)$data->stock <= 5 && (int)$data->stock > 0): ?>
-                    <span class="produit__badge produit__badge--low">Dernières pièces</span>
-                <?php elseif((int)$data->stock === 0): ?>
-                    <span class="produit__badge produit__badge--rupture">Épuisé</span>
-                <?php else: ?>
-                    <span class="produit__badge produit__badge--new">Disponible</span>
-                <?php endif; ?>
+                <a href="decouvrir.php?id=<?= (int)$data->id_produit ?>" class="produit__img-link" aria-label="Voir <?= htmlspecialchars($data->nom) ?>">
+                    <img
+                        src="<?= htmlspecialchars($data->url_image ?? 'images/placeholder.png'); ?>"
+                        alt="<?= htmlspecialchars($data->nom); ?>"
+                        loading="lazy"
+                    >
+                    <!-- Badge -->
+                    <?php if((int)$data->stock <= 5 && (int)$data->stock > 0): ?>
+                        <span class="produit__badge produit__badge--low">Dernières pièces</span>
+                    <?php elseif((int)$data->stock === 0): ?>
+                        <span class="produit__badge produit__badge--rupture">Épuisé</span>
+                    <?php else: ?>
+                        <span class="produit__badge produit__badge--new">Disponible</span>
+                    <?php endif; ?>
+                    <!-- Overlay au hover -->
+                    <div class="produit__overlay">
+                        <span class="produit__btn-quick">Voir le produit</span>
+                    </div>
+                </a>
 
-                <!-- Wishlist -->
+                <!-- Wishlist (hors du lien pour éviter le conflit de clic) -->
                 <button
                     class="produit__wishlist"
                     aria-label="Ajouter aux favoris"
@@ -295,11 +317,6 @@ try {
                     data-img="<?= htmlspecialchars($data->url_image ?? '') ?>"
                     onclick="toggleFavoriIndex(this)"
                 >♡</button>
-
-                <!-- Overlay au hover -->
-                <div class="produit__overlay">
-                    <button class="produit__btn-quick">Aperçu rapide</button>
-                </div>
             </div>
 
             <div class="produit__contenu">
@@ -407,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="edito-card edito-card--large">
             <div class="edito-card__icon-badge">
-                <img src="icones/Logo_Afrique.png" alt="" onerror="this.style.display='none'">
+                <img src="icones/logo_afrique.png" alt="" onerror="this.style.display='none'">
             </div>
             <div class="edito-card__content">
                 <p class="edito-card__eyebrow">Notre histoire</p>
@@ -419,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="edito-card edito-card--gold">
             <div class="edito-card__icon-badge">
-                <img src="icones/Epices_.png" alt="" onerror="this.style.display='none'">
+                <img src="icones/epices.png" alt="" onerror="this.style.display='none'">
             </div>
             <div class="edito-card__content">
                 <p class="edito-card__eyebrow">Savoir-faire</p>
