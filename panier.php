@@ -337,7 +337,9 @@ foreach ($lignes as $l) {
 <script>
 // ── Badge panier (sync avec l'icône dans le header) ───────────
 function wrapCartIcon() {
-  const cartLink = document.querySelector('a[href*="panier"]');
+  // Cible précisément le lien panier du header (id unique), pas celui du
+  // menu burger caché qui correspond aussi à a[href*="panier"].
+  const cartLink = document.getElementById('header-cart-link');
   if (!cartLink || cartLink.querySelector('#cart-badge-count')) return;
   cartLink.style.position = 'relative';
   cartLink.style.display  = 'inline-flex';
