@@ -282,8 +282,9 @@ foreach ($datas_raw as $row) {
 <script>
 // ── Badge panier ──────────────────────────────────────────────
 function wrapCartIcon() {
-  // Cherche le lien vers panier.php dans le header
-  const cartLink = document.querySelector('a[href*="panier"]');
+  // Cible précisément le lien panier du header (id unique), pas celui du
+  // menu burger caché qui correspond aussi à a[href*="panier"].
+  const cartLink = document.getElementById('header-cart-link');
   if (!cartLink) return;
   // Évite de wrapper deux fois
   if (cartLink.querySelector('#cart-badge-count')) return;
@@ -336,8 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 async function ajouterAuPanier(btn) {
     <?php if (empty($_SESSION['auth'])): ?>
-        header('Location: login.php');
-        exit();
+        window.location.href = 'login.php';
+        return;
     <?php endif; ?>
     const idProduit = btn.dataset.id;
     btn.disabled = true;
