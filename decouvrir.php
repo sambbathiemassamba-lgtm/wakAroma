@@ -25,17 +25,51 @@ if (!$produit) {
 
 // ── Récupération de TOUTES les images depuis la table `images` ──
 // (indépendamment de ce que retourne recuperation_produit_by_id)
+//
+// On utilise ici la même logique de connexion que stock.php (détection
+// automatique local / OVH), pour être certain de toujours interroger la
+// même base que celle où stock.php insère les images. Si pdo.php existe
+// déjà et pointe vers la bonne base, ce bloc reste compatible : il ouvre
+// simplement sa propre connexion PDO indépendante.
 try {
-    // Réutilise la connexion centrale (pdo.php contient les bons identifiants local OU en ligne)
-    require_once 'pdo.php';
-    $stmt_imgs = $pdo->prepare("SELECT id_image, url_image FROM images WHERE id_produit = ? ORDER BY id_image");
-    $stmt_imgs->execute([$id_produit]);
+    $IS_LOCAL_IMGS = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true);
+
+    if ($IS_LOCAL_IMGS) {
+        $db_host_imgs = 'localhost';
+        $db_user_imgs = 'root';
+        $db_pass_imgs = '';
+        $db_name_imgs = 'wakaroma';
+    } else {
+        $db_host_imgs = 'kgaftzfwakaroma.mysql.db';
+        $db_user_imgs = 'kgaftzfwakaroma';
+        $db_pass_imgs = 'Wakaroma1';
+        $db_name_imgs = 'kgaftzfwakaroma';
+    }
+
+    $pdo_imgs = new PDO(
+        "mysql:host=$db_host_imgs;dbname=$db_name_imgs;charset=utf8",
+        $db_user_imgs,
+        $db_pass_imgs,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+
+    // L'image de couverture (is_cover) passe en premier, puis ordre d'ajout.
+    // La colonne is_cover peut ne pas exister sur d'anciennes installations :
+    // dans ce cas on retombe simplement sur l'ordre par id_image.
+    try {
+        $stmt_imgs = $pdo_imgs->prepare("SELECT id_image, url_image, is_cover FROM images WHERE id_produit = ? ORDER BY is_cover DESC, id_image");
+        $stmt_imgs->execute([$id_produit]);
+    } catch (PDOException $e) {
+        $stmt_imgs = $pdo_imgs->prepare("SELECT id_image, url_image FROM images WHERE id_produit = ? ORDER BY id_image");
+        $stmt_imgs->execute([$id_produit]);
+    }
+
     $images_bdd = $stmt_imgs->fetchAll(PDO::FETCH_OBJ);
     if (!empty($images_bdd)) {
         $produit->images = $images_bdd;
     }
 } catch (Exception $e) {
-    // Si la requête échoue, on laisse $produit->images tel quel (fallback natif)
+    // Si la connexion ou la requête échoue, on laisse $produit->images tel quel (fallback natif)
 }
 ?>
 <?php require_once 'headear.php'; ?>
