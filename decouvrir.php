@@ -321,15 +321,6 @@ try {
     letter-spacing: 0.06em;
 }
 
-/* Rating */
-.produit-hero__rating {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.produit-hero__stars { color: var(--or); font-size: 1.1rem; letter-spacing: 2px; }
-.produit-hero__rating-count { font-size: 0.82rem; color: var(--gris); }
-
 /* Séparateur */
 .produit-hero__sep {
     width: 48px;
@@ -874,20 +865,6 @@ try {
 
             <p class="produit-hero__ref">Réf. <?= htmlspecialchars($produit->reference ?? '—') ?></p>
 
-            <!-- Rating placeholder (rechargé par JS) -->
-            <div class="produit-hero__rating produit__rating" data-id="<?= (int)$produit->id_produit ?>">
-                <div class="stars-input" role="radiogroup" aria-label="Donner une note">
-                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                        <button type="button" class="star-btn" data-val="<?= $i ?>" aria-label="<?= $i ?> étoile<?= $i > 1 ? 's' : '' ?>">★</button>
-                    <?php endfor; ?>
-                </div>
-                <div class="stars-result">
-                    <div class="stars-bar-wrap"><div class="stars-bar-fill" style="width:0%"></div></div>
-                    <span class="stars-pct">—</span>
-                    <span class="stars-count"></span>
-                </div>
-            </div>
-
             <div class="produit-hero__sep"></div>
 
             <?php
@@ -983,23 +960,6 @@ try {
      SCRIPTS
      ══════════════════════════════════════════ -->
 
-<!-- Styles du widget notation (réutilisés depuis index) -->
-<style>
-.produit__rating { display:flex; flex-direction:column; gap:5px; margin:2px 0 4px; }
-.stars-input { display:flex; gap:2px; align-items:center; }
-.star-btn { background:none; border:none; cursor:pointer; font-size:22px; color:#ddd; padding:2px; line-height:1; transition:color .15s,transform .12s; min-width:32px; min-height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px; }
-.star-btn:hover,.star-btn.hover { color:#f5c518; transform:scale(1.2); }
-.star-btn.active { color:#c8943a; transform:scale(1.1); }
-.stars-input.voted .star-btn { cursor:default; }
-.stars-input.voted .star-btn:hover { transform:none; }
-.stars-result { display:flex; align-items:center; gap:7px; }
-.stars-bar-wrap { flex:1; height:5px; background:#e8e0d6; border-radius:99px; overflow:hidden; max-width:120px; }
-.stars-bar-fill { height:100%; background:linear-gradient(90deg,#c8943a,#e8b860); border-radius:99px; transition:width .5s cubic-bezier(.22,1,.36,1); }
-.stars-pct { font-size:.78rem; font-weight:700; color:#c8943a; min-width:36px; }
-.stars-count { font-size:.72rem; color:#b0a898; white-space:nowrap; }
-@keyframes starPop { 0%{transform:scale(1)} 40%{transform:scale(1.4)} 70%{transform:scale(.9)} 100%{transform:scale(1.1)} }
-.star-btn.pop { animation:starPop .35s ease forwards; }
-</style>
 
 <script>
 // ══════════════════════════════════════════
@@ -1279,83 +1239,4 @@ async function ajouterAuPanierSim(btn) {
     }
 }
 
-// ── Système de notation (réutilisé) ──────────────────────────
-async function chargerToutesLesNotes() {
-    try {
-        const res  = await fetch('avis.php?action=get_all_stats');
-        const json = await res.json();
-        if (!json.success) return;
-        document.querySelectorAll('.produit__rating').forEach(widget => {
-            const id    = parseInt(widget.dataset.id);
-            const stats = json.stats[id]    || { moyenne:0, nb_votes:0, pct:0 };
-            const ma    = json.mes_notes[id] || 0;
-            mettreAJourWidget(widget, stats, ma);
-        });
-    } catch(e) {}
-}
-
-function mettreAJourWidget(widget, stats, maNote) {
-    const barFill  = widget.querySelector('.stars-bar-fill');
-    const pctEl    = widget.querySelector('.stars-pct');
-    const countEl  = widget.querySelector('.stars-count');
-    const si       = widget.querySelector('.stars-input');
-    barFill.style.width = stats.pct + '%';
-    pctEl.textContent   = stats.nb_votes > 0 ? stats.pct + '%' : '—';
-    countEl.textContent = stats.nb_votes > 0 ? `(${stats.nb_votes} avis)` : '(0 avis)';
-    widget.querySelectorAll('.star-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.val) <= Math.round(stats.moyenne));
-    });
-    if (maNote > 0) marquerMonVote(si, maNote);
-}
-
-function marquerMonVote(starsInput, note) {
-    starsInput.classList.add('voted');
-    starsInput.querySelectorAll('.star-btn').forEach(btn => {
-        const v = parseInt(btn.dataset.val);
-        btn.classList.toggle('active', v <= note);
-        btn.setAttribute('aria-pressed', v <= note ? 'true' : 'false');
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.produit__rating').forEach(widget => {
-        const si   = widget.querySelector('.stars-input');
-        const btns = si.querySelectorAll('.star-btn');
-        btns.forEach(btn => {
-            const val = parseInt(btn.dataset.val);
-            btn.addEventListener('mouseenter', () => {
-                if (si.classList.contains('voted')) return;
-                btns.forEach(b => b.classList.toggle('hover', parseInt(b.dataset.val) <= val));
-            });
-            btn.addEventListener('mouseleave', () => btns.forEach(b => b.classList.remove('hover')));
-            btn.addEventListener('click', () => {
-                if (si.classList.contains('voted')) return;
-                voter(widget, val);
-            });
-        });
-    });
-    chargerToutesLesNotes();
-});
-
-async function voter(widget, note) {
-    const idProduit  = parseInt(widget.dataset.id);
-    const si         = widget.querySelector('.stars-input');
-    const btns       = si.querySelectorAll('.star-btn');
-    btns.forEach(b => {
-        const v = parseInt(b.dataset.val);
-        if (v <= note) b.classList.add('active','pop'); else b.classList.remove('active');
-    });
-    try {
-        const body = new URLSearchParams({ action:'voter', id_produit: idProduit, note });
-        const res  = await fetch('avis.php', { method:'POST', body });
-        const json = await res.json();
-        if (json.success) {
-            mettreAJourWidget(widget, json.stats, json.ma_note);
-            marquerMonVote(si, json.ma_note);
-            afficherToastD(`Merci pour votre ${note}★ !`);
-        } else {
-            afficherToastD('Erreur lors du vote', 'error');
-        }
-    } catch(e) { afficherToastD('Erreur de connexion', 'error'); }
-}
 </script>
