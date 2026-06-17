@@ -29,103 +29,7 @@ foreach ($datas_raw as $row) {
      HERO SECTION
      ══════════════════════════════════════════ -->
 
-<!-- ══ CSS Système de notation ══ -->
 <style>
-/* ── Widget de notation ── */
-.produit__rating {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin: 2px 0 4px;
-}
-
-/* Étoiles cliquables */
-.stars-input {
-    display: flex;
-    gap: 2px;
-    align-items: center;
-}
-
-.star-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-    color: #ddd;
-    padding: 2px;
-    line-height: 1;
-    transition: color 0.15s, transform 0.12s;
-    /* Zone de touch confortable */
-    min-width: 28px;
-    min-height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-}
-
-.star-btn:hover,
-.star-btn.hover {
-    color: #f5c518;
-    transform: scale(1.2);
-}
-
-.star-btn.active {
-    color: #c8943a;
-    transform: scale(1.1);
-}
-
-/* État "déjà voté" */
-.stars-input.voted .star-btn {
-    cursor: default;
-}
-.stars-input.voted .star-btn:hover {
-    transform: none;
-}
-
-/* Barre de résultat */
-.stars-result {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-
-.stars-bar-wrap {
-    flex: 1;
-    height: 5px;
-    background: #e8e0d6;
-    border-radius: 99px;
-    overflow: hidden;
-    max-width: 90px;
-}
-
-.stars-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #c8943a, #e8b860);
-    border-radius: 99px;
-    transition: width 0.5s cubic-bezier(0.22,1,0.36,1);
-}
-
-.stars-pct {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #c8943a;
-    min-width: 36px;
-}
-
-.stars-count {
-    font-size: 0.72rem;
-    color: #b0a898;
-    white-space: nowrap;
-}
-
-/* Animation au vote */
-@keyframes starPop {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(1.4); }
-    70%  { transform: scale(0.9); }
-    100% { transform: scale(1.1); }
-}
 /* Lien sur l'image produit */
 .produit__img-link {
     display: block;
@@ -153,10 +57,6 @@ foreach ($datas_raw as $row) {
     letter-spacing: 0.02em;
     white-space: nowrap;
     align-self: center;
-}
-
-.star-btn.pop {
-    animation: starPop 0.35s ease forwards;
 }
 </style>
 
@@ -314,29 +214,6 @@ sort($categories_filtre);
                 <h2 class="produit__titre">
                     <?= htmlspecialchars($data->nom); ?>
                 </h2>
-
-                <div class="produit__rating" data-id="<?= (int)$data->id_produit ?>">
-                    <!-- Étoiles interactives -->
-                    <div class="stars-input" role="radiogroup" aria-label="Donner une note">
-                        <?php for($i=1;$i<=5;$i++): ?>
-                        <button
-                            type="button"
-                            class="star-btn"
-                            data-val="<?= $i ?>"
-                            aria-label="<?= $i ?> étoile<?= $i>1?'s':'' ?>"
-                            title="<?= $i ?> étoile<?= $i>1?'s':'' ?>"
-                        >★</button>
-                        <?php endfor; ?>
-                    </div>
-                    <!-- Résultat : barre % + compteur -->
-                    <div class="stars-result">
-                        <div class="stars-bar-wrap">
-                            <div class="stars-bar-fill" style="width:0%"></div>
-                        </div>
-                        <span class="stars-pct">—</span>
-                        <span class="stars-count"></span>
-                    </div>
-                </div>
 
                 <p class="produit__description">
                     <?= htmlspecialchars($data->description); ?>
@@ -629,129 +506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     <?php endif; ?>
 });
 </script>
-<script>
-// ══════════════════════════════════════════
-//  SYSTÈME DE NOTATION — WakAroma
-// ══════════════════════════════════════════
 
-// Charge les stats de tous les produits au démarrage
-async function chargerToutesLesNotes() {
-    try {
-        const res  = await fetch('avis.php?action=get_all_stats');
-        const json = await res.json();
-        if (!json.success) return;
-
-        document.querySelectorAll('.produit__rating').forEach(widget => {
-            const id     = parseInt(widget.dataset.id);
-            const stats  = json.stats[id]   || { moyenne: 0, nb_votes: 0, pct: 0 };
-            const maNote = json.mes_notes[id] || 0;
-            mettreAJourWidget(widget, stats, maNote);
-        });
-    } catch(e) {
-        console.warn('Impossible de charger les notes :', e);
-    }
-}
-
-// Met à jour visuellement un widget
-function mettreAJourWidget(widget, stats, maNote) {
-    const starsInput = widget.querySelector('.stars-input');
-    const barFill    = widget.querySelector('.stars-bar-fill');
-    const pctEl      = widget.querySelector('.stars-pct');
-    const countEl    = widget.querySelector('.stars-count');
-
-    // Barre et pourcentage
-    barFill.style.width = stats.pct + '%';
-    pctEl.textContent   = stats.nb_votes > 0 ? stats.pct + '%' : '—';
-    countEl.textContent = stats.nb_votes > 0
-        ? `(${stats.nb_votes} avis)`
-        : '(0 avis)';
-
-    // Colorer les étoiles selon la moyenne affichée
-    const moyenne = stats.moyenne;
-    widget.querySelectorAll('.star-btn').forEach(btn => {
-        const v = parseInt(btn.dataset.val);
-        btn.classList.toggle('active', v <= Math.round(moyenne));
-    });
-
-    // Si le visiteur a déjà voté, marquer son vote
-    if (maNote > 0) {
-        marquerMonVote(starsInput, maNote);
-    }
-}
-
-// Colore les étoiles correspondant au vote du visiteur
-function marquerMonVote(starsInput, note) {
-    starsInput.classList.add('voted');
-    starsInput.querySelectorAll('.star-btn').forEach(btn => {
-        const v = parseInt(btn.dataset.val);
-        btn.classList.toggle('active', v <= note);
-        btn.setAttribute('aria-pressed', v <= note ? 'true' : 'false');
-    });
-}
-
-// ── Initialisation des widgets au chargement ──
-document.addEventListener('DOMContentLoaded', () => {
-    // Survol pour preview
-    document.querySelectorAll('.produit__rating').forEach(widget => {
-        const starsInput = widget.querySelector('.stars-input');
-        const btns       = starsInput.querySelectorAll('.star-btn');
-
-        btns.forEach(btn => {
-            const val = parseInt(btn.dataset.val);
-
-            // Survol : allumer jusqu'à cette étoile
-            btn.addEventListener('mouseenter', () => {
-                if (starsInput.classList.contains('voted')) return;
-                btns.forEach(b => b.classList.toggle('hover', parseInt(b.dataset.val) <= val));
-            });
-
-            // Fin de survol : éteindre
-            btn.addEventListener('mouseleave', () => {
-                btns.forEach(b => b.classList.remove('hover'));
-            });
-
-            // Clic : voter
-            btn.addEventListener('click', () => {
-                if (starsInput.classList.contains('voted')) return;
-                voter(widget, val);
-            });
-        });
-    });
-
-    chargerToutesLesNotes();
-});
-
-// Envoie le vote au serveur
-async function voter(widget, note) {
-    const idProduit = parseInt(widget.dataset.id);
-    const starsInput = widget.querySelector('.stars-input');
-    const btns       = starsInput.querySelectorAll('.star-btn');
-
-    // Feedback immédiat (optimistic UI)
-    btns.forEach(b => {
-        const v = parseInt(b.dataset.val);
-        if (v <= note) { b.classList.add('active', 'pop'); }
-        else           { b.classList.remove('active'); }
-    });
-
-    try {
-        const body = new URLSearchParams({ action: 'voter', id_produit: idProduit, note });
-        const res  = await fetch('avis.php', { method: 'POST', body });
-        const json = await res.json();
-
-        if (json.success) {
-            mettreAJourWidget(widget, json.stats, json.ma_note);
-            marquerMonVote(starsInput, json.ma_note);
-            afficherToast(`Merci pour votre ${note}★ !`);
-        } else {
-            afficherToast('Erreur lors du vote', 'error');
-        }
-    } catch(e) {
-        afficherToast('Erreur de connexion', 'error');
-    }
-}
-</script>
-</script>
 <script>
 // ══════════════════════════════════════════
 //  FILTRAGE PAR CATÉGORIE — WakAroma
