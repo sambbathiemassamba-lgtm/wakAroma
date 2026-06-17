@@ -395,6 +395,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(['success' => true]);
             break;
 
+        case 'update_unite_ingredient':
+            $id    = (int)$_POST['id'];
+            $unite = trim($_POST['unite']);
+            if (empty($unite)) { echo json_encode(['success' => false, 'error' => 'Unité vide']); break; }
+            $pdo->prepare("UPDATE ingredients_internes SET unite = ? WHERE id = ?")->execute([$unite, $id]);
+            echo json_encode(['success' => true]);
+            break;
+
         case 'delete_ingredient':
             $id = (int)$_POST['id'];
             $pdo->prepare("DELETE FROM ingredients_internes WHERE id = ?")->execute([$id]);
@@ -2596,7 +2604,7 @@ function renderIngredients(list) {
                     <button class="save-btn" onclick="saveIngredient(${i.id})">💾 Sauver</button>
                 </div>
             </td>
-            <td data-label="Unité" style="color:var(--text-dim)">${escHtml(i.unite || 'g')}</td>
+            <td data-label="Unité"><input class="unite-input" type="text" value="${escHtml(i.unite || 'g')}" onchange="saveUniteIngredient(${i.id}, this.value)" id="ingr-unite-${i.id}" title="Ex: g, kg, L, ml…"></td>
             <td data-label="Prix achat" style="color:var(--gold)">${parseFloat(i.prix_achat || 0).toFixed(2)} €</td>
             <td data-label="Seuil alerte"><input class="seuil-input" type="number" value="${seuil}" min="0"
                 onchange="saveIngrSeuil(${i.id}, this.value)" id="ingr-seuil-${i.id}"></td>
@@ -2647,6 +2655,16 @@ async function saveIngrSeuil(id, seuil) {
     try {
         await post({ action: 'update_ingredient', id, quantite: ingr.quantite, prix_achat: ingr.prix_achat, seuil });
         showToast('Seuil mis à jour ✓', 'success');
+        loadIngredients();
+    } catch (e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function saveUniteIngredient(id, unite) {
+    unite = unite.trim();
+    if (!unite) { showToast('L\'unité ne peut pas être vide', 'error'); return; }
+    try {
+        await post({ action: 'update_unite_ingredient', id, unite });
+        showToast('Unité mise à jour : ' + unite + ' ✓', 'success');
         loadIngredients();
     } catch (e) { showToast('Erreur : ' + e.message, 'error'); }
 }
