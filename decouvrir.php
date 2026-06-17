@@ -50,7 +50,7 @@ try {
     --or-light: #e8b860;
     --sable:    #f5f0e8;
     --brun:     #3d2b1a;
-    --texte:    #070606;
+    --texte:    #fcfcfc;
     --gris:     #b0a898;
     --rouge:    #e74c3c;
     --vert:     #2d7a44;
