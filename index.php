@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="edito-card edito-card--gold">
             <div class="edito-card__icon-badge">
-                <img src="icones/epices.png" alt="" onerror="this.style.display='none'">
+                <img src="icones/epices_.png" alt="" onerror="this.style.display='none'">
             </div>
             <div class="edito-card__content">
                 <p class="edito-card__eyebrow">Savoir-faire</p>
@@ -344,8 +344,10 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 // ── Badge panier ──────────────────────────────────────────────
 function wrapCartIcon() {
-  // Cherche le lien vers panier.php dans le header
-  const cartLink = document.querySelector('a[href*="panier"]');
+  // Cible précisément le lien panier du header (id unique), pas celui du
+  // menu burger caché qui correspond aussi à a[href*="panier"] et serait
+  // sélectionné en premier par querySelector, rendant le badge invisible.
+  const cartLink = document.getElementById('header-cart-link');
   if (!cartLink) return;
   // Évite de wrapper deux fois
   if (cartLink.querySelector('#cart-badge-count')) return;
@@ -398,8 +400,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 async function ajouterAuPanier(btn) {
     <?php if (empty($_SESSION['auth'])): ?>
-        header('Location: login.php');
-        exit();
+        window.location.href = 'login.php';
+        return;
     <?php endif; ?>
     const idProduit = btn.dataset.id;
     btn.disabled = true;
