@@ -1005,71 +1005,77 @@ try {
 // ══════════════════════════════════════════
 // CAROUSEL
 // ══════════════════════════════════════════
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     const carousel  = document.getElementById('carousel-produit');
-    if (!carousel) return;
+    if (!carousel) { console.warn('[carousel] #carousel-produit introuvable dans le DOM'); return; }
 
-    const track     = document.getElementById('carousel-track');
-    const btnPrev   = document.getElementById('carousel-prev');
-    const btnNext   = document.getElementById('carousel-next');
-    const dotsWrap  = document.getElementById('carousel-dots');
-    const thumbsWrap= document.getElementById('carousel-thumbs');
-    const total     = parseInt(carousel.dataset.total) || 1;
-    const delay     = parseInt(carousel.dataset.autoplay) || 4000;
+    const track      = document.getElementById('carousel-track');
+    const btnPrev     = document.getElementById('carousel-prev');
+    const btnNext     = document.getElementById('carousel-next');
+    const dotsWrap    = document.getElementById('carousel-dots');
+    const thumbsWrap  = document.getElementById('carousel-thumbs');
+    const total       = parseInt(carousel.dataset.total, 10) || 1;
+    const delay       = parseInt(carousel.dataset.autoplay, 10) || 4000;
 
-    if (total <= 1) return; // pas de carousel si 1 seule image
+    console.log('[carousel] init — total =', total, 'btnPrev =', btnPrev, 'btnNext =', btnNext);
 
-    let current    = 0;
-    let autoTimer  = null;
-    let isAnimating= false;
+    if (total <= 1) { console.log('[carousel] une seule image, carousel désactivé'); return; }
+    if (!track) { console.warn('[carousel] #carousel-track introuvable'); return; }
+
+    let current   = 0;
+    let autoTimer = null;
+    let animLock  = false;
+    const ANIM_MS = 520;
 
     // ── Aller à un slide ──────────────────────────
     function goTo(index, userAction = false) {
-        if (isAnimating) return;
+        if (animLock) return;
         if (index < 0) index = total - 1;
         if (index >= total) index = 0;
-        if (index === current) return;
+        if (index === current) {
+            if (userAction) resetAutoplay();
+            return;
+        }
 
-        isAnimating = true;
+        animLock = true;
         current = index;
 
-        // Déplacer le track
-        track.style.transform = `translateX(-${current * 100}%)`;
+        track.style.transform = 'translateX(-' + (current * 100) + '%)';
 
-        // Mettre à jour les slides actives
-        track.querySelectorAll('.carousel__slide').forEach((s, i) => {
+        track.querySelectorAll('.carousel__slide').forEach(function(s, i) {
             s.classList.toggle('active', i === current);
         });
 
-        // Dots
         if (dotsWrap) {
-            dotsWrap.querySelectorAll('.carousel__dot').forEach((d, i) => {
+            dotsWrap.querySelectorAll('.carousel__dot').forEach(function(d, i) {
                 d.classList.toggle('active', i === current);
             });
         }
 
-        // Thumbs
         if (thumbsWrap) {
-            thumbsWrap.querySelectorAll('.carousel__thumb').forEach((t, i) => {
+            thumbsWrap.querySelectorAll('.carousel__thumb').forEach(function(t, i) {
                 t.classList.toggle('active', i === current);
             });
-            // Scroll thumb visible
             const activeThumb = thumbsWrap.querySelector('.carousel__thumb.active');
             if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 
-        setTimeout(() => { isAnimating = false; }, 520);
+        // Filet de sécurité : on libère toujours le verrou, même si une
+        // précédente exécution avait laissé un timer en suspens.
+        clearTimeout(goTo._unlockTimer);
+        goTo._unlockTimer = setTimeout(function() { animLock = false; }, ANIM_MS);
 
-        // Relancer l'autoplay si action utilisateur
         if (userAction) resetAutoplay();
     }
 
     // ── Autoplay ──────────────────────────────────
     function startAutoplay() {
-        autoTimer = setInterval(() => goTo(current + 1), delay);
+        stopAutoplay();
+        autoTimer = setInterval(function() { goTo(current + 1); }, delay);
     }
     function stopAutoplay() {
-        clearInterval(autoTimer);
+        if (autoTimer) clearInterval(autoTimer);
+        autoTimer = null;
     }
     function resetAutoplay() {
         stopAutoplay();
@@ -1077,18 +1083,43 @@ try {
     }
 
     // ── Flèches ───────────────────────────────────
-    btnPrev?.addEventListener('click', () => goTo(current - 1, true));
-    btnNext?.addEventListener('click', () => goTo(current + 1, true));
+    if (btnPrev) {
+        btnPrev.addEventListener('click', function(e) {
+            e.preventDefault();
+            goTo(current - 1, true);
+        });
+    } else {
+        console.warn('[carousel] #carousel-prev introuvable — la flèche gauche ne réagira pas');
+    }
+
+    if (btnNext) {
+        btnNext.addEventListener('click', function(e) {
+            e.preventDefault();
+            goTo(current + 1, true);
+        });
+    } else {
+        console.warn('[carousel] #carousel-next introuvable — la flèche droite ne réagira pas');
+    }
 
     // ── Dots ──────────────────────────────────────
-    dotsWrap?.querySelectorAll('.carousel__dot').forEach(dot => {
-        dot.addEventListener('click', () => goTo(parseInt(dot.dataset.index), true));
-    });
+    if (dotsWrap) {
+        dotsWrap.querySelectorAll('.carousel__dot').forEach(function(dot) {
+            dot.addEventListener('click', function(e) {
+                e.preventDefault();
+                goTo(parseInt(dot.dataset.index, 10), true);
+            });
+        });
+    }
 
     // ── Thumbs ────────────────────────────────────
-    thumbsWrap?.querySelectorAll('.carousel__thumb').forEach(thumb => {
-        thumb.addEventListener('click', () => goTo(parseInt(thumb.dataset.index), true));
-    });
+    if (thumbsWrap) {
+        thumbsWrap.querySelectorAll('.carousel__thumb').forEach(function(thumb) {
+            thumb.addEventListener('click', function(e) {
+                e.preventDefault();
+                goTo(parseInt(thumb.dataset.index, 10), true);
+            });
+        });
+    }
 
     // ── Swipe tactile ─────────────────────────────
     let touchStartX = 0;
@@ -1122,7 +1153,7 @@ try {
 
     // ── Lancement ─────────────────────────────────
     startAutoplay();
-})();
+});
 </script>
 
 <script>
