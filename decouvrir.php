@@ -25,14 +25,12 @@ if (!$produit) {
 
 // ── Récupération de TOUTES les images depuis la table `images` ──
 // (indépendamment de ce que retourne recuperation_produit_by_id)
-//
-// On utilise ici la même logique de connexion que stock.php (détection
-// automatique local / OVH), pour être certain de toujours interroger la
-// même base que celle où stock.php insère les images. Si pdo.php existe
-// déjà et pointe vers la bonne base, ce bloc reste compatible : il ouvre
-// simplement sa propre connexion PDO indépendante.
+$debug_carousel = []; // TEMPORAIRE : à retirer une fois le bug réglé
+$debug_carousel[] = 'SERVER_NAME = ' . ($_SERVER['SERVER_NAME'] ?? '(non défini)');
+$debug_carousel[] = 'id_produit demandé = ' . $id_produit;
 try {
     $IS_LOCAL_IMGS = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true);
+    $debug_carousel[] = 'IS_LOCAL_IMGS = ' . ($IS_LOCAL_IMGS ? 'true (mode local)' : 'false (mode OVH)');
 
     if ($IS_LOCAL_IMGS) {
         $db_host_imgs = 'localhost';
@@ -45,6 +43,7 @@ try {
         $db_pass_imgs = 'Wakaroma1';
         $db_name_imgs = 'kgaftzfwakaroma';
     }
+    $debug_carousel[] = 'Connexion ciblee : host=' . $db_host_imgs . ' db=' . $db_name_imgs . ' user=' . $db_user_imgs;
 
     $pdo_imgs = new PDO(
         "mysql:host=$db_host_imgs;dbname=$db_name_imgs;charset=utf8",
@@ -52,24 +51,38 @@ try {
         $db_pass_imgs,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
+    $debug_carousel[] = 'Connexion PDO etablie avec succes';
 
-    // L'image de couverture (is_cover) passe en premier, puis ordre d'ajout.
-    // La colonne is_cover peut ne pas exister sur d'anciennes installations :
-    // dans ce cas on retombe simplement sur l'ordre par id_image.
     try {
         $stmt_imgs = $pdo_imgs->prepare("SELECT id_image, url_image, is_cover FROM images WHERE id_produit = ? ORDER BY is_cover DESC, id_image");
         $stmt_imgs->execute([$id_produit]);
+        $debug_carousel[] = 'requete avec is_cover OK';
     } catch (PDOException $e) {
+        $debug_carousel[] = 'requete avec is_cover a echoue (' . $e->getMessage() . ') -> fallback sans is_cover';
         $stmt_imgs = $pdo_imgs->prepare("SELECT id_image, url_image FROM images WHERE id_produit = ? ORDER BY id_image");
         $stmt_imgs->execute([$id_produit]);
     }
 
     $images_bdd = $stmt_imgs->fetchAll(PDO::FETCH_OBJ);
+    $debug_carousel[] = 'nb lignes trouvees pour ce produit = ' . count($images_bdd);
     if (!empty($images_bdd)) {
         $produit->images = $images_bdd;
+        $debug_carousel[] = 'produit->images mis a jour avec ' . count($images_bdd) . ' image(s)';
+    } else {
+        $debug_carousel[] = 'AUCUNE IMAGE trouvee en base pour id_produit = ' . $id_produit . ' -> fallback sur url_image unique';
+
+        // Vérif supplémentaire : compter le total de lignes dans la table images,
+        // pour savoir si la table est vide en général ou juste pour ce produit.
+        try {
+            $total_imgs = (int)$pdo_imgs->query("SELECT COUNT(*) FROM images")->fetchColumn();
+            $debug_carousel[] = 'Nombre TOTAL de lignes dans la table images (tous produits) = ' . $total_imgs;
+        } catch (Exception $e2) {
+            $debug_carousel[] = 'Impossible de compter le total de la table images : ' . $e2->getMessage();
+        }
     }
 } catch (Exception $e) {
     // Si la connexion ou la requête échoue, on laisse $produit->images tel quel (fallback natif)
+    $debug_carousel[] = 'ERREUR CONNEXION/REQUETE : ' . $e->getMessage();
 }
 ?>
 <?php require_once 'headear.php'; ?>
@@ -887,6 +900,18 @@ try {
             <?php endif; ?>
 
         </div><!-- /.produit-hero__galerie -->
+
+        <!--
+        ══ DEBUG TEMPORAIRE CAROUSEL — à retirer une fois réglé ══
+        nb_images calculé   : <?= $nb_images ?>
+        produit->images existe ? : <?= isset($produit->images) ? 'oui' : 'non' ?>
+        Détail :
+        <?php foreach ($debug_carousel as $ligne): ?>
+        - <?= htmlspecialchars($ligne) ?>
+
+        <?php endforeach; ?>
+        ════════════════════════════════════════════════════════
+        -->
 
         <!-- Informations -->
         <div class="produit-hero__infos">
