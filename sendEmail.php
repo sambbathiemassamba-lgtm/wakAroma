@@ -33,14 +33,14 @@ function EnvoieMail(PHPMailer $mail, string $mailToSend, string $tokend): bool
     $mail->isSMTP();
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
-    $mail->Username   = 'samzosamb123@gmail.com';
-    $mail->Password   = 'oxwcjqcvmoettpkx';
+    $mail->Username   = 'hodanmeg7@gmail.com';
+    $mail->Password   = 'fpqquaaaprqciyqb';
 
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
     $mail->Port       = 465;
 
     // Recipients
-    $mail->setFrom('mail@gmail.com', 'WakAroma');
+    $mail->setFrom('hodanmeg7@gmail.com', 'wakaroma');
 
     $mail->addAddress($mailToSend, 'User');
 
