@@ -89,43 +89,14 @@
 
   <!-- TL 0 — Origines -->
   <section class="wak-scene wak-scene--tl" id="wak-tl-0" data-scene="2">
-    <div class="wak-scene__inner wak-scene__inner--split">
+    <div class="wak-scene__inner wak-scene__inner--centered">
       <div class="wak-tl__text">
         <span class="wak-label" data-splitting>Notre cheminement</span>
         <span class="wak-tl__badge">Origines sacrées</span>
         <h2 class="wak-title wak-title--tl" data-splitting>La transmission ancestrale</h2>
-        <p class="wak-body" data-splitting>
+        <p class="wak-body wak-body--centered wak-body--wide" data-splitting>
           Dans les marchés d'exception de Djibouti et de la Somalie, la famille sélectionne et prépare les épices selon des rituels ancestraux. Chaque arôme raconte une mémoire, chaque mélange est une œuvre d'art.
         </p>
-      </div>
-      <div class="wak-tl__visual" aria-hidden="true">
-        <svg class="wak-svg-art wak-svg-spin" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="110" cy="110" r="100" fill="none" stroke="rgba(232,200,154,0.15)" stroke-width="1"/>
-          <circle cx="110" cy="72"  r="72"  fill="none" stroke="rgba(232,200,154,0.22)" stroke-width="0.8" transform="rotate(0 110 110)"/>
-          <circle cx="110" cy="110" r="44"  fill="none" stroke="rgba(232,200,154,0.35)" stroke-width="1"/>
-          <g stroke="rgba(232,200,154,0.50)" stroke-width="0.9" fill="none">
-            <path d="M110,110 Q132,68 110,36 Q88,68 110,110"/>
-            <path d="M110,110 Q152,88 184,110 Q152,132 110,110"/>
-            <path d="M110,110 Q132,152 110,184 Q88,152 110,110"/>
-            <path d="M110,110 Q68,132 36,110 Q68,88 110,110"/>
-            <path d="M110,110 Q148,70 150,36 Q124,70 110,110" opacity=".4"/>
-            <path d="M110,110 Q150,150 184,150 Q150,124 110,110" opacity=".4"/>
-            <path d="M110,110 Q70,150 70,184 Q96,150 110,110" opacity=".4"/>
-            <path d="M110,110 Q70,70 36,70 Q70,96 110,110" opacity=".4"/>
-          </g>
-          <circle cx="110" cy="110" r="5" fill="rgba(232,200,154,0.8)"/>
-          <circle cx="110" cy="110" r="14" fill="none" stroke="rgba(232,200,154,0.4)" stroke-width="0.8"/>
-          <g stroke="rgba(232,200,154,0.45)" stroke-width="1.5" stroke-linecap="round">
-            <line x1="110" y1="9" x2="110" y2="22"/>
-            <line x1="110" y1="198" x2="110" y2="211"/>
-            <line x1="9" y1="110" x2="22" y2="110"/>
-            <line x1="198" y1="110" x2="211" y2="110"/>
-            <line x1="38" y1="38" x2="47" y2="47"/>
-            <line x1="182" y1="38" x2="173" y2="47"/>
-            <line x1="38" y1="182" x2="47" y2="173"/>
-            <line x1="182" y1="182" x2="173" y2="173"/>
-          </g>
-        </svg>
       </div>
     </div>
     <div class="wak-scene__num" aria-hidden="true">02</div>
@@ -133,39 +104,13 @@
 
   <!-- TL 1 — France -->
   <section class="wak-scene wak-scene--tl" id="wak-tl-1" data-scene="3">
-    <div class="wak-scene__inner wak-scene__inner--split wak-scene__inner--reverse">
+    <div class="wak-scene__inner wak-scene__inner--centered">
       <div class="wak-tl__text">
         <span class="wak-tl__badge">La nostalgie du continent</span>
         <h2 class="wak-title wak-title--tl" data-splitting>L'arrivée en France</h2>
-        <p class="wak-body" data-splitting>
+        <p class="wak-body wak-body--centered wak-body--wide" data-splitting>
           Installée en France, la fondatrice ressent l'absence d'une certaine élégance culinaire. Impossible de retrouver la cardamome fumée ou le xawaash authentique dans le commerce. Pourtant, derrière cette nostalgie se cachent vingt ans de travail silencieux — sélectionner, doser, affiner chaque mélange jusqu'à la perfection. Naît alors l'idée d'une passerelle d'exception.
         </p>
-      </div>
-      <div class="wak-tl__visual" aria-hidden="true">
-        <svg class="wak-svg-art" viewBox="0 0 260 160" xmlns="http://www.w3.org/2000/svg">
-          <!-- Silhouette continent Afrique — esquisse calligraphique -->
-          <path d="M60,20 Q70,18 78,24 Q88,22 94,30 Q100,38 98,50 Q104,58 102,70 Q106,80 100,92 Q96,104 88,112 Q80,122 72,118 Q64,114 58,106 Q52,96 50,84 Q46,72 48,60 Q50,46 52,34 Z"
-                fill="none" stroke="rgba(232,200,154,0.55)" stroke-width="1.2" stroke-linejoin="round"/>
-          <!-- Corne de l'Afrique -->
-          <path d="M94,30 Q102,26 110,32 Q116,42 108,50 Q102,54 98,50"
-                fill="none" stroke="rgba(232,200,154,0.45)" stroke-width="1" stroke-linejoin="round"/>
-          <!-- Ligne de route / mer -->
-          <line x1="118" y1="80" x2="142" y2="80" stroke="rgba(232,200,154,0.6)" stroke-width="1" stroke-dasharray="4 3"/>
-          <!-- Points de voyage -->
-          <circle cx="114" cy="80" r="3" fill="rgba(232,200,154,0.7)"/>
-          <circle cx="146" cy="80" r="3" fill="rgba(232,200,154,0.7)"/>
-          <!-- Silhouette de France — esquisse épurée -->
-          <path d="M150,40 Q162,36 172,42 Q182,48 186,60 Q190,74 184,86 Q178,100 166,108 Q154,114 146,106 Q140,98 140,86 Q138,72 140,60 Q142,50 150,40 Z"
-                fill="none" stroke="rgba(232,200,154,0.55)" stroke-width="1.2" stroke-linejoin="round"/>
-          <!-- Légendes en script -->
-          <text x="44" y="138" font-family="Cormorant Garamond,Georgia,serif" font-style="italic"
-                font-size="10" fill="rgba(232,200,154,0.55)" text-anchor="middle">Djibouti</text>
-          <text x="166" y="126" font-family="Cormorant Garamond,Georgia,serif" font-style="italic"
-                font-size="10" fill="rgba(232,200,154,0.55)" text-anchor="middle">France</text>
-          <!-- Étoile de navigation -->
-          <path d="M130,76 L132,71 L134,76 L139,76 L135,79 L137,84 L132,81 L127,84 L129,79 L125,76 Z"
-                fill="rgba(232,200,154,0.35)" stroke="rgba(232,200,154,0.5)" stroke-width="0.5"/>
-        </svg>
       </div>
     </div>
     <div class="wak-scene__num" aria-hidden="true">03</div>
@@ -173,38 +118,13 @@
 
   <!-- TL 2 — Naissance -->
   <section class="wak-scene wak-scene--tl" id="wak-tl-2" data-scene="4">
-    <div class="wak-scene__inner wak-scene__inner--split">
+    <div class="wak-scene__inner wak-scene__inner--centered">
       <div class="wak-tl__text">
         <span class="wak-tl__badge">La naissance</span>
         <h2 class="wak-title wak-title--tl" data-splitting>WakAroma voit le jour</h2>
-        <p class="wak-body" data-splitting>
+        <p class="wak-body wak-body--centered wak-body--wide" data-splitting>
           Les premières préparations sont élaborées à la main, dans l'écrin de la cuisine familiale. Un mariage subtil entre des épices d'exception directement importées et des trésors dénichés en France — car WakAroma est née de ces deux mondes. Le bouche-à-oreille d'une clientèle exigeante révèle ces trésors uniques.
         </p>
-      </div>
-      <div class="wak-tl__visual" aria-hidden="true">
-        <svg class="wak-svg-art" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
-          <!-- Mortier -->
-          <path d="M55,90 Q55,68 100,68 Q145,68 145,90 L138,170 Q138,188 100,188 Q62,188 62,170 Z"
-                fill="rgba(232,200,154,0.07)" stroke="rgba(232,200,154,0.45)" stroke-width="1.2"/>
-          <!-- Motif géométrique sur le mortier -->
-          <path d="M68,100 L132,100" stroke="rgba(232,200,154,0.25)" stroke-width="0.8"/>
-          <path d="M66,115 L134,115" stroke="rgba(232,200,154,0.18)" stroke-width="0.8"/>
-          <path d="M72,130 L128,130" stroke="rgba(232,200,154,0.12)" stroke-width="0.8"/>
-          <!-- Remplissage épices -->
-          <path d="M62,170 Q62,148 100,148 Q138,148 138,170 Q138,188 100,188 Q62,188 62,170 Z"
-                fill="rgba(178,125,64,0.22)"/>
-          <!-- Pilon -->
-          <rect x="93" y="24" width="14" height="70" rx="7"
-                fill="rgba(232,200,154,0.12)" stroke="rgba(232,200,154,0.5)" stroke-width="1.2"/>
-          <ellipse cx="100" cy="24" rx="10" ry="6"
-                   fill="rgba(232,200,154,0.25)" stroke="rgba(232,200,154,0.5)" stroke-width="1"/>
-          <!-- Fumée / arôme — lignes ondulées -->
-          <path d="M85,18 Q82,10 85,4" fill="none" stroke="rgba(232,200,154,0.3)" stroke-width="1" stroke-linecap="round" class="wak-steam-line"/>
-          <path d="M100,14 Q97,6 100,0" fill="none" stroke="rgba(232,200,154,0.4)" stroke-width="1" stroke-linecap="round" class="wak-steam-line"/>
-          <path d="M115,18 Q118,10 115,4" fill="none" stroke="rgba(232,200,154,0.3)" stroke-width="1" stroke-linecap="round" class="wak-steam-line"/>
-          <!-- Ornement bas -->
-          <path d="M75,195 Q100,202 125,195" fill="none" stroke="rgba(232,200,154,0.3)" stroke-width="0.8"/>
-        </svg>
       </div>
     </div>
     <div class="wak-scene__num" aria-hidden="true">04</div>
@@ -212,43 +132,13 @@
 
   <!-- TL 3 — Expansion -->
   <section class="wak-scene wak-scene--tl" id="wak-tl-3" data-scene="5">
-    <div class="wak-scene__inner wak-scene__inner--split wak-scene__inner--reverse">
+    <div class="wak-scene__inner wak-scene__inner--centered">
       <div class="wak-tl__text">
         <span class="wak-tl__badge">L'expansion</span>
         <h2 class="wak-title wak-title--tl" data-splitting>Au-delà des frontières</h2>
-        <p class="wak-body" data-splitting>
+        <p class="wak-body wak-body--centered wak-body--wide" data-splitting>
           WakAroma a vocation à dépasser les cercles communautaires. Des chefs étoilés, des épiceries fines et des amateurs éclairés pourraient un jour s'approprier ces mélanges rares. La boutique en ligne, elle, est prête à accueillir une clientèle internationale.
         </p>
-      </div>
-      <div class="wak-tl__visual" aria-hidden="true">
-        <svg class="wak-svg-art wak-svg-breathe" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-          <!-- Rosace géométrique islamique / corne de l'Afrique -->
-          <g transform="translate(110,110)">
-            <!-- Hexagone central -->
-            <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19"
-                     fill="rgba(232,200,154,0.06)" stroke="rgba(232,200,154,0.45)" stroke-width="1"/>
-            <!-- 6 losanges rayonnants -->
-            <g stroke="rgba(232,200,154,0.35)" stroke-width="0.8" fill="none">
-              <path d="M0,-38 L20,-66 L0,-94 L-20,-66 Z"/>
-              <path d="M33,-19 L66,-19 L80,-46 L47,-46 Z" transform="rotate(60)"/>
-              <path d="M33,19 L66,19 L80,46 L47,46 Z" transform="rotate(120)"/>
-              <path d="M0,38 L20,66 L0,94 L-20,66 Z" transform="rotate(180)"/>
-              <path d="M-33,19 L-66,19 L-80,46 L-47,46 Z" transform="rotate(240)"/>
-              <path d="M-33,-19 L-66,-19 L-80,-46 L-47,-46 Z" transform="rotate(300)"/>
-            </g>
-            <!-- Cercle extérieur ponctué -->
-            <circle r="100" fill="none" stroke="rgba(232,200,154,0.2)" stroke-width="0.8" stroke-dasharray="3 6"/>
-            <!-- Points aux sommets -->
-            <circle cy="-100" r="3" fill="rgba(232,200,154,0.5)"/>
-            <circle cy="-100" r="3" fill="rgba(232,200,154,0.5)" transform="rotate(60)"/>
-            <circle cy="-100" r="3" fill="rgba(232,200,154,0.5)" transform="rotate(120)"/>
-            <circle cy="-100" r="3" fill="rgba(232,200,154,0.5)" transform="rotate(180)"/>
-            <circle cy="-100" r="3" fill="rgba(232,200,154,0.5)" transform="rotate(240)"/>
-            <circle cy="-100" r="3" fill="rgba(232,200,154,0.5)" transform="rotate(300)"/>
-            <!-- Centre -->
-            <circle r="5" fill="rgba(232,200,154,0.75)"/>
-          </g>
-        </svg>
       </div>
     </div>
     <div class="wak-scene__num" aria-hidden="true">05</div>
@@ -262,15 +152,7 @@
       <p class="wak-body wak-body--centered wak-body--wide" data-splitting>
         Une collection d'épices rares et de mélanges soigneusement élaborés, pensés pour révéler la profondeur et la complexité des cuisines du monde. Chaque produit est une invitation au voyage — il porte en lui la mémoire d'un terroir, la précision d'un geste, et la vision d'une femme qui a fait de la transmission culinaire sa raison d'être.
       </p>
-      <div class="wak-fin-ornament" aria-hidden="true">
-        <svg viewBox="0 0 280 60" xmlns="http://www.w3.org/2000/svg" class="wak-svg-divider-full">
-          <line x1="0" y1="30" x2="90" y2="30" stroke="rgba(232,200,154,0.3)" stroke-width="0.8"/>
-          <path d="M95,30 Q110,10 125,30 Q140,50 155,30 Q170,10 185,30"
-                fill="none" stroke="rgba(232,200,154,0.6)" stroke-width="1.2" stroke-linecap="round"/>
-          <line x1="190" y1="30" x2="280" y2="30" stroke="rgba(232,200,154,0.3)" stroke-width="0.8"/>
-          <circle cx="140" cy="30" r="3" fill="rgba(232,200,154,0.6)"/>
-        </svg>
-      </div>
+      <div class="wak-fin-ornament" aria-hidden="true"></div>
     </div>
     <div class="wak-scene__num" aria-hidden="true">06</div>
   </section>
@@ -286,63 +168,21 @@
       <div class="wak-valeurs__grid">
 
         <div class="wak-valeur-card">
-          <div class="wak-valeur-card__icon">
-            <svg viewBox="0 0 48 48" class="wak-icon-svg" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16,12 Q24,8 32,12 L36,20 Q38,28 36,36 Q32,44 24,44 Q16,44 12,36 Q10,28 12,20 Z"
-                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-              <path d="M14,18 Q24,14 34,18" fill="none" stroke="currentColor" stroke-width="1.2"/>
-              <path d="M12,26 Q24,22 36,26" fill="none" stroke="currentColor" stroke-width="0.8" opacity=".6"/>
-              <path d="M20,6 Q24,4 28,6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </div>
           <h3 class="wak-valeur-card__title" data-splitting>Authenticité précieuse</h3>
           <p class="wak-valeur-card__text">Chaque épice est sélectionnée directement à la source, sans intermédiaire, pour préserver toute la noblesse aromatique originelle.</p>
         </div>
 
         <div class="wak-valeur-card">
-          <div class="wak-valeur-card__icon">
-            <svg viewBox="0 0 48 48" class="wak-icon-svg" xmlns="http://www.w3.org/2000/svg">
-              <!-- Mains jointes / poignée de main stylisée -->
-              <path d="M10,28 Q10,20 18,18 L24,16 L30,18 Q38,20 38,28 Q38,38 24,42 Q10,38 10,28 Z"
-                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-              <path d="M18,18 Q24,12 30,18" fill="none" stroke="currentColor" stroke-width="1.2"/>
-              <line x1="24" y1="16" x2="24" y2="10" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
-              <line x1="20" y1="12" x2="20" y2="7"  stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity=".6"/>
-              <line x1="28" y1="12" x2="28" y2="7"  stroke="currentColor" stroke-width="0.8" stroke-linecap="round" opacity=".6"/>
-            </svg>
-          </div>
           <h3 class="wak-valeur-card__title" data-splitting>Commerce équitable</h3>
           <p class="wak-valeur-card__text">WakAroma soutient avec respect les productrices et producteurs africains, assurant une juste rémunération et des conditions dignes.</p>
         </div>
 
         <div class="wak-valeur-card">
-          <div class="wak-valeur-card__icon">
-            <svg viewBox="0 0 48 48" class="wak-icon-svg" xmlns="http://www.w3.org/2000/svg">
-              <!-- Main tenant une graine / artisanat -->
-              <path d="M14,32 Q12,26 16,22 Q20,18 24,20 Q28,18 32,22 Q36,26 34,32 Q32,38 24,40 Q16,38 14,32 Z"
-                    fill="none" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M24,20 L24,10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-              <path d="M24,10 Q28,6 32,8 Q28,12 24,10" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-              <path d="M24,10 Q20,6 16,8 Q20,12 24,10" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
-              <line x1="18" y1="30" x2="30" y2="30" stroke="currentColor" stroke-width="0.8" opacity=".5"/>
-            </svg>
-          </div>
           <h3 class="wak-valeur-card__title" data-splitting>Artisanat d'exception</h3>
           <p class="wak-valeur-card__text">Chaque pot est préparé et conditionné avec un soin méticuleux, perpétuant l'exigence d'une tradition familiale.</p>
         </div>
 
         <div class="wak-valeur-card">
-          <div class="wak-valeur-card__icon">
-            <svg viewBox="0 0 48 48" class="wak-icon-svg" xmlns="http://www.w3.org/2000/svg">
-              <!-- Deux arches / pont culturel -->
-              <path d="M8,36 Q8,20 20,16 Q24,14 28,16 Q40,20 40,36"
-                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <path d="M14,36 Q14,26 24,24 Q34,26 34,36"
-                    fill="none" stroke="currentColor" stroke-width="1" opacity=".6" stroke-linecap="round"/>
-              <line x1="6" y1="36" x2="42" y2="36" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <circle cx="24" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
-            </svg>
-          </div>
           <h3 class="wak-valeur-card__title" data-splitting>Pont culturel</h3>
           <p class="wak-valeur-card__text">Partager les saveurs d'Afrique, c'est offrir un voyage d'exception. WakAroma est une invitation à l'évasion dans chaque assiette.</p>
         </div>
@@ -358,15 +198,7 @@
   <section class="wak-scene wak-scene--cta" id="wak-cta" data-scene="8">
     <div class="wak-scene__bg-text" aria-hidden="true">WAK</div>
     <div class="wak-scene__inner wak-scene__inner--cta">
-      <div class="wak-ornament wak-ornament--large" aria-hidden="true">
-        <svg viewBox="0 0 120 40" class="wak-svg-cta-ornament" xmlns="http://www.w3.org/2000/svg">
-          <line x1="0" y1="20" x2="42" y2="20" stroke="rgba(232,200,154,0.4)" stroke-width="0.8"/>
-          <path d="M46,20 Q52,8 60,12 Q68,8 74,20 Q68,32 60,28 Q52,32 46,20 Z"
-                fill="none" stroke="rgba(232,200,154,0.65)" stroke-width="1.2"/>
-          <line x1="78" y1="20" x2="120" y2="20" stroke="rgba(232,200,154,0.4)" stroke-width="0.8"/>
-          <circle cx="60" cy="20" r="2.5" fill="rgba(232,200,154,0.65)"/>
-        </svg>
-      </div>
+      <div class="wak-ornament wak-ornament--large" aria-hidden="true">✦</div>
       <h2 class="wak-title wak-title--cta" data-splitting>Laissez-vous<br><em>séduire</em></h2>
       <p class="wak-body wak-body--centered" data-splitting>
         Découvrez notre collection d'épices rares, d'encens précieux et de cosmétiques naturels — un voyage d'exception de la Corne de l'Afrique à votre table.
@@ -502,15 +334,6 @@ body { cursor: none; }
   box-shadow: 0 24px 60px rgba(0,0,0,0.2);
   text-align: center;
 }
-.wak-scene__inner--split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(2rem,5vw,6rem);
-  align-items: center;
-  max-width: 1100px;
-}
-.wak-scene__inner--reverse { direction: rtl; }
-.wak-scene__inner--reverse > * { direction: ltr; }
 .wak-scene__inner--centered { text-align: center; }
 .wak-scene__inner--cta {
   background: rgba(255,255,255,0.06);
@@ -568,21 +391,21 @@ body { cursor: none; }
 .wak-title em { font-style: italic; color: var(--wak-gold); font-weight: 400; }
 .wak-title--hero { font-size: clamp(3rem,7vw,6rem); font-weight: 600; }
 .wak-title--mid  { font-size: clamp(2.2rem,4.5vw,3.8rem); font-weight: 700; }
-.wak-title--tl   { font-size: clamp(2rem,4vw,3.2rem); font-weight: 600; }
+.wak-title--tl   { font-size: clamp(2.3rem,4.6vw,3.8rem); font-weight: 600; }
 .wak-title--large { font-size: clamp(3rem,7vw,5.5rem); font-weight: 900; }
 .wak-title--cta  { font-size: clamp(2.8rem,6vw,5rem); font-weight: 600; }
 
 .wak-body {
   font-family: var(--wak-body-serif);
-  font-size: clamp(1rem,1.5vw,1.2rem);
-  line-height: 1.9;
+  font-size: clamp(1.15rem,1.9vw,1.45rem);
+  line-height: 1.85;
   color: var(--wak-white-dim);
   font-weight: 400;
   letter-spacing: 0.01em;
   margin-bottom: 1.4rem;
 }
-.wak-body--centered { text-align: center; max-width: 700px; margin-left:auto; margin-right:auto; }
-.wak-body--wide { max-width: 820px; }
+.wak-body--centered { text-align: center; max-width: 760px; margin-left:auto; margin-right:auto; }
+.wak-body--wide { max-width: 880px; }
 
 .wak-ornament {
   font-size: 2rem; color: var(--wak-gold);
@@ -647,9 +470,9 @@ body { cursor: none; }
 .wak-sub .char { transform: translateY(115%); opacity: 0; }
 
 /* ── TIMELINE SCENES ── */
-.wak-tl__text { display: flex; flex-direction: column; gap: 0.4rem; }
+.wak-tl__text { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
 .wak-tl__badge {
-  display: inline-flex; align-self: flex-start;
+  display: inline-flex; align-self: center;
   font-family: var(--wak-sans); font-size: 0.72rem;
   letter-spacing: 0.22em; text-transform: uppercase; font-weight: 700;
   color: var(--wak-gold);
@@ -658,69 +481,18 @@ body { cursor: none; }
   padding: 0.3rem 1rem; border-radius: 20px; margin-bottom: 0.8rem;
 }
 
-/* ── ARTIFACTS VISUELS ── */
-.wak-tl__visual {
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transform: scale(0.85) translateX(30px);
-}
-.wak-scene__inner--reverse .wak-tl__visual { transform: scale(0.85) translateX(-30px); }
-
-/* ── SVG ART — motifs africains / arabesque Corne de l'Afrique ── */
-.wak-svg-art {
-  width: 220px; height: 220px;
-  opacity: 0.88;
-  filter: drop-shadow(0 0 18px rgba(232,200,154,0.12));
-}
-
-/* Rotation lente pour le motif Adinkra */
-.wak-svg-spin {
-  animation: wakSvgSpin 40s linear infinite;
-}
-@keyframes wakSvgSpin { to { transform: rotate(360deg); } }
-
-/* Respiration douce pour la rosace */
-.wak-svg-breathe {
-  animation: wakSvgBreathe 6s ease-in-out infinite;
-}
-@keyframes wakSvgBreathe {
-  0%,100%{ transform: scale(1); opacity: .88; }
-  50%    { transform: scale(1.04); opacity: 1; }
-}
-
-/* Lignes de vapeur animées sur le mortier */
-.wak-steam-line {
-  animation: wakSteamRise 3s ease-in-out infinite;
-  transform-origin: bottom center;
-}
-.wak-steam-line:nth-child(1) { animation-delay: 0s; }
-.wak-steam-line:nth-child(2) { animation-delay: .6s; }
-.wak-steam-line:nth-child(3) { animation-delay: 1.2s; }
-@keyframes wakSteamRise {
-  0%  { opacity: 0; transform: translateY(0) scaleX(1); }
-  40% { opacity: .7; }
-  100%{ opacity: 0; transform: translateY(-14px) scaleX(1.5); }
-}
-
 /* Ornement fin de section Aujourd'hui */
 .wak-fin-ornament {
   margin-top: 3rem; opacity: 0;
 }
-.wak-svg-divider-full { width: 280px; height: 60px; display: block; margin: 0 auto; }
-
-/* Icônes SVG des valeurs */
-.wak-valeur-card__icon {
-  width: 52px; height: 52px;
-  margin: 0 auto 1.4rem;
-  color: var(--wak-gold);
-  opacity: 0.85;
-}
-.wak-icon-svg {
-  width: 100%; height: 100%;
+.wak-fin-ornament::before {
+  content: '✦ ✦ ✦';
   display: block;
+  text-align: center;
+  color: var(--wak-gold);
+  letter-spacing: 1em;
+  font-size: 0.9rem;
 }
-
-/* Ornement SVG CTA */
-.wak-svg-cta-ornament { width: 120px; height: 40px; display: block; margin: 0 auto; }
 
 /* ── VALEURS ── */
 .wak-scene--valeurs { padding-bottom: 8vh; }
@@ -784,9 +556,6 @@ body { cursor: none; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
-  .wak-scene__inner--split { grid-template-columns: 1fr; }
-  .wak-scene__inner--reverse { direction: ltr; }
-  .wak-tl__visual { display: none; }
   .wak-scene__num { font-size: 20vw; }
   .wak-chapnav { right: 0.5rem; }
   .wak-scene__inner--card { padding: 2.5rem 1.5rem; border-radius: 24px; }
@@ -984,7 +753,6 @@ document.addEventListener('DOMContentLoaded', function () {
   ['#wak-tl-0','#wak-tl-1','#wak-tl-2','#wak-tl-3'].forEach(id => {
     animChars(id + ' .wak-title', 0.08, 0.028);
     animChars(id + ' .wak-body',  0.22, 0.014);
-    gsap.to(id + ' .wak-tl__visual', { opacity:1, scale:1, x:0, duration:1.2, ease:'power3.out', scrollTrigger:{ trigger:id, start:'top 58%' }});
   });
   animLabel('#wak-tl-0 .wak-label');
 
