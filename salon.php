@@ -1,10 +1,20 @@
 <?php
 session_start();
 
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'wakaroma');
+// Détection automatique : local (WAMP/XAMPP) ou serveur en ligne (OVH)
+$IS_LOCAL = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true);
+
+if ($IS_LOCAL) {
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'root');
+    define('DB_PASS', '');
+    define('DB_NAME', 'wakaroma');
+} else {
+    define('DB_HOST', 'kgaftzfwakaroma.mysql.db');
+    define('DB_USER', 'kgaftzfwakaroma');
+    define('DB_PASS', 'Wakaroma1');
+    define('DB_NAME', 'kgaftzfwakaroma');
+}
 
 function getDB() {
     static $pdo = null;
@@ -27,7 +37,7 @@ function getDB() {
                 actif       TINYINT(1) NOT NULL DEFAULT 1,
                 created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )");
-        } catch (PDOException $e) { die('Connexion impossible'); }
+        } catch (PDOException $e) { die('Connexion impossible : ' . $e->getMessage()); }
     }
     return $pdo;
 }
