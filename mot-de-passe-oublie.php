@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             // Envoyer le mail
-            $lien = "http://localhost/wakaroma2/reset-password.php?token=" . $token;
+            $lien = "https://wakaroma.com/reset-password.php?token=" . $token;
 
             $mail = new PHPMailer\PHPMailer\PHPMailer(true);
 
@@ -43,12 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mail->isSMTP();
                 $mail->Host       = 'smtp.gmail.com';
                 $mail->SMTPAuth   = true;
-                $mail->Username   = 'samzosamb123@gmail.com';
-                $mail->Password   = 'oxwcjqcvmoettpkx';
+             $mail->Username   = 'hodanmeg7@gmail.com';
+                $mail->Password   = 'fpqquaaaprqciyqb';
                 $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
                 $mail->Port       = 465;
 
-                $mail->setFrom('samzosamb123@gmail.com', 'WakAroma');
+                $mail->setFrom('hodanmeg7@gmail.com', 'wakaroma');
                 $mail->addAddress($email, $user->prenom);
                 $mail->addReplyTo('noreply@wakaroma.com', 'No Reply');
                 $mail->isHTML(true);
