@@ -26,16 +26,11 @@ $admin = $_SESSION['admin_auth'];
 $IS_LOCAL = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true);
 
 if ($IS_LOCAL) {
-    define('DB_HOST', 'localhost');
+    define('DB_HOST', '');
     define('DB_USER', '');
     define('DB_PASS', '');
-    define('DB_NAME', 'wakaroma');
-} else {
-    define('DB_HOST', 'kgaftzfwakaroma.mysql.db');
-    define('DB_USER', 'kgaftzfwakaroma');
-    define('DB_PASS', 'Wakaroma1');
-    define('DB_NAME', 'kgaftzfwakaroma');
-}
+    define('DB_NAME', '');
+} 
 define('SEUIL_ALERTE_DEFAULT', 10);
 
 // ==========================================
