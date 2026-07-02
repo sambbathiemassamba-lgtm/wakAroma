@@ -27,7 +27,7 @@ $IS_LOCAL = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], 
 
 if ($IS_LOCAL) {
     define('DB_HOST', 'localhost');
-    define('DB_USER', 'root');
+    define('DB_USER', '');
     define('DB_PASS', '');
     define('DB_NAME', 'wakaroma');
 } else {
@@ -637,6 +637,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(['success'=>true]);
             break;
 
+        // ---- COMMANDES ----
+        case 'get_commandes':
+            $stmt = $pdo->query("
+                SELECT cmd.id_commande, cmd.numero_commande, cmd.statut, cmd.total, cmd.created_at,
+                       u.id_user, u.nom, u.prenom, u.email, u.numero,
+                       (SELECT COUNT(*) FROM lignes_commandes lc WHERE lc.id_commande = cmd.id_commande) AS nb_articles
+                FROM commandes cmd
+                LEFT JOIN users u ON u.id_user = cmd.id_user
+                ORDER BY cmd.created_at DESC, cmd.id_commande DESC
+            ");
+            echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            break;
+
+        case 'get_commande_detail':
+            $id = (int)($_POST['id'] ?? 0);
+            $stmtC = $pdo->prepare("
+                SELECT cmd.*, u.nom, u.prenom, u.email, u.numero
+                FROM commandes cmd
+                LEFT JOIN users u ON u.id_user = cmd.id_user
+                WHERE cmd.id_commande = ?
+            ");
+            $stmtC->execute([$id]);
+            $cmd = $stmtC->fetch(PDO::FETCH_ASSOC);
+            if (!$cmd) { echo json_encode(['success' => false, 'error' => 'Commande introuvable']); break; }
+            $stmtL = $pdo->prepare("SELECT * FROM lignes_commandes WHERE id_commande = ? ORDER BY id_ligne_commande");
+            $stmtL->execute([$id]);
+            $cmd['lignes'] = $stmtL->fetchAll(PDO::FETCH_ASSOC);
+            $cmd['adresse'] = null;
+            if (!empty($cmd['id_user'])) {
+                try {
+                    $stmtA = $pdo->prepare("SELECT * FROM adresses WHERE id_user = ? ORDER BY id_adresse DESC LIMIT 1");
+                    $stmtA->execute([$cmd['id_user']]);
+                    $adr = $stmtA->fetch(PDO::FETCH_ASSOC);
+                    if ($adr) $cmd['adresse'] = $adr;
+                } catch (PDOException $e) { /* table adresses absente : on ignore */ }
+            }
+            echo json_encode(['success' => true, 'data' => $cmd]);
+            break;
+
+        case 'update_commande_statut':
+            $id     = (int)($_POST['id'] ?? 0);
+            $statut = trim($_POST['statut'] ?? '');
+            $allowed = ['en_attente','en_preparation','expediee','livree','annulee'];
+            if (!in_array($statut, $allowed, true)) { echo json_encode(['success' => false, 'error' => 'Statut invalide']); break; }
+            $pdo->prepare("UPDATE commandes SET statut = ? WHERE id_commande = ?")->execute([$statut, $id]);
+            echo json_encode(['success' => true]);
+            break;
+
+        case 'get_commandes_alert':
+            $enAttente = (int)$pdo->query("SELECT COUNT(*) FROM commandes WHERE statut = 'en_attente'")->fetchColumn();
+            $dernierId = (int)$pdo->query("SELECT COALESCE(MAX(id_commande),0) FROM commandes")->fetchColumn();
+            $total     = (int)$pdo->query("SELECT COUNT(*) FROM commandes")->fetchColumn();
+            echo json_encode(['success' => true, 'en_attente' => $enAttente, 'dernier_id' => $dernierId, 'total' => $total]);
+            break;
+
         default:
             echo json_encode(['success' => false, 'error' => 'Action inconnue']);
     }
@@ -878,6 +933,22 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 .empty-state p { font-size: .95rem; }
+
+/* =============================================
+   COMMANDES
+   ============================================= */
+.cmd-statut { display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:20px; font-size:.78rem; font-weight:600; white-space:nowrap; }
+.cmd-statut.en_attente     { background: var(--red-bg); border:1px solid var(--red-border); color:#e74c3c; animation: pulse 2s infinite; }
+.cmd-statut.en_preparation { background: rgba(201,150,59,.12); border:1px solid var(--gold-dim); color: var(--gold); }
+.cmd-statut.expediee       { background: var(--blue-bg); border:1px solid var(--blue-border); color:#6fa3e8; }
+.cmd-statut.livree         { background: var(--green-bg); border:1px solid #1e6b40; color:#4ecb78; }
+.cmd-statut.annulee        { background: var(--surface2); border:1px solid var(--border); color: var(--text-dim); }
+.cmd-statut-select { padding:6px 10px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:.82rem; outline:none; cursor:pointer; transition: border-color .2s; }
+.cmd-statut-select:focus { border-color: var(--gold); }
+#cmd-new-order-banner {
+    animation: cmdBannerIn .35s ease;
+}
+@keyframes cmdBannerIn { from { opacity:0; transform: translate(-50%,-16px); } to { opacity:1; transform: translate(-50%,0); } }
 
 /* =============================================
    NEWSLETTER
@@ -1138,6 +1209,7 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
         border-bottom: none;
         z-index: 150;
         box-shadow: 0 -4px 20px rgba(0,0,0,.5);
+        overflow-x: auto;
     }
     .nav-tab {
         flex: 1; min-width: 0;
@@ -1283,6 +1355,18 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
     #usersTable td:nth-child(4) { grid-column: 2; justify-self: end; }
     #usersTable td:nth-child(5) { grid-column: 1 / -1; margin-top: 4px; }
 
+    /* ── COMMANDES : cartes empilées ── */
+    #cmdTable tbody tr[data-id] { grid-template-columns: 1fr 1fr; }
+    #cmdTable tr[data-id] td:nth-child(1) { grid-area: 1 / 1 / 2 / -1; font-size: 1rem; }
+    #cmdTable tr[data-id] td:nth-child(2) { grid-area: 2 / 1 / 3 / -1; }
+    #cmdTable tr[data-id] td:nth-child(3) { grid-area: 3 / 1; }
+    #cmdTable tr[data-id] td:nth-child(4) { grid-area: 3 / 2; justify-self: end; }
+    #cmdTable tr[data-id] td:nth-child(5) { grid-area: 4 / 1 / 5 / -1; }
+    #cmdTable tr[data-id] td:nth-child(5) .cmd-statut-select { width: 100%; }
+    #cmdTable tr[data-id] td:nth-child(6) { grid-area: 5 / 1 / 6 / -1; }
+    #cmdTable tr[data-id] td:nth-child(7) { grid-area: 6 / 1 / 7 / -1; }
+    #cmdTable tr[data-id] td:nth-child(7) .save-btn { width: 100%; text-align: center; }
+
     /* ── NEWSLETTER : tableau abonnés en défilement horizontal ──
        (trop de colonnes interactives pour des cartes lisibles) */
     #nlSubTable { display: table; min-width: 700px; }
@@ -1334,6 +1418,7 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
     /* ── TOASTS au-dessus de la barre d'onglets ── */
     .toast-container { bottom: calc(84px + env(safe-area-inset-bottom)); right: 14px; left: 14px; }
     .toast { font-size: .82rem; }
+    #cmd-new-order-banner { width: calc(100% - 28px); left: 14px; right: 14px; transform: none; }
 
     /* ── Stats mini en haut de page stocks ── */
     .mobile-stats {
@@ -1353,6 +1438,12 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 </style>
 </head>
 <body>
+
+<!-- BANNIÈRE ALERTE NOUVELLE COMMANDE -->
+<div id="cmd-new-order-banner" style="display:none;position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:400;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;padding:14px 22px;border-radius:12px;box-shadow:0 8px 32px rgba(192,57,43,.5);align-items:center;gap:14px;font-weight:600;cursor:pointer;">
+    <span onclick="cmdGoToOrders()">🔔 <span id="cmd-new-order-text">Nouvelle commande reçue !</span></span>
+    <button onclick="event.stopPropagation();cmdDismissBanner()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:5px 11px;cursor:pointer;font-weight:600;">OK</button>
+</div>
 
 <!-- HEADER -->
 <header class="header">
@@ -1384,6 +1475,10 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
 
 <!-- NAVIGATION PAR ONGLETS -->
 <nav class="nav-tabs">
+    <button class="nav-tab" onclick="switchPage('commandes', this)" id="tab-commandes">
+        <span class="tab-icon">🧾</span> Commandes
+        <span class="tab-badge" id="badge-commandes" style="display:none">0</span>
+    </button>
     <button class="nav-tab active" onclick="switchPage('stocks', this)" id="tab-stocks">
         <span class="tab-icon">📦</span> Stocks
     </button>
@@ -1403,6 +1498,63 @@ td { padding: 14px 18px; font-size: .9rem; vertical-align: middle; }
     </button>
 </nav>
 
+<!-- ===================== PAGE COMMANDES ===================== -->
+<div class="page" id="page-commandes">
+    <div class="toolbar">
+        <div class="search-wrap">
+            <span class="ico">🔍</span>
+            <input type="text" id="search-cmd" placeholder="Rechercher (n° commande, client, email)…" oninput="filterCommandes()">
+        </div>
+        <select class="filter-select" id="filter-cmd-statut" onchange="filterCommandes()">
+            <option value="">Tous les statuts</option>
+            <option value="en_attente">🕓 En attente</option>
+            <option value="en_preparation">📦 En préparation</option>
+            <option value="expediee">🚚 Expédiée</option>
+            <option value="livree">✅ Livrée</option>
+            <option value="annulee">❌ Annulée</option>
+        </select>
+        <button class="btn btn-ghost" onclick="loadCommandes()">🔄 Actualiser</button>
+        <span style="color:var(--text-dim);font-size:.85rem;margin-left:auto;" id="cmd-count-label"></span>
+    </div>
+    <main class="main">
+        <div class="table-card">
+            <div class="table-wrap">
+                <table id="cmdTable">
+                    <thead>
+                        <tr>
+                            <th>N° Commande</th>
+                            <th>Client</th>
+                            <th>Articles</th>
+                            <th>Total</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-cmd">
+                        <tr><td colspan="7" class="empty-state"><div class="icon">⏳</div><p>Chargement…</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- MODAL DÉTAIL COMMANDE -->
+<div class="modal-overlay" id="modal-commande">
+    <div class="modal modal--wide">
+        <div class="modal-header">
+            <div class="modal-title">🧾 Commande <span id="cmd-detail-numero" style="color:var(--gold)"></span></div>
+            <button class="modal-close" onclick="closeModal('commande')">✕</button>
+        </div>
+        <div id="cmd-detail-body">
+            <div style="text-align:center;padding:2rem;color:var(--text-dim)">Chargement…</div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('commande')">Fermer</button>
+        </div>
+    </div>
+</div>
 
 <!-- ===================== PAGE SALONS ===================== -->
 <div class="page" id="page-salons">
@@ -2136,6 +2288,7 @@ function switchPage(page, btn) {
     if (page === 'users'       && allUsers.length === 0)       loadUsers();
     if (page === 'newsletter'  && nlAllSubs.length === 0)      nlLoadSubs();
     if (page === 'salons'       && allSalons.length === 0)      loadSalons();
+    if (page === 'commandes')   loadCommandes();
 }
 
 // ==========================================
@@ -2144,6 +2297,7 @@ function switchPage(page, btn) {
 document.addEventListener('DOMContentLoaded', () => {
     loadStocks();
     loadCategories();
+    startCmdPolling();
 });
 
 // ==========================================
@@ -2779,6 +2933,201 @@ async function deleteUser(id, nom) {
 }
 
 // ==========================================
+// COMMANDES
+// ==========================================
+let allCommandes    = [];
+let cmdLastKnownId  = null;
+let cmdPollInterval = null;
+
+const CMD_STATUTS = {
+    en_attente:     { label: '🕓 En attente',     class: 'en_attente' },
+    en_preparation: { label: '📦 En préparation', class: 'en_preparation' },
+    expediee:       { label: '🚚 Expédiée',       class: 'expediee' },
+    livree:         { label: '✅ Livrée',         class: 'livree' },
+    annulee:        { label: '❌ Annulée',        class: 'annulee' },
+};
+
+async function loadCommandes() {
+    try {
+        const res = await post({ action: 'get_commandes' });
+        allCommandes = res.data || [];
+        renderCommandes(allCommandes);
+        updateCmdBadge();
+        if (cmdLastKnownId === null && allCommandes.length) {
+            cmdLastKnownId = Math.max(...allCommandes.map(c => parseInt(c.id_commande)));
+        }
+    } catch(e) { showToast('Erreur chargement commandes : ' + e.message, 'error'); }
+}
+
+function renderCommandes(list) {
+    const tbody = document.getElementById('tbody-cmd');
+    document.getElementById('cmd-count-label').textContent = list.length + ' commande' + (list.length > 1 ? 's' : '');
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">🧾</div><p>Aucune commande pour l'instant.</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = list.map(c => {
+        const date = c.created_at ? new Date(c.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+        const st   = CMD_STATUTS[c.statut] || { label: c.statut, class: '' };
+        const clientNom = (c.prenom || c.nom) ? `${c.prenom||''} ${c.nom||''}`.trim() : '—';
+        const isNew = c.statut === 'en_attente';
+        const options = Object.entries(CMD_STATUTS).map(([k,v]) => `<option value="${k}" ${k===c.statut?'selected':''}>${v.label}</option>`).join('');
+        return `<tr data-id="${c.id_commande}" data-search="${escHtml((c.numero_commande+' '+clientNom+' '+(c.email||'')).toLowerCase())}" data-statut="${c.statut}" class="${isNew ? 'row-alert' : ''}">
+            <td class="td-nom" data-label="N° Commande">🧾 ${escHtml(c.numero_commande)}</td>
+            <td data-label="Client">
+                <div style="font-weight:500;color:var(--cream)">${escHtml(clientNom)}</div>
+                <div style="font-size:.78rem;color:var(--text-dim)">${escHtml(c.email||'—')}</div>
+            </td>
+            <td data-label="Articles">${c.nb_articles} article${c.nb_articles>1?'s':''}</td>
+            <td data-label="Total" style="color:var(--gold);font-weight:600">${parseFloat(c.total||0).toFixed(2)} €</td>
+            <td data-label="Statut">
+                <select class="cmd-statut-select" onchange="updateCommandeStatut(${c.id_commande}, this.value)">${options}</select>
+            </td>
+            <td data-label="Date" style="font-size:.8rem;color:var(--text-dim)">${date}</td>
+            <td data-label="Actions">
+                <button class="save-btn" style="background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)" onclick="openCommandeDetail(${c.id_commande})">👁 Détail</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function filterCommandes() {
+    const search = document.getElementById('search-cmd').value.toLowerCase();
+    const statut = document.getElementById('filter-cmd-statut').value;
+    document.querySelectorAll('#tbody-cmd tr[data-id]').forEach(row => {
+        const searchMatch = row.dataset.search.includes(search);
+        const statutMatch = !statut || row.dataset.statut === statut;
+        row.style.display = (searchMatch && statutMatch) ? '' : 'none';
+    });
+}
+
+async function updateCommandeStatut(id, statut) {
+    try {
+        await post({ action: 'update_commande_statut', id, statut });
+        showToast('Statut mis à jour ✓', 'success');
+        loadCommandes();
+    } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function openCommandeDetail(id) {
+    openModal('commande');
+    const body = document.getElementById('cmd-detail-body');
+    body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim)">Chargement…</div>';
+    try {
+        const res = await post({ action: 'get_commande_detail', id });
+        const c = res.data;
+        document.getElementById('cmd-detail-numero').textContent = c.numero_commande;
+        const date = c.created_at ? new Date(c.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+        const st = CMD_STATUTS[c.statut] || { label:c.statut, class:'' };
+        const adresse = c.adresse ? `${escHtml(c.adresse.adresse_complete||'')}, ${escHtml(c.adresse.code_postal||'')} ${escHtml(c.adresse.ville||'')}` : 'Non renseignée';
+        const lignesHtml = (c.lignes||[]).map(l => `
+            <tr>
+                <td style="padding:10px 14px;color:var(--cream)">${escHtml(l.nom_produit)}${l.reference_produit ? `<div style="font-size:.75rem;color:var(--text-dim)">Réf: ${escHtml(l.reference_produit)}</div>` : ''}</td>
+                <td style="padding:10px 14px;text-align:center;color:var(--text-dim)">x${l.quantite}</td>
+                <td style="padding:10px 14px;text-align:right;color:var(--gold)">${parseFloat(l.prix).toFixed(2)} €</td>
+                <td style="padding:10px 14px;text-align:right;color:var(--cream);font-weight:600">${(parseFloat(l.prix)*parseInt(l.quantite)).toFixed(2)} €</td>
+            </tr>`).join('');
+        body.innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+                    <div style="font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Client</div>
+                    <div style="color:var(--cream);font-weight:500;">${escHtml((c.prenom||'')+' '+(c.nom||''))}</div>
+                    <div style="color:var(--text-dim);font-size:.85rem;">${escHtml(c.email||'—')}</div>
+                    <div style="color:var(--text-dim);font-size:.85rem;">${escHtml(c.numero||'—')}</div>
+                </div>
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+                    <div style="font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Livraison</div>
+                    <div style="color:var(--cream);font-size:.85rem;">${adresse}</div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+                <span class="cmd-statut ${st.class}">${st.label}</span>
+                <span style="font-size:.8rem;color:var(--text-dim);">📅 ${date}</span>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead><tr style="background:var(--surface2);"><th style="padding:10px 14px;text-align:left;font-size:.75rem;color:var(--gold);text-transform:uppercase;">Produit</th><th style="padding:10px 14px;font-size:.75rem;color:var(--gold);text-transform:uppercase;">Qté</th><th style="padding:10px 14px;text-align:right;font-size:.75rem;color:var(--gold);text-transform:uppercase;">Prix unit.</th><th style="padding:10px 14px;text-align:right;font-size:.75rem;color:var(--gold);text-transform:uppercase;">Sous-total</th></tr></thead>
+                    <tbody>${lignesHtml}</tbody>
+                </table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:14px;font-size:1.1rem;">
+                <span style="color:var(--text-dim);margin-right:10px;">Total :</span>
+                <span style="color:var(--gold);font-weight:700;">${parseFloat(c.total||0).toFixed(2)} €</span>
+            </div>`;
+    } catch(e) {
+        body.innerHTML = `<div style="text-align:center;padding:2rem;color:#e74c3c;">Erreur : ${e.message}</div>`;
+    }
+}
+
+function updateCmdBadge() {
+    const nbAttente = allCommandes.filter(c => c.statut === 'en_attente').length;
+    const badge = document.getElementById('badge-commandes');
+    badge.style.display = nbAttente > 0 ? '' : 'none';
+    badge.textContent   = nbAttente;
+}
+
+// --- Alerte nouvelle commande (polling toutes les 20s) ---
+function cmdBeep() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const g = ctx.createGain();
+        g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.16, ctx.currentTime);
+        const o1 = ctx.createOscillator();
+        o1.type = 'sine'; o1.frequency.value = 880; o1.connect(g);
+        o1.start(); o1.stop(ctx.currentTime + 0.18);
+        setTimeout(() => {
+            const o2 = ctx.createOscillator();
+            o2.type = 'sine'; o2.frequency.value = 1108; o2.connect(g);
+            o2.start(); o2.stop(ctx.currentTime + 0.16);
+        }, 200);
+    } catch(e) {}
+}
+
+function cmdShowBanner(n) {
+    const banner = document.getElementById('cmd-new-order-banner');
+    document.getElementById('cmd-new-order-text').textContent = n > 1 ? `${n} nouvelles commandes reçues !` : 'Nouvelle commande reçue !';
+    banner.style.display = 'flex';
+    cmdBeep();
+    document.title = '🔔 Nouvelle commande — WakAroma Admin';
+}
+
+function cmdDismissBanner() {
+    document.getElementById('cmd-new-order-banner').style.display = 'none';
+    document.title = 'Administration — WakAroma';
+}
+
+function cmdGoToOrders() {
+    cmdDismissBanner();
+    document.getElementById('tab-commandes').click();
+}
+
+async function cmdPoll() {
+    try {
+        const res = await post({ action: 'get_commandes_alert' });
+        const badge = document.getElementById('badge-commandes');
+        badge.style.display = res.en_attente > 0 ? '' : 'none';
+        badge.textContent   = res.en_attente;
+        if (cmdLastKnownId === null) {
+            cmdLastKnownId = res.dernier_id;
+            return;
+        }
+        if (res.dernier_id > cmdLastKnownId) {
+            const diff = res.dernier_id - cmdLastKnownId;
+            cmdShowBanner(diff);
+            cmdLastKnownId = res.dernier_id;
+            if (document.getElementById('page-commandes').classList.contains('active')) loadCommandes();
+        }
+    } catch(e) { /* silencieux : on retentera au prochain poll */ }
+}
+
+function startCmdPolling() {
+    cmdPoll();
+    if (cmdPollInterval) clearInterval(cmdPollInterval);
+    cmdPollInterval = setInterval(cmdPoll, 20000);
+}
+
+// ==========================================
 // MODALS
 // ==========================================
 function openModal(type) {
@@ -2810,6 +3159,7 @@ document.getElementById('modal-edit-produit').addEventListener('click', e => { i
 document.getElementById('modal-produit').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('produit'); });
 document.getElementById('modal-ingredient').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('ingredient'); });
 document.getElementById('modal-categories').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('categories'); });
+document.getElementById('modal-commande').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('commande'); });
 
 // ==========================================
 // UTILITAIRES
